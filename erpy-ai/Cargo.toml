@@ -1,0 +1,36 @@
+[package]
+name = "erpy-ai"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.89"
+camino = "1.1.9"
+either = "1.13.0"
+hf-hub = { version = "0.3.2", optional = true, features = ["tokio"] }
+indexmap = "2.6.0"
+log = "0.4.22"
+reqwest = { version = "0.12.8", features = ["json"] }
+reqwest-eventsource = "0.6.0"
+serde = { version = "1.0.210", features = ["derive"] }
+serde_json = "1.0.128"
+tokio = { version = "1.40.0", features = ["sync"] }
+tokio-stream = "0.1.16"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs", rev = "v0.3.1", features = [
+    "metal",
+], optional = true }
+llama-cpp-2 = { version = "0.1", optional = true, features = ["metal"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs", rev = "v0.3.1", features = [
+    "cuda",
+    "cudnn",
+], optional = true }
+llama-cpp-2 = { version = "0.1", optional = true, features = ["cuda"] }
+
+[features]
+default = []
+llama = ["llama-cpp-2", "hf-hub"]
+mistral = ["mistralrs"]

@@ -1,0 +1,43 @@
+[package]
+name = "erpy-ui"
+version = "0.1.0"
+description = "EroticRolePlay UI"
+authors = ["soundchaser128 <soundchaser128@gmail.com>"]
+edition = "2021"
+
+[lib]
+name = "erpy_ui_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+anyhow = "1.0.89"
+anyhow-tauri = "1.0.0"
+base64 = "0.22.1"
+camino = "1.1.9"
+erpy-ai = { path = "../erpy-ai" }
+erpy-types = { path = "../erpy-types" }
+log = "0.4"
+reqwest = "0.12.7"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2.0.0", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.0.0"
+tauri-plugin-fs = "2.0.0"
+tauri-plugin-log = "2.0.0"
+tauri-plugin-notification = "2.0.0"
+tauri-plugin-os = "2.0.0"
+tauri-plugin-shell = "2.0.0"
+tauri-plugin-sql = { version = "2.0.0", features = ["sqlite"] }
+tokio = { version = "1.40.0", features = ["sync", "process"] }
+tokio-stream = "0.1.16"
+walkdir = "2.5.0"
+zune-png = "0.4.10"
+
+[profile.dev.package.erpy-ai]
+opt-level = 3
+
+[features]
+mistral = ["erpy-ai/mistral"]
