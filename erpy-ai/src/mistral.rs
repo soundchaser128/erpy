@@ -166,7 +166,7 @@ impl CompletionApi for MistralRsCompletions {
         Ok(stream.map_while(|response| match response {
             Response::Chunk(chunk) => {
                 let is_finished = chunk.choices.iter().all(|x| x.finish_reason.is_some());
-                log::info!("got chunk: {:#?}", chunk);
+                log::debug!("got chunk: {:#?}", chunk);
                 if is_finished {
                     None
                 } else {
