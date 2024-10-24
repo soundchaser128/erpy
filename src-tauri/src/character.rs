@@ -3,7 +3,7 @@
 use anyhow::{anyhow, bail, Result};
 use erpy_types::Character;
 use log::info;
-use serde::{Deserialize};
+use serde::Deserialize;
 use serde_json::Value;
 
 const DEFAULT_SYSTEM_PROMPT: &str =
