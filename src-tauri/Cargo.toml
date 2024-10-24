@@ -36,8 +36,5 @@ tokio-stream = "0.1.16"
 walkdir = "2.5.0"
 zune-png = "0.4.10"
 
-[profile.dev.package.erpy-ai]
-opt-level = 3
-
 [features]
 mistral = ["erpy-ai/mistral"]

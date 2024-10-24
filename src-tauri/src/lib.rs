@@ -162,7 +162,7 @@ impl LoadModel {
                 chat_template,
                 file_name,
             } => {
-                use ai::MistralRsCompletions;
+                use erpy_ai::mistral::MistralRsCompletions;
 
                 CompletionApis::Mistral(
                     MistralRsCompletions::new(model_id, chat_template, vec![file_name]).await?,

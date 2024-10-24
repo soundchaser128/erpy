@@ -1,3 +1,6 @@
 [workspace]
 members = ["src-tauri", "erpy-types", "erpy-ai", "erpy-sync-server"]
 resolver = "2"
+
+[profile.dev.package.erpy-ai]
+opt-level = 3

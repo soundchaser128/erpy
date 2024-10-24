@@ -1,11 +1,19 @@
 {
   "name": "Tauri Dev Container",
-  "image": "mcr.microsoft.com/vscode/devcontainers/base:ubuntu",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "runArgs": ["--gpus=all"],
   "features": {
     "ghcr.io/devcontainers/features/rust:1": {},
     "ghcr.io/devcontainers/features/node:1": {
       "version": "lts"
     }
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:/usr/local/cuda/bin",
+    "LD_LIBRARY_PATH": "$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64",
+    "XLA_FLAGS": "--xla_gpu_cuda_data_dir=/usr/local/cuda"
   },
   "customizations": {
     "vscode": {
@@ -13,9 +21,4 @@
     }
   },
   "forwardPorts": [4041]
-  // "postCreateCommand": [
-  //   "apt-get update",
-  //   "apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev",
-  //   "npm install"
-  // ]
 }
