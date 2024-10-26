@@ -2,7 +2,11 @@
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { faArrowUpRightFromSquare, faBrain } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
+
   export let data;
+
+  const openAiEnabled = data.backends.includes("open-ai");
+  const mistralEnabled = data.backends.includes("mistral");
 </script>
 
 <TopMenu modelName={data.activeModel}>
@@ -26,11 +30,11 @@
   </p>
 </div>
 <div class="flex gap-4 self-center">
-  <a class="btn btn-primary btn-lg" href="/models/mistral">
+  <a class="btn btn-primary btn-lg {!mistralEnabled ? 'btn-disabled' : ''}" href="/models/mistral">
     <Fa icon={faBrain} />
     Run with erpy</a
   >
-  <a class="btn btn-primary btn-lg" href="/models/openai">
+  <a class="btn btn-primary btn-lg {!openAiEnabled ? 'btn-disabled' : ''}" href="/models/openai">
     <Fa icon={faArrowUpRightFromSquare} />
     Connect to API</a
   >

@@ -144,6 +144,23 @@ async fn summarize(app: AppHandle, chat: Chat, config: Config, prompt: String) -
     Ok("TODO".into())
 }
 
+#[derive(Serialize, Debug, Clone, Copy)]
+#[serde(rename_all = "kebab-case")]
+pub enum BackendType {
+    OpenAi,
+    Mistral,
+}
+
+#[tauri::command]
+async fn get_backends() -> Vec<BackendType> {
+    let mut backends = vec![BackendType::OpenAi];
+    
+    #[cfg(feature = "mistral")]
+    backends.push(BackendType::Mistral);
+
+    backends
+}
+
 #[derive(Deserialize, Serialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum LoadModel {
@@ -283,7 +300,8 @@ pub fn run() {
             upload_character_pngs,
             load_model,
             test_connection,
-            list_models_on_disk
+            list_models_on_disk,
+            get_backends
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
