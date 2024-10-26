@@ -1,7 +1,7 @@
 use anyhow::Result;
 use erpy_ai::{CompletionApi, CompletionRequest, MessageHistoryItem, MessageRole};
 use erpy_types::Chat;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 pub fn chat_to_string(chat: &Chat) -> String {
     let max_tokens = 8192;

@@ -1,10 +1,15 @@
-use std::{num::NonZero, sync::Arc};
+use std::{
+    cell::LazyCell,
+    num::NonZero,
+    sync::{Arc, LazyLock},
+};
 
 use super::{
     CompletionApi, CompletionRequest, CompletionResponse, DeltaContent, MessageHistoryItem,
     StreamingCompletionChoice, StreamingCompletionResponse,
 };
 use anyhow::Result;
+use camino::{Utf8Component, Utf8Path, Utf8PathBuf};
 use either::Either;
 use indexmap::IndexMap;
 
@@ -202,6 +207,108 @@ impl CompletionApi for MistralRsCompletions {
     }
 }
 
+#[derive(Debug)]
+pub struct ModelInfo {
+    pub user: String,
+    pub name: String,
+    pub path: Utf8PathBuf,
+}
+
+fn find_models_path_segment(path: &Utf8Path) -> Option<&str> {
+    path.components()
+        .filter_map(|c| {
+            if let Utf8Component::Normal(s) = c {
+                if s.starts_with("models--") {
+                    return Some(s);
+                }
+            }
+            None
+        })
+        .next()
+}
+
+fn find_huggingface_models(home: &Utf8Path) -> Result<Vec<ModelInfo>> {
+    use regex::Regex;
+    use walkdir::WalkDir;
+
+    const HUGGINGFACE_CACHE_DIR: &str = ".cache/huggingface/hub";
+    static HF_MODEL_REGEX: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new("models--(.*)--(.*)").unwrap());
+
+    let hf_directory = home.join(HUGGINGFACE_CACHE_DIR);
+    let mut models = vec![];
+
+    for entry in WalkDir::new(hf_directory).follow_links(false) {
+        let path = Utf8PathBuf::from_path_buf(entry?.into_path()).unwrap();
+        if path.extension() == Some("gguf") {
+            if let Some(parent) = find_models_path_segment(&path) {
+                let caps = HF_MODEL_REGEX.captures(parent);
+                if let Some(captures) = caps {
+                    let user = captures.get(1);
+                    let name = captures.get(2);
+                    if let (Some(user), Some(name)) = (user, name) {
+                        models.push(ModelInfo {
+                            user: user.as_str().to_string(),
+                            name: name.as_str().to_string(),
+                            path,
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(models)
+}
+
+fn find_lm_studio_models(home: &Utf8Path) -> Result<Vec<ModelInfo>> {
+    use walkdir::WalkDir;
+
+    const LM_STUDIO_CACHE_DIR: &str = ".cache/lm-studio/models";
+
+    let directory = home.join(LM_STUDIO_CACHE_DIR);
+    let mut models = vec![];
+
+    for entry in WalkDir::new(directory) {
+        let path = Utf8PathBuf::from_path_buf(entry?.into_path()).unwrap();
+        if path.extension() == Some("gguf") {
+            let Some(model_name) = path.parent().and_then(|p| p.file_name()) else {
+                continue;
+            };
+
+            let Some(user) = path
+                .parent()
+                .and_then(|p| p.parent())
+                .and_then(|p| p.file_name())
+            else {
+                continue;
+            };
+
+            models.push(ModelInfo {
+                user: user.to_string(),
+                name: model_name.to_string(),
+                path,
+            });
+        }
+    }
+
+    Ok(models)
+}
+
+pub fn list_models_on_disk() -> Result<Vec<ModelInfo>> {
+    let mut models = vec![];
+    let home = Utf8PathBuf::from_path_buf(dirs::home_dir().expect("could not find home directory"))
+        .unwrap();
+
+    let hf_models = find_huggingface_models(&home)?;
+    models.extend(hf_models);
+
+    let lm_studio_models = find_lm_studio_models(&home)?;
+    models.extend(lm_studio_models);
+
+    Ok(models)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::{
@@ -210,11 +317,13 @@ mod tests {
     };
     use tokio_stream::StreamExt;
 
+    use super::list_models_on_disk;
+
     #[tokio::test]
     async fn test_streaming_completions() {
         let mistral = MistralRsCompletions::new(
             "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF".into(),
-            "../chat_templates/llama3.json".into(),
+            Some("../chat_templates/llama3.json".into()),
             vec!["Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf".into()],
         )
         .await
@@ -245,6 +354,14 @@ mod tests {
         let mut stream = mistral.get_completions_stream(&request).await.unwrap();
         while let Some(response) = stream.next().await {
             println!("{:#?}", response);
+        }
+    }
+
+    #[test]
+    fn test_list_models() {
+        let models = list_models_on_disk().expect("failed to list models");
+        for model in models {
+            println!("{:#?}", model);
         }
     }
 }

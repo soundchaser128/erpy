@@ -1829,18 +1829,21 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "camino",
+ "dirs",
  "either",
  "hf-hub",
  "indexmap 2.6.0",
  "llama-cpp-2",
  "log",
  "mistralrs",
+ "regex",
  "reqwest 0.12.8",
  "reqwest-eventsource",
  "serde",
  "serde_json",
  "tokio",
  "tokio-stream",
+ "walkdir",
 ]
 
 [[package]]
