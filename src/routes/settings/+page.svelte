@@ -40,19 +40,6 @@
     </div>
 
     <div class="form-control">
-      <label class="label" for="user-name">
-        <span class="label-text">URL of the OpenAI-compatible endpoint</span>
-      </label>
-      <input
-        id="user-name"
-        type="text"
-        class="input input-primary"
-        placeholder="http://localhost:1234/v1"
-        bind:value={data.config.apiUrl}
-      />
-    </div>
-
-    <div class="form-control">
       <label class="label cursor-pointer">
         <span class="label-text"> Notifications for new messages </span>
 

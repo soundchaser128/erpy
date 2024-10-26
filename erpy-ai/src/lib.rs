@@ -2,6 +2,7 @@ use std::{fmt, future::Future, pin::Pin};
 
 use anyhow::Result;
 
+use camino::Utf8PathBuf;
 use serde::{Deserialize, Serialize};
 use tokio_stream::Stream;
 
@@ -181,4 +182,11 @@ impl CompletionApis {
             CompletionApis::OpenAi(api) => api.get_completions(request).await,
         }
     }
+}
+
+#[derive(Debug, Serialize)]
+pub struct ModelInfo {
+    pub user: String,
+    pub name: String,
+    pub path: Utf8PathBuf,
 }

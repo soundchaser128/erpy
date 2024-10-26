@@ -3,8 +3,8 @@ use anyhow_tauri::{bail, IntoTAResult, TAResult};
 use character::character_from_png_bytes;
 use character::character_from_string;
 use config::Config;
-use erpy_ai::CompletionApi;
 use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, MessageHistoryItem};
+use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::Character;
 use erpy_types::Chat;
 use log::{info, LevelFilter};
@@ -30,6 +30,17 @@ async fn list_models(app: AppHandle) -> TAResult<Vec<String>> {
         bail!("no model loaded")
     };
     let models = api.list_models().await?;
+    Ok(models)
+}
+
+#[tauri::command]
+fn list_models_on_disk() -> TAResult<Vec<ModelInfo>> {
+    #[cfg(feature = "mistral")]
+    let models = erpy_ai::mistral::list_models_on_disk()?;
+
+    #[cfg(not(feature = "mistral"))]
+    let models = Vec::new();
+
     Ok(models)
 }
 
@@ -145,7 +156,7 @@ pub enum LoadModel {
     #[cfg(feature = "mistral")]
     Mistral {
         model_id: String,
-        chat_template: Option<String>,
+        chat_template: String,
         file_name: String,
     },
 }
@@ -165,7 +176,8 @@ impl LoadModel {
                 use erpy_ai::mistral::MistralRsCompletions;
 
                 CompletionApis::Mistral(
-                    MistralRsCompletions::new(model_id, chat_template, vec![file_name]).await?,
+                    MistralRsCompletions::new(model_id, Some(chat_template), vec![file_name])
+                        .await?,
                 )
             }
         };
@@ -270,7 +282,8 @@ pub fn run() {
             summarize,
             upload_character_pngs,
             load_model,
-            test_connection
+            test_connection,
+            list_models_on_disk
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

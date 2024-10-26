@@ -1,6 +1,6 @@
 <script lang="ts">
   import { invoke } from "@tauri-apps/api/core";
-  import { goto } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import type { LoadModel } from "$lib/types.js";
 
@@ -10,21 +10,39 @@
   let modelId = "";
   let fileName = "";
   let chatTemplate = "";
+  let modelOnDisk = "";
 
   async function onSubmit() {
     loading = true;
 
-    modelId = modelId.trim();
-    fileName = fileName.trim();
-    const templatePath = "chat_templates/" + chatTemplate.trim();
-    const payload = {
-      type: "mistral",
-      modelId,
-      fileName,
-      chatTemplate: templatePath,
-    } satisfies LoadModel;
+    let payload;
+    if (modelId && fileName && modelOnDisk !== "__none__") {
+      modelId = modelOnDisk;
+      modelId = modelId.trim();
+      fileName = fileName.trim();
+      const templatePath = "chat_templates/" + chatTemplate.trim();
+      payload = {
+        type: "mistral",
+        modelId,
+        fileName,
+        chatTemplate: templatePath,
+      } satisfies LoadModel;
+    } else {
+      const path = modelOnDisk;
+      const parent = path.split("/").slice(0, -1).join("/") + "/";
+      const fileName = path.split("/").slice(-1)[0];
+      // FIXME
+      const templatePath = "chat_templates/llama3.json";
 
+      payload = {
+        type: "mistral",
+        modelId: parent,
+        fileName,
+        chatTemplate: templatePath,
+      } satisfies LoadModel;
+    }
     await invoke("load_model", { payload });
+    await invalidateAll();
     loading = false;
     goto("/");
   }
@@ -45,11 +63,33 @@
 
 <main class="container mx-auto">
   <h1 class="mb-4 text-4xl font-black">Load model</h1>
-  {#if data.activeModel}
-    <p>Current model: <code>{data.activeModel}</code></p>
+
+  {#if data.modelsOnDisk.length > 0}
+    <form class="flex w-full flex-col" on:submit|preventDefault={onSubmit}>
+      <div class="form-control">
+        <label class="label" for="modelDropdown"
+          ><span class="label-text">Select an already downloaded model</span></label
+        >
+
+        <select bind:value={modelOnDisk} class="select select-primary" id="modelDropdown">
+          <option value="__none__" selected disabled>Select a model...</option>
+          {#each data.modelsOnDisk as model}
+            <option value={model.path}>{model.name}</option>
+          {/each}
+        </select>
+      </div>
+
+      <button
+        disabled={modelOnDisk === "__none__" || !modelOnDisk}
+        class="btn btn-primary mt-4 self-end">Load Model</button
+      >
+    </form>
+
+    <div class="divider">OR</div>
   {/if}
 
-  <form class="flex w-full flex-col gap-4" on:submit|preventDefault={onSubmit}>
+  <form class="flex w-full flex-col" on:submit|preventDefault={onSubmit}>
+    <p>Download a new model from HuggingFace</p>
     <div class="form-control">
       <label class="label" for="modelId"><span class="label-text">Model ID</span></label>
       <input
@@ -88,10 +128,10 @@
 
     <button
       type="submit"
-      class="btn btn-primary self-end"
+      class="btn btn-primary mt-4 self-end"
       disabled={loading || !modelId || !fileName || !chatTemplate}
     >
-      {loading ? "Loading..." : "Load Model"}
+      {loading ? "Downloading..." : "Download"}
     </button>
   </form>
 </main>

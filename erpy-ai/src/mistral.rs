@@ -1,8 +1,9 @@
 use std::{
-    cell::LazyCell,
     num::NonZero,
     sync::{Arc, LazyLock},
 };
+
+use crate::ModelInfo;
 
 use super::{
     CompletionApi, CompletionRequest, CompletionResponse, DeltaContent, MessageHistoryItem,
@@ -207,13 +208,6 @@ impl CompletionApi for MistralRsCompletions {
     }
 }
 
-#[derive(Debug)]
-pub struct ModelInfo {
-    pub user: String,
-    pub name: String,
-    pub path: Utf8PathBuf,
-}
-
 fn find_models_path_segment(path: &Utf8Path) -> Option<&str> {
     path.components()
         .filter_map(|c| {
@@ -300,11 +294,15 @@ pub fn list_models_on_disk() -> Result<Vec<ModelInfo>> {
     let home = Utf8PathBuf::from_path_buf(dirs::home_dir().expect("could not find home directory"))
         .unwrap();
 
-    let hf_models = find_huggingface_models(&home)?;
-    models.extend(hf_models);
+    let hf_models = find_huggingface_models(&home);
+    if let Ok(hf_models) = hf_models {
+        models.extend(hf_models);
+    }
 
-    let lm_studio_models = find_lm_studio_models(&home)?;
-    models.extend(lm_studio_models);
+    let lm_studio_models = find_lm_studio_models(&home);
+    if let Ok(lm_studio_models) = lm_studio_models {
+        models.extend(lm_studio_models);
+    }
 
     Ok(models)
 }

@@ -1,4 +1,5 @@
 {
   "svelte.enable-ts-plugin": true,
-  "rust-analyzer.cargo.features": ["mistral"]
+  "rust-analyzer.cargo.features": ["mistral"],
+  "rust-analyzer.checkOnSave": true
 }
