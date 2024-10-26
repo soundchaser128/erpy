@@ -50,20 +50,22 @@ async fn fetch_chats() -> Result<()> {
 #[axum::debug_handler]
 async fn fetch_chat_by_id() {}
 
+// TODO how to handle conflicts in the "remote_id" field?
+//  i guess it should be a UUID or something
 #[axum::debug_handler]
 async fn persist_chat(state: State<AppState>, chat: Json<Chat>) -> Result<()> {
     sqlx::query!(
-        "INSERT INTO chat (id, title, character_id, updated_at, payload)
-        VALUES ($1, $2, $3, NOW(), $4)
+        "INSERT INTO chat (title, character_id, updated_at, payload, remote_id)
+        VALUES ($1, $2, NOW(), $3, $4)
         ON CONFLICT (id) DO UPDATE SET
-            title = $2,
-            character_id = $3,
+            title = $1,
+            character_id = $2,
             updated_at = NOW(),
-            payload = $4",
-        chat.id,
+            payload = $3",
         chat.title,
         chat.character_id,
         serde_json::to_value(&chat.data).unwrap(),
+        chat.id,
     )
     .execute(&state.db)
     .await
