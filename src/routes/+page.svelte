@@ -1,6 +1,6 @@
 <script lang="ts">
   import Fa from "svelte-fa";
-  import { faPlus, faFileImport, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
+  import { faPlus, faFileImport, faWarning } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
   import { getAvatar, pluralize } from "$lib/helpers.js";
   import TopMenu from "$lib/components/TopMenu.svelte";
@@ -48,6 +48,10 @@
     textInput = "";
     loading = false;
   }
+
+  function isDisabled(chatCount: number): boolean {
+    return !data.activeModel && chatCount === 0;
+  }
 </script>
 
 <dialog bind:this={addModal} class="modal">
@@ -69,7 +73,7 @@
             class="textarea textarea-primary"
             rows={5}
             placeholder="https://chub.ai/characters/..."
-          />
+          ></textarea>
         </div>
         <button type="submit" class="btn btn-primary self-end">
           <Fa icon={faPlus} />
@@ -122,6 +126,18 @@
   </svelte:fragment>
 </TopMenu>
 
+{#if !data.activeModel}
+  <div role="alert" class="alert alert-warning mb-4">
+    <Fa icon={faWarning} />
+    <span>
+      No model loaded. You can only view chats. Load a model or connect to an API from <a
+        class="link"
+        href="/models">here</a
+      >.
+    </span>
+  </div>
+{/if}
+
 <input
   bind:value={searchInput}
   type="search"
@@ -132,13 +148,15 @@
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
     {#each filtered as character (character.id)}
       <a
-        href="/character/{character.id}/chat"
+        href={isDisabled(character.chats.length) ? undefined : `/character/${character.id}/chat`}
         class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >
         <figure class="aspect-square">
           <img
-            class="w-full rounded-t-lg object-contain"
+            class="w-full rounded-t-lg object-contain {isDisabled(character.chats.length)
+              ? 'blur-sm grayscale'
+              : ''}"
             src={getAvatar(character.data.avatar)}
             alt={character.data.name}
           />

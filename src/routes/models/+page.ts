@@ -1,7 +1,7 @@
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from "@tauri-apps/api/core";
 
 export const load = async (event) => {
-    const backends = await invoke<string[]>("get_backends");
+  const backends = await invoke<string[]>("get_backends");
 
-    return { backends }
-}
+  return { backends };
+};

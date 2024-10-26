@@ -476,7 +476,7 @@
                   bind:value={editText}
                   rows={12}
                   cols={160}
-                />
+                ></textarea>
                 <div class="join mt-2 flex self-end">
                   <button on:click={onCancelEdit} type="button" class="btn join-item btn-sm">
                     <Fa icon={faXmark} /> Cancel
@@ -487,7 +487,9 @@
                 </div>
               </form>
             {:else if getContent(entry).length > 0}
-              <div class="prose-invert prose-ol:list-inside prose-ol:list-decimal">
+              <div
+                class="prose-invert prose-ol:list-inside prose-ol:list-decimal prose-img:float-left prose-img:m-2 prose-img:max-h-96"
+              >
                 <SvelteMarkdown options={{ gfm: true, breaks: true }} source={getContent(entry)} />
               </div>
             {:else}
@@ -513,7 +515,7 @@
       autofocus
       rows={rowCount}
       on:keydown={handleKeyDown}
-    />
+    ></textarea>
     <button
       disabled={!data.activeModel}
       class="btn {status === 'loading' ? 'btn-error' : 'btn-success'}"

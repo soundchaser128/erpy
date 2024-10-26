@@ -17,7 +17,6 @@
 
     let payload;
     if (modelId && fileName && modelOnDisk !== "__none__") {
-      modelId = modelOnDisk;
       modelId = modelId.trim();
       fileName = fileName.trim();
       const templatePath = "chat_templates/" + chatTemplate.trim();
