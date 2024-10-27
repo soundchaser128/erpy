@@ -237,7 +237,12 @@ export async function getConfig(): Promise<Config> {
     await saveConfig(defaultConfig);
     return defaultConfig;
   } else {
-    return JSON.parse(rows[0].payload);
+    const config: Config = JSON.parse(rows[0].payload);
+    if (!config.sync) {
+      config.sync = {};
+    }
+
+    return config;
   }
 }
 
@@ -265,6 +270,7 @@ export function getDefaultConfig(): Config {
     },
     temperature: 0.8,
     firstTimeSetupCompleted: false,
+    sync: {},
   } satisfies Config;
 }
 

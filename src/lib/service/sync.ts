@@ -10,8 +10,12 @@ class SyncClient {
     this.#clientId = clientId;
   }
 
+  #prepareUrl(path: string): string {
+    return `${this.#baseUrl}/${path}?clientId=${encodeURIComponent(this.#clientId)}`;
+  }
+
   async storeChat(chat: Chat) {
-    const response = await fetch(`${this.#baseUrl}/api/chat`, {
+    const response = await fetch(this.#prepareUrl("/api/chat"), {
       method: "POST",
       body: JSON.stringify(chat),
       headers: { "Content-Type": "application/json" },
@@ -24,7 +28,7 @@ class SyncClient {
   }
 
   async storeCharacter(character: Character) {
-    const response = await fetch(`${this.#baseUrl}/api/character`, {
+    const response = await fetch(this.#prepareUrl("/api/character"), {
       method: "POST",
       body: JSON.stringify(character),
       headers: { "Content-Type": "application/json" },

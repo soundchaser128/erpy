@@ -74,6 +74,33 @@
       </div>
     </div>
 
+    <h2 class="text-2xl font-bold">Sync settings</h2>
+    <div class="form-control">
+      <label for="syncServerUrl" class="label">
+        <span class="label-text"> Server URL </span>
+      </label>
+
+      <input
+        id="syncServerUrl"
+        type="url"
+        bind:value={data.config.sync.serverUrl}
+        class="input input-primary"
+      />
+    </div>
+
+    <div class="form-control">
+      <label for="syncClientId" class="label">
+        <span class="label-text"> Server URL </span>
+      </label>
+
+      <input
+        id="syncClientId"
+        type="url"
+        bind:value={data.config.sync.clientId}
+        class="input input-primary"
+      />
+    </div>
+
     <button type="submit" class="btn btn-primary mt-4 self-end">
       <Fa icon={faSave} />
       Save</button

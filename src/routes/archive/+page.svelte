@@ -58,6 +58,10 @@
             >
           </td>
         </tr>
+      {:else}
+        <tr>
+          <td class="text-center font-light" colspan="6">No chats archived yet.</td>
+        </tr>
       {/each}
     </tbody>
   </table>

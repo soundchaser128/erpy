@@ -40,6 +40,11 @@ export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {
     .filter((i) => i.content.length > 0);
 }
 
+export interface SyncSettings {
+  serverUrl?: string;
+  clientId?: string;
+}
+
 export interface Config {
   apiUrl: string;
   apiKey?: string;
@@ -55,6 +60,8 @@ export interface Config {
   repeatPenalty?: number;
   topP?: number;
   seed?: number;
+
+  sync: SyncSettings;
 }
 
 export interface NotificationsConfig {
