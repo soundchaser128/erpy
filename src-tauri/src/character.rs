@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use anyhow::{anyhow, bail, Result};
-use erpy_types::Character;
+use erpy_types::{Character, CharacterInformation};
 use log::info;
 use serde::Deserialize;
 use serde_json::Value;
@@ -71,7 +71,7 @@ pub struct CharacterCardData {
     pub tags: Vec<String>,
 }
 
-pub async fn character_from_chub_ai(url: &str) -> Result<Character> {
+pub async fn character_from_chub_ai(url: &str) -> Result<CharacterInformation> {
     let parsed_url = reqwest::Url::parse(url)?;
     let api_url = format!("https://api.chub.ai/api{}?full=true", parsed_url.path());
     let response: ChubAiCharacter = reqwest::get(&api_url).await?.json().await?;
@@ -80,7 +80,7 @@ pub async fn character_from_chub_ai(url: &str) -> Result<Character> {
     let mut first_messages = vec![response.node.definition.first_message];
     first_messages.extend(response.node.definition.alternate_greetings);
 
-    Ok(Character {
+    Ok(CharacterInformation {
         name: response.node.definition.name,
         description: response.node.definition.description,
         personality: response.node.definition.personality,
@@ -95,7 +95,7 @@ pub async fn character_from_chub_ai(url: &str) -> Result<Character> {
     })
 }
 
-pub fn character_from_png_bytes(bytes: &[u8]) -> Result<Character> {
+pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
     use base64::prelude::*;
     use zune_png::PngDecoder;
 
@@ -121,7 +121,7 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<Character> {
     let mut first_messages = vec![json.data.first_message];
     first_messages.extend(json.data.alternate_greetings);
 
-    Ok(Character {
+    Ok(CharacterInformation {
         name: json.data.name,
         description: json.data.description,
         personality: json.data.personality,
@@ -136,13 +136,13 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<Character> {
     })
 }
 
-pub async fn character_fron_png_url(url: &str) -> Result<Character> {
+pub async fn character_fron_png_url(url: &str) -> Result<CharacterInformation> {
     let bytes = reqwest::get(url).await?.bytes().await?;
 
     character_from_png_bytes(&*bytes)
 }
 
-pub async fn character_from_string(string: &str) -> Result<Character> {
+pub async fn character_from_string(string: &str) -> Result<CharacterInformation> {
     if string.starts_with("https://") {
         let url = reqwest::Url::parse(string)?;
         if url.host_str() == Some("chub.ai") {

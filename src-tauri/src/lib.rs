@@ -5,7 +5,7 @@ use character::character_from_string;
 use config::Config;
 use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, MessageHistoryItem};
 use erpy_ai::{CompletionApi, ModelInfo};
-use erpy_types::Character;
+use erpy_types::CharacterInformation;
 use erpy_types::Chat;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
@@ -100,13 +100,13 @@ async fn chat_completion(
 }
 
 #[tauri::command]
-async fn fetch_character(character_url: String) -> TAResult<Character> {
+async fn fetch_character(character_url: String) -> TAResult<CharacterInformation> {
     let character = character_from_string(&character_url).await?;
     Ok(character)
 }
 
 #[tauri::command]
-async fn upload_character_pngs(pngs: Vec<String>) -> TAResult<Vec<Character>> {
+async fn upload_character_pngs(pngs: Vec<String>) -> TAResult<Vec<CharacterInformation>> {
     use base64::prelude::*;
 
     let mut characters = Vec::new();
@@ -266,9 +266,16 @@ pub fn run() {
             sql: "ALTER TABLE chats ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "add_uuid_to_chats",
+            sql: "ALTER TABLE chats ADD COLUMN uuid VARCHAR",
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .setup(|app| {
             app.manage(State {
                 completions: Mutex::new(None),

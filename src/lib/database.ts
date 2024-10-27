@@ -33,6 +33,7 @@ export interface Chat {
   characterId: number;
   data: ChatHistoryItem[];
   archived: boolean;
+  uuid?: string;
 }
 
 export interface ChatHistoryItem {
