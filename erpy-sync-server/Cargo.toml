@@ -14,3 +14,4 @@ sqlx = { version = "0.8", features = [ "runtime-tokio", "tls-rustls-ring", "post
 tokio = { version = "1.40.0", features = ["full"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+uuid = { version = "1.11.0", features = ["serde"] }

@@ -1,6 +1,6 @@
 use axum::{
     body::Body,
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -11,6 +11,7 @@ use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
 use tracing::info;
+use uuid::Uuid;
 
 pub struct Error(anyhow::Error);
 
@@ -48,9 +49,20 @@ pub struct ClientIdQuery {
     pub client_id: String,
 }
 
+async fn find_character_id(db: &PgPool, remote_id: i32, client_id: &str) -> Result<Uuid> {
+    sqlx::query_scalar!(
+        "SELECT uuid FROM character WHERE remote_id = $1 AND client_id = $2",
+        remote_id,
+        client_id
+    )
+    .fetch_one(db)
+    .await
+    .map_err(|e| Error(e.into()))
+}
+
 #[axum::debug_handler]
 async fn fetch_chats(state: State<AppState>) -> Result<Json<Vec<Chat>>> {
-    let rows = sqlx::query!("SELECT * FROM chat")
+    let rows = sqlx::query!("SELECT c.*, ch.remote_id AS character_remote_id FROM chat c INNER JOIN character ch ON c.character_id = ch.uuid")
         .fetch_all(&state.db)
         .await
         .map_err(|e| Error(e.into()))?;
@@ -60,7 +72,7 @@ async fn fetch_chats(state: State<AppState>) -> Result<Json<Vec<Chat>>> {
         chats.push(Chat {
             uuid: Some(row.uuid),
             archived: row.archived,
-            character_id: row.character_id,
+            character_id: row.character_remote_id,
             id: row.remote_id,
             title: row.title,
             data: serde_json::from_value(row.payload).unwrap(),
@@ -74,12 +86,15 @@ async fn fetch_chats(state: State<AppState>) -> Result<Json<Vec<Chat>>> {
 async fn fetch_chat_by_id() {}
 
 #[axum::debug_handler]
-async fn persist_chat(state: State<AppState>, chat: Json<Chat>) -> Result<()> {
-    let character_uuid = Default::default();
-
+async fn persist_chat(
+    state: State<AppState>,
+    query: Query<ClientIdQuery>,
+    chat: Json<Chat>,
+) -> Result<()> {
+    let character_uuid = find_character_id(&state.db, chat.id, &query.client_id).await?;
     sqlx::query!(
-        "INSERT INTO chat (uuid, remote_id, title, character_id, updated_at, payload)
-        VALUES ($1, $2, $3, $4, NOW(), $5)
+        "INSERT INTO chat (uuid, remote_id, title, character_id, updated_at, payload, client_id)
+        VALUES ($1, $2, $3, $4, NOW(), $5, $6)
         ON CONFLICT (uuid) DO UPDATE SET
             title = $3,
             character_id = $4,
@@ -90,6 +105,7 @@ async fn persist_chat(state: State<AppState>, chat: Json<Chat>) -> Result<()> {
         chat.title,
         character_uuid,
         serde_json::to_value(&chat.data).unwrap(),
+        query.client_id,
     )
     .execute(&state.db)
     .await
@@ -109,9 +125,10 @@ async fn fetch_characters(state: State<AppState>) -> Result<Json<Vec<Character>>
 
     for row in rows {
         characters.push(Character {
-            id: row.id,
+            id: row.remote_id,
             url: row.url,
             payload: serde_json::from_value(row.payload).unwrap(),
+            uuid: Some(row.uuid),
         });
     }
 
@@ -119,16 +136,22 @@ async fn fetch_characters(state: State<AppState>) -> Result<Json<Vec<Character>>
 }
 
 #[axum::debug_handler]
-async fn persist_character(state: State<AppState>, character: Json<Character>) -> Result<()> {
+async fn persist_character(
+    state: State<AppState>,
+    query: Query<ClientIdQuery>,
+    character: Json<Character>,
+) -> Result<()> {
     sqlx::query!(
-        "INSERT INTO character (id, url, payload)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (id) DO UPDATE SET
-            url = $2,
-            payload = $3",
+        "INSERT INTO character (uuid, remote_id, url, payload, client_id)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (uuid) DO UPDATE SET
+            url = $3,
+            payload = $4",
+        character.uuid,
         character.id,
         character.url,
         serde_json::to_value(&character.payload).unwrap(),
+        query.client_id,
     )
     .execute(&state.db)
     .await
