@@ -80,9 +80,10 @@ interface Row {
 export async function getAllCharacters() {
   const database = await getDatabase();
   const rows = await database.select<Row[]>(
-    `SELECT c.id, c.url, c.payload, h.id AS chat_id, h.payload AS chat_payload 
+    `SELECT c.id, c.url, c.payload, h.id AS chat_id, h.payload AS chat_payload
     FROM characters c 
-    LEFT JOIN chats h ON c.id = h.character_id`,
+    LEFT JOIN chats h ON c.id = h.character_id
+    WHERE h.archived = FALSE OR h.archived IS NULL`,
   );
 
   const groups = Object.groupBy(rows, ({ id }) => id);
@@ -237,6 +238,18 @@ export async function getConfig(): Promise<Config> {
   } else {
     return JSON.parse(rows[0].payload);
   }
+}
+
+export async function getArchivedChats(): Promise<Chat[]> {
+  const database = await getDatabase();
+  const rows = await database.select<DbChat[]>("SELECT * FROM chats WHERE archived != 0");
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    characterId: row.character_id,
+    data: JSON.parse(row.payload),
+    archived: row.archived,
+  }));
 }
 
 export function getDefaultConfig(): Config {

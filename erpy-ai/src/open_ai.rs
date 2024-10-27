@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::{bail, Result};
 use log::{debug, info};
 use reqwest::Client;
@@ -63,6 +65,8 @@ impl CompletionApi for OpenAiCompletions {
         let response = self
             .client
             .get(&url)
+            // this really shouldn't take more than a second
+            .timeout(Duration::from_secs(1))
             .send()
             .await?
             .json::<ModelsResponse>()

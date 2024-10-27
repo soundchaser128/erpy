@@ -153,12 +153,11 @@ pub enum BackendType {
 
 #[tauri::command]
 async fn get_backends() -> Vec<BackendType> {
-    let mut backends = vec![BackendType::OpenAi];
-
     #[cfg(feature = "mistral")]
-    backends.push(BackendType::Mistral);
+    return vec![BackendType::OpenAi, BackendType::Mistral];
 
-    backends
+    #[cfg(not(feature = "mistral"))]
+    return vec![BackendType::OpenAi];
 }
 
 #[derive(Deserialize, Serialize)]

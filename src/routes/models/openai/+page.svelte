@@ -8,8 +8,8 @@
 
   export let data;
 
-  let apiUrl = "";
-  let apiKey = "";
+  let apiUrl = localStorage.getItem("openai-api-url") || "";
+  let apiKey = localStorage.getItem("openai-api-key") || "";
   let connectionTestStatus: "success" | string | undefined = undefined;
   let testingConnection = false;
 
@@ -37,6 +37,8 @@
 
     await invoke("load_model", { payload });
     await invalidateAll();
+    localStorage.setItem("openai-api-url", apiUrl);
+    localStorage.setItem("openai-api-key", apiKey);
     goto("/");
   }
 </script>

@@ -122,10 +122,10 @@ pub struct CompletionMessage {
 }
 
 pub trait CompletionApi {
-    async fn get_completions_stream(
+    fn get_completions_stream(
         &self,
         request: &CompletionRequest,
-    ) -> Result<impl Stream<Item = StreamingCompletionResponse>>;
+    ) -> impl Future<Output = Result<impl Stream<Item = StreamingCompletionResponse>>> + Send;
 
     fn list_models(&self) -> impl Future<Output = Result<Vec<String>>> + Send;
 

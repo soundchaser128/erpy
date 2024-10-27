@@ -1,6 +1,6 @@
 <script lang="ts">
   import Fa from "svelte-fa";
-  import { faPlus, faFileImport, faWarning } from "@fortawesome/free-solid-svg-icons";
+  import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
   import { getAvatar, pluralize } from "$lib/helpers.js";
   import TopMenu from "$lib/components/TopMenu.svelte";
@@ -119,10 +119,10 @@
     <button on:click={showModal} class="btn btn-success btn-sm">
       <Fa icon={faFileImport} /> Import characters
     </button>
-    <!-- <a href="/archive" class="btn btn-secondary btn-sm">
+    <a href="/archive" class="btn btn-secondary btn-sm">
       <Fa icon={faBoxArchive} />
       Archive
-    </a> -->
+    </a>
   </svelte:fragment>
 </TopMenu>
 

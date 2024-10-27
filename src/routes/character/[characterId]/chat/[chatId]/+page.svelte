@@ -30,6 +30,7 @@
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { goto, invalidateAll } from "$app/navigation";
   import invariant from "tiny-invariant";
+  import { page } from "$app/stores";
 
   export let data;
 
@@ -43,6 +44,7 @@
   let deleteModal: HTMLDialogElement;
   let titleModal: HTMLDialogElement;
   let messageToEdit: ChatHistoryItem | null = null;
+  let hideTabs = $page.url.searchParams.get("tabs") === "false";
 
   $: rowCount = Math.max(1, question.split("\n").length);
   $: chatHistory = data.history.data;
@@ -387,7 +389,7 @@
     </svelte:fragment>
   </TopMenu>
 
-  {#if data.allChats.length > 1}
+  {#if data.allChats.length > 1 && !hideTabs}
     <div role="tablist" class="tabs tabs-bordered">
       {#each data.allChats as chat}
         <a

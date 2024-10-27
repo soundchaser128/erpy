@@ -6,17 +6,18 @@
 
   export let data;
 
+  let downloading = false;
   let loading = false;
+
   let modelId = "";
   let fileName = "";
   let chatTemplate = "";
   let modelOnDisk = "";
 
   async function onSubmit() {
-    loading = true;
-
     let payload;
     if (modelId && fileName && modelOnDisk !== "__none__") {
+      downloading = true;
       modelId = modelId.trim();
       fileName = fileName.trim();
       const templatePath = "chat_templates/" + chatTemplate.trim();
@@ -27,6 +28,7 @@
         chatTemplate: templatePath,
       } satisfies LoadModel;
     } else {
+      loading = true;
       const path = modelOnDisk;
       const parent = path.split("/").slice(0, -1).join("/") + "/";
       const fileName = path.split("/").slice(-1)[0];
@@ -40,9 +42,12 @@
         chatTemplate: templatePath,
       } satisfies LoadModel;
     }
+
     await invoke("load_model", { payload });
     await invalidateAll();
+    downloading = false;
     loading = false;
+
     goto("/");
   }
 </script>
@@ -79,7 +84,7 @@
       </div>
 
       <button
-        disabled={modelOnDisk === "__none__" || !modelOnDisk}
+        disabled={modelOnDisk === "__none__" || !modelOnDisk || loading}
         class="btn btn-primary mt-4 self-end">Load Model</button
       >
     </form>
@@ -128,9 +133,9 @@
     <button
       type="submit"
       class="btn btn-primary mt-4 self-end"
-      disabled={loading || !modelId || !fileName || !chatTemplate}
+      disabled={downloading || !modelId || !fileName || !chatTemplate}
     >
-      {loading ? "Downloading..." : "Download"}
+      {downloading ? "Downloading..." : "Download"}
     </button>
   </form>
 </main>
