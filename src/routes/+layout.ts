@@ -10,8 +10,12 @@ export const load = async () => {
   const activeModel: string | null = await invoke("active_model", { config });
   const sync =
     config.sync.clientId && config.sync.serverUrl
-      ? new SyncClient(config.sync.serverUrl, config.sync.clientId)
+      ? new SyncClient(config.sync.serverUrl, config.sync.clientId, 30 * 1000)
       : undefined;
+
+  if (sync) {
+    sync.sync();
+  }
 
   return {
     activeModel: activeModel || undefined,

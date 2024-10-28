@@ -1,17 +1,41 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import type { Character, Chat } from "$lib/database";
+import { persistCharacters, saveChatHistory, type Character, type Chat } from "$lib/database";
 
 class SyncClient {
   #baseUrl: string;
   #clientId: string;
+  #syncInterval: number | null = null;
 
-  constructor(baseUrl: string, clientId: string) {
+  constructor(baseUrl: string, clientId: string, syncInterval: number | null = null) {
     this.#baseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     this.#clientId = clientId;
+    this.#syncInterval = syncInterval;
+
+    if (this.#syncInterval) {
+      this.startSync();
+    }
+  }
+
+  startSync() {
+    if (this.#syncInterval) {
+      this.#syncInterval = setInterval(() => {
+        this.sync();
+      }, this.#syncInterval);
+    }
   }
 
   #prepareUrl(path: string): string {
     return `${this.#baseUrl}${path}?client_id=${encodeURIComponent(this.#clientId)}`;
+  }
+
+  async sync() {
+    const characters = await this.fetchCharacters();
+    await persistCharacters(characters.map((c) => c.payload));
+
+    // const chats = await this.fetchChats();
+    // for (const chat of chats) {
+    //   await saveChatHistory(chat.id, chat.data);
+    // }
   }
 
   async storeChat(chat: Chat) {
