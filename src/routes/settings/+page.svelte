@@ -90,12 +90,12 @@
 
     <div class="form-control">
       <label for="syncClientId" class="label">
-        <span class="label-text"> Server URL </span>
+        <span class="label-text">Client ID</span>
       </label>
 
       <input
         id="syncClientId"
-        type="url"
+        type="text"
         bind:value={data.config.sync.clientId}
         class="input input-primary"
       />

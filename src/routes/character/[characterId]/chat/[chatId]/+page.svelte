@@ -498,7 +498,7 @@
                 </div>
               </form>
             {:else if getContent(entry).length > 0}
-              <div class="markdown">
+              <div class="chat-bubble-markdown">
                 <Markdown {plugins} md={getContent(entry)} />
               </div>
             {:else}
@@ -539,13 +539,7 @@
 </div>
 
 <style lang="postcss">
-  .markdown {
-    @apply whitespace-pre-wrap;
-  }
-  .markdown p {
-  }
-
-  .markdown em {
-    @apply text-green-500;
+  .chat-bubble-markdown {
+    @apply prose max-w-none text-neutral-content prose-ol:list-disc;
   }
 </style>
