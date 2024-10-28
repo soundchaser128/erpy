@@ -136,11 +136,15 @@ async fn active_model(app: AppHandle) -> Option<String> {
 }
 
 #[tauri::command]
-async fn summarize(app: AppHandle, chat: Chat, config: Config, prompt: String) -> TAResult<String> {
+async fn summarize(app: AppHandle, chat: Chat, prompt: String) -> TAResult<String> {
     let state = app.state::<State>();
-    let api = &state.completions.lock().await.expect("no model loaded");
-    let summary = chat::summarize(&chat, &api, &prompt).await?;
-    Ok(summary)
+    let lock = state.completions.lock().await;
+    if let Some(api) = lock.as_ref() {
+        let summary = chat::summarize(&chat, &api, &prompt).await?;
+        Ok(summary)
+    } else {
+        bail!("no model loaded")
+    }
 }
 
 #[derive(Serialize, Debug, Clone, Copy)]
