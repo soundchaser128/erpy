@@ -1,6 +1,12 @@
 import { fetch } from "@tauri-apps/plugin-http";
 import { persistCharacters, saveChatHistory, type Character, type Chat } from "$lib/database";
 
+export async function healthCheck(baseUrl: string): Promise<boolean> {
+  return fetch(`${baseUrl}/api/health`)
+    .then((res) => (res.ok ? res.json() : Promise.resolve({ status: "error" })))
+    .then((res) => res.status === "ok");
+}
+
 class SyncClient {
   #baseUrl: string;
   #clientId: string;

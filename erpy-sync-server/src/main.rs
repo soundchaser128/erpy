@@ -180,6 +180,11 @@ async fn persist_character(
     Ok(())
 }
 
+#[axum::debug_handler]
+async fn application_health() -> Result<Json<serde_json::Value>> {
+    Ok(Json(json!({ "status": "ok" })))
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
@@ -199,6 +204,7 @@ async fn main() -> anyhow::Result<()> {
     sqlx::migrate!("./migrations").run(&db).await?;
 
     let router = Router::new()
+        .route("/api/health", get(application_health))
         .route("/api/chat", get(fetch_chats))
         .route("/api/chat/:id", get(fetch_chat_by_id))
         .route("/api/chat", post(persist_chat))

@@ -215,6 +215,15 @@ async fn load_model(app: AppHandle, payload: LoadModel) -> TAResult<()> {
     Ok(())
 }
 
+#[tauri::command]
+async fn unload_model(app: AppHandle) -> TAResult<()> {
+    let mutex = app.state::<State>();
+    let mut lock = mutex.completions.lock().await;
+    lock.take();
+
+    Ok(())
+}
+
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 enum ConnectionTestResult {
@@ -281,6 +290,7 @@ pub fn run() {
             summarize,
             upload_character_pngs,
             load_model,
+            unload_model,
             test_connection,
             list_models_on_disk,
             get_backends

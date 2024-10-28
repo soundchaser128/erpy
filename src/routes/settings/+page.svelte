@@ -23,7 +23,7 @@
   <svelte:fragment slot="right"></svelte:fragment>
 </TopMenu>
 
-<main class="container mx-auto">
+<main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">Settings</h1>
   <form class="flex flex-col" on:submit|preventDefault={onSubmit}>
     <div class="form-control">
@@ -62,7 +62,7 @@
         class="input input-primary"
         min="0"
         max="2"
-        step="0.01"
+        step="0.1"
         bind:value={data.config.temperature}
       />
 
@@ -85,6 +85,7 @@
         type="url"
         bind:value={data.config.sync.serverUrl}
         class="input input-primary"
+        placeholder="http://localhost:4041"
       />
     </div>
 
@@ -98,6 +99,7 @@
         type="text"
         bind:value={data.config.sync.clientId}
         class="input input-primary"
+        placeholder="A unique identifier for this machine."
       />
     </div>
 

@@ -49,7 +49,6 @@ impl MistralRsCompletions {
         // } else {
         //     None
         // };
-        let paged_attn_cfg = None;
 
         let device = &best_device(false)?;
         println!("Using device: {:?}", device);
@@ -63,7 +62,7 @@ impl MistralRsCompletions {
             false,
             DeviceMapMetadata::dummy(),
             None,
-            paged_attn_cfg,
+            None,
         )?;
 
         let scheduler_method = SchedulerConfig::DefaultScheduler {

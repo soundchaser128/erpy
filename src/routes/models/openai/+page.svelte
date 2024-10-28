@@ -56,7 +56,7 @@
   <svelte:fragment slot="right"></svelte:fragment>
 </TopMenu>
 
-<main class="container mx-auto">
+<main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">OpenAI connection</h1>
   {#if connectionTestStatus !== undefined}
     {#if connectionTestStatus === "success"}
@@ -86,7 +86,20 @@
       <label for="api-key-field" class="label cursor-pointer">
         <span class="label-text">API key (optional)</span>
       </label>
-      <input id="api-key=field" type="text" class="input input-primary" bind:value={apiKey} />
+      <input
+        id="api-key=field"
+        type="text"
+        class="input input-primary"
+        bind:value={apiKey}
+        placeholder="Enter your API key"
+      />
+      <div class="label">
+        <span class="label-text-alt">
+          If you're running your model locally (e.g. with LM Studio or KoboldCpp), you won't need
+          this. If you're connecting to some external API (e.g. the official OpenAI API) you'll need
+          to add your API key here.
+        </span>
+      </div>
     </div>
 
     <div class="mt-4 flex gap-2 self-end">
