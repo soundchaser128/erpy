@@ -3,19 +3,22 @@ import type { CharacterPayload, Config, MessageRole } from "./types";
 import { platform } from "@tauri-apps/plugin-os";
 import { appDataDir, join } from "@tauri-apps/api/path";
 import { copyFile } from "@tauri-apps/plugin-fs";
+import type SyncClient from "./service/sync";
 
 const DATABASE_URL = "sqlite:erpy.sqlite3";
 
 export interface DbCharacter {
   id: number;
+  uuid: string;
   url: string;
   payload: string;
 }
 
 export interface Character {
   id: number;
+  uuid: string;
   url?: string;
-  data: CharacterPayload;
+  payload: CharacterPayload;
   chatCount: number;
 }
 
@@ -67,8 +70,9 @@ export async function getCharacter(id: number): Promise<Character> {
   const row = rows[0];
   return {
     id: row.id,
+    uuid: row.uuid,
     url: row.url,
-    data: JSON.parse(row.payload),
+    payload: JSON.parse(row.payload),
     chatCount: 0,
   };
 }
@@ -119,15 +123,26 @@ export interface CharacterPayloadWithUrl {
   payload: CharacterPayload;
 }
 
-export async function addCharacters(characters: CharacterPayloadWithUrl[]) {
+export async function addCharacters(characters: CharacterPayloadWithUrl[]): Promise<Character[]> {
   const database = await getDatabase();
 
+  const creactedCharacters: Character[] = [];
   for (const { url, payload } of characters) {
-    await database.execute("INSERT INTO characters (url, payload) VALUES ($1, $2)", [
-      url,
-      JSON.stringify(payload),
-    ]);
+    const uuid = crypto.randomUUID();
+    const row: { id: number }[] = await database.select(
+      "INSERT INTO characters (url, payload, uuid) VALUES ($1, $2, $3) RETURNING id",
+      [url, JSON.stringify(payload), uuid],
+    );
+
+    creactedCharacters.push({
+      id: row[0].id,
+      uuid: uuid,
+      payload: payload,
+      chatCount: 0,
+    });
   }
+
+  return creactedCharacters;
 }
 
 export async function persistCharacters(characters: CharacterPayload[]) {
@@ -136,9 +151,10 @@ export async function persistCharacters(characters: CharacterPayload[]) {
 
   const data: Character[] = [];
   for (const character of characters) {
+    const uuid = crypto.randomUUID();
     const row: { id: number }[] = await database.select(
-      "INSERT INTO characters (payload) VALUES ($1) RETURNING id",
-      [JSON.stringify(character)],
+      "INSERT INTO characters (payload, uuid) VALUES ($1, $2) RETURNING id",
+      [JSON.stringify(character), uuid],
     );
     const id = row[0].id;
     const path = await join(directory, "avatars", `${character.name} - ${id}.png`);
@@ -152,8 +168,9 @@ export async function persistCharacters(characters: CharacterPayload[]) {
 
     data.push({
       id,
-      data: character,
+      payload: character,
       chatCount: 0,
+      uuid,
     });
   }
 

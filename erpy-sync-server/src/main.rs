@@ -10,7 +10,9 @@ use erpy_types::{Character, Chat};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::PgPool;
-use tracing::info;
+use tower_http::trace::TraceLayer;
+use tracing::{error, info};
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 use uuid::Uuid;
 
 pub struct Error(anyhow::Error);
@@ -25,6 +27,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
+        error!("error: {}", self.0);
+
         let body = json!({
             "error": self.0.to_string(),
         })
@@ -47,6 +51,18 @@ pub struct AppState {
 #[derive(Deserialize)]
 pub struct ClientIdQuery {
     pub client_id: String,
+}
+
+async fn create_client_if_not_exists(db: &PgPool, client_id: &str) -> Result<()> {
+    sqlx::query!(
+        "INSERT INTO client (client_id) VALUES ($1) ON CONFLICT DO NOTHING",
+        client_id
+    )
+    .execute(db)
+    .await
+    .map_err(|e| Error(e.into()))?;
+
+    Ok(())
 }
 
 async fn find_character_id(db: &PgPool, remote_id: i32, client_id: &str) -> Result<Uuid> {
@@ -92,6 +108,7 @@ async fn persist_chat(
     query: Query<ClientIdQuery>,
     chat: Json<Chat>,
 ) -> Result<()> {
+    create_client_if_not_exists(&state.db, &query.client_id).await?;
     let character_uuid = find_character_id(&state.db, chat.id, &query.client_id).await?;
     sqlx::query!(
         "INSERT INTO chat (uuid, remote_id, title, character_id, updated_at, payload, client_id)
@@ -142,6 +159,8 @@ async fn persist_character(
     query: Query<ClientIdQuery>,
     character: Json<Character>,
 ) -> Result<()> {
+    create_client_if_not_exists(&state.db, &query.client_id).await?;
+
     sqlx::query!(
         "INSERT INTO character (uuid, remote_id, url, payload, client_id)
         VALUES ($1, $2, $3, $4, $5)
@@ -165,7 +184,13 @@ async fn persist_character(
 async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
 
-    tracing_subscriber::fmt().init();
+    tracing_subscriber::registry()
+        .with(
+            EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info,tower_http=debug,axum::rejection=trace".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
     info!("starting up erpy-sync-server");
 
     let db_url = std::env::var("DATABASE_URL")?;
@@ -179,7 +204,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/chat", post(persist_chat))
         .route("/api/character", get(fetch_characters))
         .route("/api/character", post(persist_character))
-        .with_state(AppState { db });
+        .with_state(AppState { db })
+        .layer(TraceLayer::new_for_http());
 
     let bind_addr = std::env::var("ERPY_ADDR").unwrap_or("127.0.0.1".into());
     let port = std::env::var("PORT")

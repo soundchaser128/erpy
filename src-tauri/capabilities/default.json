@@ -16,6 +16,13 @@
     "fs:write-files",
     "fs:allow-appdata-meta-recursive",
     "dialog:default",
-    "http:default"
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "http://localhost:4041"
+        }
+      ]
+    }
   ]
 }

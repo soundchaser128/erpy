@@ -1,6 +1,7 @@
 CREATE TABLE
     characters (
         id INTEGER PRIMARY KEY,
+        uuid VARCHAR NOT NULL,
         url VARCHAR,
         payload VARCHAR NOT NULL
     );

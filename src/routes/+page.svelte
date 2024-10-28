@@ -25,12 +25,21 @@
   }
 
   async function addCharactersFromUrls() {
+    const urls = textInput.split("\n").map((url) => url.trim());
+    if (urls.length === 0) {
+      return;
+    }
     loading = true;
     addModal.close();
-    const urls = textInput.split("\n").map((url) => url.trim());
 
-    await createCharacterFromUrls(urls);
+    const newCharacters = await createCharacterFromUrls(urls);
     await invalidateAll();
+
+    if (data.sync) {
+      for (const character of newCharacters) {
+        await data.sync.storeCharacter(character);
+      }
+    }
 
     files = undefined;
     loading = false;
@@ -42,9 +51,15 @@
     loading = true;
     addModal.close();
 
-    await createCharactersFromPngs(files);
-
+    const newCharacters = await createCharactersFromPngs(files);
     await invalidateAll();
+
+    if (data.sync) {
+      for (const character of newCharacters) {
+        await data.sync.storeCharacter(character);
+      }
+    }
+
     textInput = "";
     loading = false;
   }

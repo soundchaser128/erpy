@@ -41,7 +41,7 @@
   let editText = "";
   let summarizing = false;
   let newTitle = "";
-  let plugins = [gfmPlugin(), remarkHighlightQuotes() ];
+  let plugins = [gfmPlugin(), remarkHighlightQuotes()];
 
   let messageContainer: HTMLElement;
   let deleteModal: HTMLDialogElement;
@@ -140,6 +140,11 @@
         if (data.config.notifications.newMessage) {
           const messageContent = answer.content[answer.chosenAnswer].content;
           await createNotification("erpy", messageContent, false);
+        }
+
+        if (data.sync) {
+          // TODO
+          // await data.sync.storeChat(chatHistory);
         }
       });
     } else if (status === "loading") {
@@ -357,7 +362,7 @@
     <svelte:fragment slot="breadcrumbs">
       <ul>
         <li><a href="/">Home</a></li>
-        <li>Chat with {data.character.data.name}</li>
+        <li>Chat with {data.character.payload.name}</li>
       </ul>
     </svelte:fragment>
     <svelte:fragment slot="right">
@@ -420,15 +425,15 @@
             <div class="avatar chat-image">
               <div class="w-20 rounded-full shadow-xl">
                 <img
-                  alt="Avatar image for {data.character.data.name}"
-                  src={getAvatar(data.character.data.avatar)}
+                  alt="Avatar image for {data.character.payload.name}"
+                  src={getAvatar(data.character.payload.avatar)}
                 />
               </div>
             </div>
           {/if}
           <div class="chat-header flex flex-row items-baseline gap-4 py-2">
             <span>
-              {entry.role === "assistant" ? data.character.data.name : data.config.userName}
+              {entry.role === "assistant" ? data.character.payload.name : data.config.userName}
             </span>
 
             <span class="join flex items-center">

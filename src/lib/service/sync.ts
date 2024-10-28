@@ -6,12 +6,12 @@ class SyncClient {
   #clientId: string;
 
   constructor(baseUrl: string, clientId: string) {
-    this.#baseUrl = baseUrl;
+    this.#baseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     this.#clientId = clientId;
   }
 
   #prepareUrl(path: string): string {
-    return `${this.#baseUrl}/${path}?clientId=${encodeURIComponent(this.#clientId)}`;
+    return `${this.#baseUrl}${path}?client_id=${encodeURIComponent(this.#clientId)}`;
   }
 
   async storeChat(chat: Chat) {

@@ -33,9 +33,9 @@ export function getInitialChatHistory(
   modelId: string,
 ): ChatHistoryItem[] {
   const systemPrompts = [
-    character.data.system_prompt,
-    character.data.personality,
-    character.data.description,
+    character.payload.system_prompt,
+    character.payload.personality,
+    character.payload.description,
   ].filter((s) => s.trim().length > 0);
   let systemMessage = "";
   for (const msg of systemPrompts) {
@@ -58,7 +58,7 @@ export function getInitialChatHistory(
 
   messages.push({
     role: "assistant",
-    content: character.data.first_messages.map((content) => ({
+    content: character.payload.first_messages.map((content) => ({
       content,
       timestamp: Date.now(),
       modelId,
@@ -69,7 +69,7 @@ export function getInitialChatHistory(
   return messages.map((message) => ({
     ...message,
     content: message.content.map((content) => ({
-      content: substituteParams(content.content, userName, character.data.name, content.content),
+      content: substituteParams(content.content, userName, character.payload.name, content.content),
       timestamp: content.timestamp,
       modelId,
     })),
