@@ -1,4 +1,4 @@
-use std::{fmt, future::Future, pin::Pin};
+use std::{future::Future, pin::Pin};
 
 use anyhow::Result;
 

@@ -235,47 +235,12 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let migrations = vec![
-        Migration {
-            version: 1,
-            description: "create_initial_tables",
-            sql: "CREATE TABLE characters (
-                    id INTEGER PRIMARY KEY, 
-                    url VARCHAR, 
-                    payload VARCHAR NOT NULL
-                )",
-            kind: MigrationKind::Up,
-        },
-        Migration {
-            version: 2,
-            description: "add_chat_history",
-            sql: "CREATE TABLE chats (
-                    id INTEGER PRIMARY KEY, 
-                    title VARCHAR,
-                    character_id INTEGER NOT NULL REFERENCES characters (id), 
-                    payload VARCHAR NOT NULL
-                )",
-            kind: MigrationKind::Up,
-        },
-        Migration {
-            version: 3,
-            description: "add_config",
-            sql: "CREATE TABLE config (id INTEGER PRIMARY KEY, payload VARCHAR NOT NULL)",
-            kind: MigrationKind::Up,
-        },
-        Migration {
-            version: 4,
-            description: "add_archived_column_to_chats",
-            sql: "ALTER TABLE chats ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
-            kind: MigrationKind::Up,
-        },
-        Migration {
-            version: 5,
-            description: "add_uuid_to_chats",
-            sql: "ALTER TABLE chats ADD COLUMN uuid VARCHAR",
-            kind: MigrationKind::Up,
-        },
-    ];
+    let migrations = vec![Migration {
+        version: 1,
+        description: "create_initial_tables",
+        sql: include_str!("../migrations/1_init.sql"),
+        kind: MigrationKind::Up,
+    }];
 
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())

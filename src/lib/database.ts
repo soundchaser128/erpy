@@ -22,18 +22,21 @@ export interface Character {
 export interface DbChat {
   id: number;
   character_id: number;
+  uuid: string;
+  created_at: string;
   payload: string;
   title: string | null;
-  archived: boolean;
+  archived: number;
 }
 
 export interface Chat {
   id: number;
+  uuid: string;
+  createdAt: string;
   title: string | null;
   characterId: number;
   data: ChatHistoryItem[];
   archived: boolean;
-  uuid?: string;
 }
 
 export interface ChatHistoryItem {
@@ -171,8 +174,8 @@ export async function saveChatHistory(
     return historyId;
   } else {
     const rows: { id: number }[] = await database.select(
-      "INSERT INTO chats (character_id, payload) VALUES ($1, $2) RETURNING id",
-      [characterId, JSON.stringify(chatHistory)],
+      "INSERT INTO chats (character_id, payload, uuid) VALUES ($1, $2, $3) RETURNING id",
+      [characterId, JSON.stringify(chatHistory), crypto.randomUUID()],
     );
     return rows[0].id;
   }
@@ -188,8 +191,10 @@ export async function getAllChats(characterId: number): Promise<Chat[]> {
     id: row.id,
     title: row.title,
     characterId: row.character_id,
+    createdAt: row.created_at,
+    uuid: row.uuid,
     data: JSON.parse(row.payload),
-    archived: row.archived,
+    archived: row.archived === 1,
   }));
 }
 
@@ -205,10 +210,12 @@ export async function getChatById(characterId: number, chatId: number): Promise<
     const row = rows[0];
     return {
       id: row.id,
+      uuid: row.uuid,
+      createdAt: row.created_at,
       characterId: row.character_id,
       data: JSON.parse(row.payload),
       title: row.title,
-      archived: row.archived,
+      archived: row.archived === 1,
     };
   }
 }
@@ -254,7 +261,9 @@ export async function getArchivedChats(): Promise<Chat[]> {
     title: row.title,
     characterId: row.character_id,
     data: JSON.parse(row.payload),
-    archived: row.archived,
+    archived: row.archived === 1,
+    createdAt: row.created_at,
+    uuid: row.uuid,
   }));
 }
 

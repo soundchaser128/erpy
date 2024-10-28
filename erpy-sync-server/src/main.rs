@@ -70,8 +70,9 @@ async fn fetch_chats(state: State<AppState>) -> Result<Json<Vec<Chat>>> {
 
     for row in rows {
         chats.push(Chat {
-            uuid: Some(row.uuid),
+            uuid: row.uuid,
             archived: row.archived,
+            created_at: row.created_at.to_string(),
             character_id: row.character_remote_id,
             id: row.remote_id,
             title: row.title,

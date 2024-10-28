@@ -7,11 +7,12 @@ use uuid::Uuid;
 #[serde(rename_all = "camelCase")]
 pub struct Chat {
     pub id: i32,
+    pub uuid: Uuid,
+    pub created_at: String,
     pub title: Option<String>,
     pub character_id: i32,
     pub data: Vec<ChatHistoryItem>,
     pub archived: bool,
-    pub uuid: Option<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

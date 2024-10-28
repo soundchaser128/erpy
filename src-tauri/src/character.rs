@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use anyhow::{anyhow, bail, Result};
-use erpy_types::{Character, CharacterInformation};
+use erpy_types::CharacterInformation;
 use log::info;
 use serde::Deserialize;
 use serde_json::Value;
