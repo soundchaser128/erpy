@@ -324,12 +324,13 @@
         bind:value={newTitle}
         class="input input-primary w-full"
         placeholder="Enter a title for this chat"
+        disabled={summarizing}
       />
       <div class="modal-action">
         <button on:click={closeTitleModal} type="button" class="btn">
           <Fa icon={faXmark} /> Cancel
         </button>
-        <button type="button" on:click={summarize} class="btn btn-secondary">
+        <button type="button" on:click={summarize} class="btn btn-secondary" disabled={summarizing}>
           <Fa icon={faPenToSquare} /> Generate summary
         </button>
         <button type="submit" class="btn btn-success">

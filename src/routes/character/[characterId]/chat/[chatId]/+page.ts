@@ -18,6 +18,8 @@ export async function load(event) {
       data: getInitialChatHistory(character, data.config.userName, data.activeModel),
       title: null,
       archived: false,
+      createdAt: new Date().toISOString(),
+      uuid: crypto.randomUUID(),
     };
   }
   return {
