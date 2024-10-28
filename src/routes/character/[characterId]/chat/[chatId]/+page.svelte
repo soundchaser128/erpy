@@ -9,7 +9,7 @@
     setChatArchived,
     updateChatTitle,
   } from "$lib/database";
-  import SvelteMarkdown from "svelte-markdown";
+  import Markdown from "svelte-exmarkdown";
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
   import {
@@ -31,6 +31,8 @@
   import { goto, invalidateAll } from "$app/navigation";
   import invariant from "tiny-invariant";
   import { page } from "$app/stores";
+  import { gfmPlugin } from "svelte-exmarkdown/gfm";
+  import remarkQuotePlugin from "$lib/remark.js";
 
   export let data;
 
@@ -39,6 +41,7 @@
   let editText = "";
   let summarizing = false;
   let newTitle = "";
+  let plugins = [gfmPlugin()];
 
   let messageContainer: HTMLElement;
   let deleteModal: HTMLDialogElement;
@@ -277,14 +280,18 @@
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter" && e.shiftKey) {
       e.preventDefault();
-      question += "\n";
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      question = question.slice(0, start) + "\n" + question.slice(end);
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
     } else if (e.key === "Enter" && e.ctrlKey) {
       e.preventDefault();
       onSubmit(true);
     } else if (e.key === "Enter") {
       e.preventDefault();
       onSubmit();
-    } else if (e.key === "ArrowUp" && rowCount === 1) {
+    } else if (e.key === "ArrowUp" && question.length === 0) {
       e.preventDefault();
       onStartEdit(chatHistory[chatHistory.length - 1]);
     }
@@ -491,10 +498,8 @@
                 </div>
               </form>
             {:else if getContent(entry).length > 0}
-              <div
-                class="prose-invert prose-ol:list-inside prose-ol:list-decimal prose-img:float-left prose-img:m-2 prose-img:max-h-96"
-              >
-                <SvelteMarkdown options={{ gfm: true, breaks: true }} source={getContent(entry)} />
+              <div class="markdown">
+                <Markdown {plugins} md={getContent(entry)} />
               </div>
             {:else}
               <span class="flex items-end gap-2"
@@ -532,3 +537,15 @@
     </button>
   </form>
 </div>
+
+<style lang="postcss">
+  .markdown {
+    @apply whitespace-pre-wrap;
+  }
+  .markdown p {
+  }
+
+  .markdown em {
+    @apply text-green-500;
+  }
+</style>

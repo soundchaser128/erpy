@@ -226,7 +226,15 @@ enum ConnectionTestResult {
 async fn test_connection(api_url: String, api_key: Option<String>) -> ConnectionTestResult {
     let api = OpenAiCompletions::new(api_url, api_key);
     match api.list_models().await {
-        Ok(_) => ConnectionTestResult::Success,
+        Ok(models) => {
+            if models.is_empty() {
+                ConnectionTestResult::Failure {
+                    error: "No models found".to_string(),
+                }
+            } else {
+                ConnectionTestResult::Success
+            }
+        }
         Err(e) => ConnectionTestResult::Failure {
             error: format!("Failed to connect: {e}"),
         },
