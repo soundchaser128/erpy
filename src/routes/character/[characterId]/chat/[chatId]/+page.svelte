@@ -130,7 +130,7 @@
       const unlisten = await listen<CompletionResponse>("completion", (response) => {
         answer.content[answer.chosenAnswer].content += response.payload.choices[0].delta.content;
         chatHistory = [...chatHistory];
-        scrollToBottom();
+        scrollToBottom("instant");
       });
       once("completion_done", async () => {
         await saveChatHistory(historyId, data.character.id, chatHistory);
