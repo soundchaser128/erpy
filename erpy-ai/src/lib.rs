@@ -3,6 +3,7 @@ use std::{fmt, future::Future, pin::Pin};
 use anyhow::Result;
 
 use camino::Utf8PathBuf;
+use erpy_types::MessageRole;
 use serde::{Deserialize, Serialize};
 use tokio_stream::Stream;
 
@@ -24,23 +25,6 @@ pub struct Model {
     pub id: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash)]
-#[serde(rename_all = "lowercase")]
-pub enum MessageRole {
-    User,
-    Assistant,
-    System,
-}
-
-impl fmt::Display for MessageRole {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            MessageRole::User => write!(f, "user"),
-            MessageRole::Assistant => write!(f, "assistant"),
-            MessageRole::System => write!(f, "system"),
-        }
-    }
-}
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MessageHistoryItem {

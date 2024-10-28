@@ -1,49 +1,25 @@
 use anyhow::Result;
-use erpy_ai::{CompletionApi, CompletionApis, CompletionRequest, MessageHistoryItem, MessageRole};
-use erpy_types::Chat;
-use serde::Serialize;
-
-pub fn chat_to_string(chat: &Chat) -> String {
-    let max_tokens = 8192;
-
-    #[derive(Serialize)]
-    struct Entry {
-        role: String,
-        content: String,
-    }
-
-    let mut total_tokens = 0;
-    let mut pairs = vec![];
-    for entry in chat.data.iter().rev() {
-        let answer = &entry.content[entry.chosen_answer];
-        let token_count = answer.content.len() / 4;
-        if total_tokens + token_count > max_tokens {
-            break;
-        }
-
-        pairs.push(Entry {
-            role: format!("{:?}", entry.role),
-            content: answer.content.clone(),
-        });
-        total_tokens += token_count;
-    }
-
-    serde_json::to_string_pretty(&pairs).unwrap()
-}
+use erpy_ai::{CompletionApis, CompletionRequest, MessageHistoryItem};
+use erpy_types::{Chat, MessageRole};
 
 pub async fn summarize(chat: &Chat, client: &CompletionApis, prompt: &str) -> Result<String> {
-    let template = format!("{}\n\n{}", prompt, chat_to_string(chat));
+    let mut history: Vec<_> = chat
+        .data
+        .iter()
+        .map(|entry| MessageHistoryItem {
+            role: match entry.role {
+                erpy_types::MessageRole::User => MessageRole::User,
+                erpy_types::MessageRole::Assistant => MessageRole::Assistant,
+                erpy_types::MessageRole::System => MessageRole::System,
+            },
+            content: entry.content[entry.chosen_answer].content.clone(),
+        })
+        .collect();
 
-    let history = vec![
-        MessageHistoryItem {
-            role: MessageRole::System,
-            content: "You are a knowledgeable and friendly AI assistant".into(),
-        },
-        MessageHistoryItem {
-            role: MessageRole::User,
-            content: template,
-        },
-    ];
+    history.push(MessageHistoryItem {
+        role: MessageRole::User,
+        content: prompt.into(),
+    });
 
     let request = CompletionRequest {
         messages: history,

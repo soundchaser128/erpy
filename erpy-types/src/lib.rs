@@ -1,3 +1,5 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -36,6 +38,15 @@ pub enum MessageRole {
     System,
 }
 
+impl fmt::Display for MessageRole {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MessageRole::User => write!(f, "user"),
+            MessageRole::Assistant => write!(f, "assistant"),
+            MessageRole::System => write!(f, "system"),
+        }
+    }
+}
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CharacterInformation {
     pub name: String,

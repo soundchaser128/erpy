@@ -218,10 +218,11 @@
   async function summarize() {
     summarizing = true;
     const summarizePrompt =
-      "Give me a summary of the following conversation between a user and a chat bot in less than ten words. Reply only with the sumamry and nothing else.";
+      "[Pause your roleplay. Summarize the most important facts and events that have happened in the chat so far. Limit the summary to 12 words or less. Your response should include nothing but the summary.]";
+
+    console.log(data.history);
     const response = await invoke<string>("summarize", {
       chat: data.history,
-      config: data.config,
       prompt: summarizePrompt,
     });
     newTitle = response;

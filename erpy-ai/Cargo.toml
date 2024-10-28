@@ -5,9 +5,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.89"
-camino = {version = "1.1.9", features = ["serde1"]}
+camino = { version = "1.1.9", features = ["serde1"] }
 dirs = "5.0.1"
 either = "1.13.0"
+erpy-types = { path = "../erpy-types" }
 hf-hub = { version = "0.3.2", optional = true, features = ["tokio"] }
 indexmap = "2.6.0"
 log = "0.4.22"

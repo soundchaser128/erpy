@@ -1865,6 +1865,7 @@ dependencies = [
  "camino",
  "dirs",
  "either",
+ "erpy-types",
  "hf-hub",
  "indexmap 2.6.0",
  "llama-cpp-2",
