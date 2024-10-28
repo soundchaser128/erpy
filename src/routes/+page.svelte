@@ -75,7 +75,7 @@
             placeholder="https://chub.ai/characters/..."
           ></textarea>
         </div>
-        <button type="submit" class="btn btn-primary self-end">
+        <button disabled={textInput.length === 0} type="submit" class="btn btn-primary self-end">
           <Fa icon={faPlus} />
           Add</button
         >
@@ -96,7 +96,7 @@
           />
         </label>
 
-        <button disabled={files?.length === 0} type="submit" class="btn btn-primary self-end">
+        <button disabled={!files?.length} type="submit" class="btn btn-primary self-end">
           <Fa icon={faFileImport} />
           Upload</button
         >

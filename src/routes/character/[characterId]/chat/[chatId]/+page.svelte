@@ -32,7 +32,7 @@
   import invariant from "tiny-invariant";
   import { page } from "$app/stores";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
-  import remarkQuotePlugin from "$lib/remark.js";
+  import { remarkHighlightQuotes } from "$lib/remark.js";
 
   export let data;
 
@@ -41,7 +41,7 @@
   let editText = "";
   let summarizing = false;
   let newTitle = "";
-  let plugins = [gfmPlugin()];
+  let plugins = [gfmPlugin(), remarkHighlightQuotes() ];
 
   let messageContainer: HTMLElement;
   let deleteModal: HTMLDialogElement;
@@ -498,7 +498,7 @@
                 </div>
               </form>
             {:else if getContent(entry).length > 0}
-              <div class="chat-bubble-markdown">
+              <div class="prose prose-invert text-neutral-content">
                 <Markdown {plugins} md={getContent(entry)} />
               </div>
             {:else}
@@ -537,9 +537,3 @@
     </button>
   </form>
 </div>
-
-<style lang="postcss">
-  .chat-bubble-markdown {
-    @apply prose max-w-none text-neutral-content prose-ol:list-disc;
-  }
-</style>
