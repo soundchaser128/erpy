@@ -31,7 +31,7 @@ pub fn chat_to_string(chat: &Chat) -> String {
     serde_json::to_string_pretty(&pairs).unwrap()
 }
 
-pub async fn summarize(chat: &Chat, client: impl CompletionApi, prompt: &str) -> Result<String> {
+pub async fn summarize(chat: &Chat, client: &impl CompletionApi, prompt: &str) -> Result<String> {
     let template = format!("{}\n\n{}", prompt, chat_to_string(chat));
 
     let history = vec![

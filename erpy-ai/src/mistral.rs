@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
-use crate::ModelInfo;
+use crate::{CompletionChoice, CompletionMessage, MessageRole, ModelInfo};
 
 use super::{
     CompletionApi, CompletionRequest, CompletionResponse, DeltaContent, MessageHistoryItem,
@@ -153,6 +153,7 @@ impl From<ChatCompletionChunkResponse> for StreamingCompletionResponse {
                 delta: DeltaContent {
                     content: c.delta.content,
                 },
+                finish_reason: c.finish_reason,
             });
 
         Self {
@@ -204,7 +205,28 @@ impl CompletionApi for MistralRsCompletions {
     }
 
     async fn get_completions(&self, request: &CompletionRequest) -> Result<CompletionResponse> {
-        todo!()
+        let chunks: Vec<_> = self.get_completions_stream(request).await?.collect().await;
+        let finish_reason = chunks
+            .last()
+            .and_then(|c| c.choices[0].finish_reason.clone());
+        let message = chunks
+            .into_iter()
+            .map(|mut c| c.choices.remove(0).delta.content)
+            .collect();
+
+        Ok(CompletionResponse {
+            id: "todo".into(),
+            created: 0,
+            model: self.model_id.clone(),
+            choices: vec![CompletionChoice {
+                index: 0,
+                finish_reason,
+                message: CompletionMessage {
+                    role: MessageRole::Assistant,
+                    content: message,
+                },
+            }],
+        })
     }
 }
 

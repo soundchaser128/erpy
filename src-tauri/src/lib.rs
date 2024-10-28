@@ -138,10 +138,9 @@ async fn active_model(app: AppHandle) -> Option<String> {
 #[tauri::command]
 async fn summarize(app: AppHandle, chat: Chat, config: Config, prompt: String) -> TAResult<String> {
     let state = app.state::<State>();
-    let api = &state.completions;
-    // let summary = chat::summarize(&chat, &api, &prompt).await?;
-
-    Ok("TODO".into())
+    let api = &state.completions.lock().await.expect("no model loaded");
+    let summary = chat::summarize(&chat, &api, &prompt).await?;
+    Ok(summary)
 }
 
 #[derive(Serialize, Debug, Clone, Copy)]

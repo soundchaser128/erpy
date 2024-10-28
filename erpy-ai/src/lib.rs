@@ -85,6 +85,7 @@ pub struct StreamingCompletionResponse {
 #[serde(rename_all = "camelCase")]
 pub struct StreamingCompletionChoice {
     pub delta: DeltaContent,
+    pub finish_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -111,7 +112,7 @@ impl CompletionResponse {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CompletionChoice {
     pub index: i32,
-    pub finish_reason: String,
+    pub finish_reason: Option<String>,
     pub message: CompletionMessage,
 }
 
