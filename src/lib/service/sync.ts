@@ -4,7 +4,8 @@ import { persistCharacters, saveChatHistory, type Character, type Chat } from "$
 export async function healthCheck(baseUrl: string): Promise<boolean> {
   return fetch(`${baseUrl}/api/health`)
     .then((res) => (res.ok ? res.json() : Promise.resolve({ status: "error" })))
-    .then((res) => res.status === "ok");
+    .then((res) => res.status === "ok")
+    .catch(() => false);
 }
 
 class SyncClient {

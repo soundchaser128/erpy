@@ -9,7 +9,7 @@ function rehypeQuotes() {
       [
         /"(.*?)"/g,
         function ($0) {
-          return h("span", { class: "text-white" }, $0);
+          return h("span", { class: "text-white font-bold" }, $0);
         },
       ],
     ]);
