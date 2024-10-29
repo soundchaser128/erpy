@@ -120,17 +120,18 @@
         chatHistory = [...chatHistory];
       }
 
+      scrollToBottom();
+
       const history = addToExisting ? chatHistory.slice(0, -1) : chatHistory;
       invoke("chat_completion", {
         messageHistory: toApiRequest(history),
         config: data.config,
       });
 
-      scrollToBottom();
       const unlisten = await listen<CompletionResponse>("completion", (response) => {
         answer.content[answer.chosenAnswer].content += response.payload.choices[0].delta.content;
         chatHistory = [...chatHistory];
-        scrollToBottom("instant");
+        scrollToBottom();
       });
       once("completion_done", async () => {
         await saveChatHistory(historyId, data.character.id, chatHistory);
@@ -189,6 +190,8 @@
       chatHistory = chatHistory.filter((item) => item !== entry);
     }
 
+    scrollToBottom();
+
     await saveChatHistory(historyId, data.character.id, chatHistory);
   }
 
@@ -226,9 +229,8 @@
   async function summarize() {
     summarizing = true;
     const summarizePrompt =
-      "[Pause your roleplay. Summarize the most important facts and events that have happened in the chat so far. Limit the summary to 12 words or less. Your response should include nothing but the summary.]";
+      "[Pause your roleplay. Generate a title for the content of this chat so far, Limit the summary to 8 words or less. Your response should include nothing but the title.]";
 
-    console.log(data.history);
     const response = await invoke<string>("summarize", {
       chat: data.history,
       prompt: summarizePrompt,
@@ -264,6 +266,7 @@
     await updateChatTitle(data.history.id, newTitle);
     await invalidateAll();
     closeTitleModal();
+    newTitle = "";
   }
 
   function showDeleteModal() {

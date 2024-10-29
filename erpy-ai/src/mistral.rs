@@ -14,11 +14,12 @@ use camino::{Utf8Component, Utf8Path, Utf8PathBuf};
 use either::Either;
 use indexmap::IndexMap;
 
+use log::info;
 use mistralrs::{
     best_device, ChatCompletionChunkResponse, Constraint, DefaultSchedulerMethod,
-    DeviceMapMetadata, GGUFLoaderBuilder, GGUFSpecificConfig, MistralRs, MistralRsBuilder,
-    ModelDType, NormalRequest, Request, RequestMessage, Response, SamplingParams, SchedulerConfig,
-    TokenSource,
+    DeviceMapMetadata, GGUFLoaderBuilder, GGUFSpecificConfig, MemoryGpuConfig, MistralRs,
+    MistralRsBuilder, ModelDType, NormalRequest, PagedAttentionMetaBuilder, Request,
+    RequestMessage, Response, SamplingParams, SchedulerConfig, TokenSource,
 };
 use tokio::sync::mpsc::Receiver;
 use tokio_stream::{Stream, StreamExt};
@@ -44,14 +45,20 @@ impl MistralRsCompletions {
         let loader =
             GGUFLoaderBuilder::new(chat_template, None, model_id.clone(), files, config).build();
 
-        // let paged_attn_cfg = if cfg!(not(target_os = "macos")) {
-        //     Some(PagedAttentionMetaBuilder::default().build()?)
-        // } else {
-        //     None
-        // };
+        let paged_attn = if cfg!(target_os = "linux") {
+            Some(
+                PagedAttentionMetaBuilder::default()
+                    .with_block_size(32)
+                    // TODO load from configuration
+                    .with_gpu_memory(MemoryGpuConfig::ContextSize(8192))
+                    .build()?,
+            )
+        } else {
+            None
+        };
 
         let device = &best_device(false)?;
-        println!("Using device: {:?}", device);
+        info!("Using device: {:?}", device);
 
         // Load, into a Pipeline
         let pipeline = loader.load_model_from_hf(
@@ -62,7 +69,7 @@ impl MistralRsCompletions {
             false,
             DeviceMapMetadata::dummy(),
             None,
-            None,
+            paged_attn,
         )?;
 
         let scheduler_method = SchedulerConfig::DefaultScheduler {
