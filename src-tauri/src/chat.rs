@@ -7,11 +7,7 @@ pub async fn summarize(chat: &Chat, client: &CompletionApis, prompt: &str) -> Re
         .data
         .iter()
         .map(|entry| MessageHistoryItem {
-            role: match entry.role {
-                erpy_types::MessageRole::User => MessageRole::User,
-                erpy_types::MessageRole::Assistant => MessageRole::Assistant,
-                erpy_types::MessageRole::System => MessageRole::System,
-            },
+            role: entry.role,
             content: entry.content[entry.chosen_answer].content.clone(),
         })
         .collect();
