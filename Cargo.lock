@@ -815,7 +815,7 @@ dependencies = [
 [[package]]
 name = "candle-core"
 version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=629ec72#629ec72d08953f79eae6af3f260e090397b29646"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
 dependencies = [
  "byteorder",
  "candle-kernels",
@@ -843,7 +843,7 @@ dependencies = [
 [[package]]
 name = "candle-kernels"
 version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=629ec72#629ec72d08953f79eae6af3f260e090397b29646"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
 dependencies = [
  "bindgen_cuda 0.1.5",
 ]
@@ -851,7 +851,7 @@ dependencies = [
 [[package]]
 name = "candle-metal-kernels"
 version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=629ec72#629ec72d08953f79eae6af3f260e090397b29646"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
 dependencies = [
  "metal 0.27.0",
  "once_cell",
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "candle-nn"
 version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=629ec72#629ec72d08953f79eae6af3f260e090397b29646"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
 dependencies = [
  "candle-core",
  "candle-metal-kernels",
@@ -2231,9 +2231,9 @@ checksum = "9e5c1b78ca4aae1ac06c48a526a655760685149f0d465d21f37abfe57ce075c6"
 
 [[package]]
 name = "futures-lite"
-version = "2.3.0"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52527eb5074e35e9339c6b4e8d12600c7128b68fb25dcb9fa9dec18f7c25f3a5"
+checksum = "3f1fa2f9765705486b33fd2acf1577f8ec449c2ba1f318ae5447697b7c08d210"
 dependencies = [
  "fastrand",
  "futures-core",
@@ -3827,7 +3827,7 @@ dependencies = [
 [[package]]
 name = "mistralrs"
 version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=v0.3.2#57a8b03970ff450d34684a16b2d4d17eb566e1df"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
 dependencies = [
  "anyhow",
  "candle-core",
@@ -3846,7 +3846,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-core"
 version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=v0.3.2#57a8b03970ff450d34684a16b2d4d17eb566e1df"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
 dependencies = [
  "akin",
  "anyhow",
@@ -3915,7 +3915,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-paged-attn"
 version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=v0.3.2#57a8b03970ff450d34684a16b2d4d17eb566e1df"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
 dependencies = [
  "anyhow",
  "bindgen_cuda 0.1.6",
@@ -3927,7 +3927,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-quant"
 version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=v0.3.2#57a8b03970ff450d34684a16b2d4d17eb566e1df"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
 dependencies = [
  "bindgen_cuda 0.1.5",
  "byteorder",
@@ -3946,7 +3946,7 @@ dependencies = [
 [[package]]
 name = "mistralrs-vision"
 version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=v0.3.2#57a8b03970ff450d34684a16b2d4d17eb566e1df"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
 dependencies = [
  "candle-core",
  "image",

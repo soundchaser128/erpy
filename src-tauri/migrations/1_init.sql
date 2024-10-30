@@ -14,7 +14,6 @@ CREATE TABLE
         title VARCHAR,
         character_id INTEGER NOT NULL REFERENCES characters (id),
         payload VARCHAR NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         uuid VARCHAR NOT NULL,
         archived INTEGER NOT NULL DEFAULT 0,
         created_at VARCHAR NOT NULL DEFAULT CURRENT_TIMESTAMP,
