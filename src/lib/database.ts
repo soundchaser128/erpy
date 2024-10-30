@@ -3,7 +3,6 @@ import type { CharacterPayload, Config, MessageRole } from "./types";
 import { platform } from "@tauri-apps/plugin-os";
 import { appDataDir, join } from "@tauri-apps/api/path";
 import { copyFile } from "@tauri-apps/plugin-fs";
-import type SyncClient from "./service/sync";
 
 const DATABASE_URL = "sqlite:erpy.sqlite3";
 
@@ -80,15 +79,20 @@ export async function getCharacter(id: number): Promise<Character> {
 interface Row {
   id: number;
   url: string;
+  uuid: string;
   payload: string;
   chat_id: number | null;
   chat_payload: string | null;
 }
 
-export async function getAllCharacters() {
+export interface CharacterWithChat extends Character {
+  chats: { id: number; data: ChatHistoryItem[] }[];
+}
+
+export async function getAllCharacters(): Promise<CharacterWithChat[]> {
   const database = await getDatabase();
   const rows = await database.select<Row[]>(
-    `SELECT c.id, c.url, c.payload, h.id AS chat_id, h.payload AS chat_payload
+    `SELECT c.id, c.url, c.payload, c.uuid, h.id AS chat_id, h.payload AS chat_payload
     FROM characters c 
     LEFT JOIN chats h ON c.id = h.character_id
     WHERE h.archived = FALSE OR h.archived IS NULL`,
@@ -107,13 +111,15 @@ export async function getAllCharacters() {
 
     return {
       id: character.id,
+      uuid: character.uuid,
       url: character.url,
-      data,
+      payload: data,
       chats,
-    };
+      chatCount: chats.length,
+    } satisfies CharacterWithChat;
   });
 
-  characters.sort((a, b) => a.data.name.localeCompare(b.data.name));
+  characters.sort((a, b) => a.payload.name.localeCompare(b.payload.name));
 
   return characters;
 }
@@ -198,7 +204,21 @@ export async function saveChatHistory(
   }
 }
 
-export async function getAllChats(characterId: number): Promise<Chat[]> {
+export async function getAllChats(): Promise<Chat[]> {
+  const database = await getDatabase();
+  const rows = await database.select<DbChat[]>("SELECT * FROM chats");
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    characterId: row.character_id,
+    data: JSON.parse(row.payload),
+    archived: row.archived === 1,
+    createdAt: row.created_at,
+    uuid: row.uuid,
+  }));
+}
+
+export async function getChatsForCharacter(characterId: number): Promise<Chat[]> {
   const database = await getDatabase();
   const rows = await database.select<DbChat[]>(
     "SELECT * FROM chats WHERE character_id = $1 AND archived = FALSE",

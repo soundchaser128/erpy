@@ -1,4 +1,4 @@
-import { getChatById, getCharacter, getAllChats } from "$lib/database.js";
+import { getChatById, getCharacter, getChatsForCharacter } from "$lib/database.js";
 import { getInitialChatHistory } from "$lib/helpers";
 import invariant from "tiny-invariant";
 
@@ -7,7 +7,7 @@ export async function load(event) {
   const characterId = parseInt(event.params.characterId, 10);
   const chatId = parseInt(event.params.chatId, 10);
   const character = await getCharacter(characterId);
-  const allChats = await getAllChats(characterId);
+  const allChats = await getChatsForCharacter(characterId);
 
   let history = await getChatById(characterId, chatId);
   if (history === undefined) {

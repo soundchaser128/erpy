@@ -10,10 +10,15 @@ export const load = async () => {
   const activeModel: string | null = await invoke("active_model", { config });
   let sync = undefined;
 
-  if (config.sync.clientId && config.sync.serverUrl) {
-    const healthy = await healthCheck(config.sync.serverUrl);
+  if (config.sync.clientId && config.sync.serverUrl && config.sync.apiKey) {
+    const healthy = await healthCheck(config.sync.serverUrl, config.sync.apiKey);
     if (healthy) {
-      sync = new SyncClient(config.sync.serverUrl, config.sync.clientId, 30 * 1000);
+      sync = new SyncClient(
+        config.sync.serverUrl,
+        config.sync.clientId,
+        config.sync.apiKey,
+        30 * 1000,
+      );
     }
   }
 

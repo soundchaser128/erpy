@@ -102,6 +102,19 @@
         placeholder="A unique identifier for this machine."
       />
     </div>
+    <div class="form-control">
+      <label for="syncApiKey" class="label">
+        <span class="label-text">API key</span>
+      </label>
+
+      <input
+        id="syncApiKey"
+        type="text"
+        bind:value={data.config.sync.apiKey}
+        class="input input-primary"
+        placeholder="The API key configured on the server"
+      />
+    </div>
 
     <button type="submit" class="btn btn-primary mt-4 self-end">
       <Fa icon={faSave} />

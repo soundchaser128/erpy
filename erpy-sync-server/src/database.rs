@@ -82,7 +82,6 @@ impl Database {
 
     pub async fn persist_chat(&self, chat: Chat, client_id: &str) -> Result<()> {
         self.create_client(client_id).await?;
-
         let character_uuid = self.find_character_id(chat.id, client_id).await?;
 
         sqlx::query!(

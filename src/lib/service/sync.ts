@@ -1,8 +1,13 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import { persistCharacters, saveChatHistory, type Character, type Chat } from "$lib/database";
+import { getAllCharacters, getAllChats, type Character, type Chat } from "$lib/database";
 
-export async function healthCheck(baseUrl: string): Promise<boolean> {
-  return fetch(`${baseUrl}/api/health`)
+const headers = (apiKey: string) => ({
+  Authorization: `Bearer ${apiKey}`,
+  "Content-Type": "application/json",
+});
+
+export async function healthCheck(baseUrl: string, apiKey: string): Promise<boolean> {
+  return fetch(`${baseUrl}/api/health`, { headers: headers(apiKey) })
     .then((res) => (res.ok ? res.json() : Promise.resolve({ status: "error" })))
     .then((res) => res.status === "ok")
     .catch(() => false);
@@ -11,19 +16,28 @@ export async function healthCheck(baseUrl: string): Promise<boolean> {
 class SyncClient {
   #baseUrl: string;
   #clientId: string;
+  #apiKey: string;
   #syncInterval: number | null = null;
 
-  constructor(baseUrl: string, clientId: string, syncInterval: number | null = null) {
+  constructor(
+    baseUrl: string,
+    clientId: string,
+    apiKey: string,
+    syncInterval: number | null = null,
+  ) {
     this.#baseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     this.#clientId = clientId;
     this.#syncInterval = syncInterval;
+    this.#apiKey = apiKey;
 
     if (this.#syncInterval) {
       this.startSync();
     }
   }
 
-  startSync() {
+  async startSync() {
+    await this.sync();
+
     if (this.#syncInterval) {
       this.#syncInterval = setInterval(() => {
         this.sync();
@@ -36,20 +50,30 @@ class SyncClient {
   }
 
   async sync() {
-    const characters = await this.fetchCharacters();
-    await persistCharacters(characters.map((c) => c.payload));
+    const characters = await getAllCharacters();
+    const chats = await getAllChats();
+    const payload = {
+      chats,
+      characters,
+    };
 
-    // const chats = await this.fetchChats();
-    // for (const chat of chats) {
-    //   await saveChatHistory(chat.id, chat.data);
-    // }
+    const response = await fetch(this.#prepareUrl("/api/sync"), {
+      headers: headers(this.#apiKey),
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Request failed with status code ${response.status}: ${text}`);
+    }
   }
 
   async storeChat(chat: Chat) {
     const response = await fetch(this.#prepareUrl("/api/chat"), {
       method: "POST",
       body: JSON.stringify(chat),
-      headers: { "Content-Type": "application/json" },
+      headers: headers(this.#apiKey),
     });
 
     if (!response.ok) {
@@ -62,7 +86,7 @@ class SyncClient {
     const response = await fetch(this.#prepareUrl("/api/character"), {
       method: "POST",
       body: JSON.stringify(character),
-      headers: { "Content-Type": "application/json" },
+      headers: headers(this.#apiKey),
     });
 
     if (!response.ok) {
@@ -72,7 +96,9 @@ class SyncClient {
   }
 
   async fetchChats(): Promise<Chat[]> {
-    const response = await fetch(`${this.#baseUrl}/api/chat`);
+    const response = await fetch(`${this.#baseUrl}/api/chat`, {
+      headers: headers(this.#apiKey),
+    });
 
     if (!response.ok) {
       const text = await response.text();
@@ -83,7 +109,9 @@ class SyncClient {
   }
 
   async fetchCharacters(): Promise<Character[]> {
-    const response = await fetch(`${this.#baseUrl}/api/character`);
+    const response = await fetch(`${this.#baseUrl}/api/character`, {
+      headers: headers(this.#apiKey),
+    });
 
     if (!response.ok) {
       const text = await response.text();

@@ -1,4 +1,4 @@
-import { getAllChats, getCharacter, saveChatHistory } from "$lib/database";
+import { getCharacter, getChatsForCharacter, saveChatHistory } from "$lib/database";
 import { getInitialChatHistory } from "$lib/helpers";
 import { redirect } from "@sveltejs/kit";
 import invariant from "tiny-invariant";
@@ -6,7 +6,7 @@ import invariant from "tiny-invariant";
 export const load = async (event) => {
   const data = await event.parent();
   const characterId = parseInt(event.params.characterId, 10);
-  const chats = await getAllChats(characterId);
+  const chats = await getChatsForCharacter(characterId);
   if (chats.length === 0) {
     invariant(!!data.activeModel, "No active model");
 

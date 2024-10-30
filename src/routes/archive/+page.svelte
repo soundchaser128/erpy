@@ -10,7 +10,7 @@
   export let data: PageData;
 
   function findCharacterName(chat: Chat): string {
-    return data.characters.find((c) => c.id === chat.characterId)?.data.name || "Unknown";
+    return data.characters.find((c) => c.id === chat.characterId)?.payload.name || "Unknown";
   }
 
   async function restoreChat(chat: Chat) {

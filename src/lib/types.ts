@@ -43,6 +43,7 @@ export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {
 export interface SyncSettings {
   serverUrl?: string;
   clientId?: string;
+  apiKey?: string;
 }
 
 export interface Config {

@@ -16,7 +16,7 @@
 
   $: filtered = searchInput.trim()
     ? data.characters.filter((character) =>
-        character.data.name.toLowerCase().includes(searchInput.toLowerCase()),
+        character.payload.name.toLowerCase().includes(searchInput.toLowerCase()),
       )
     : data.characters;
 
@@ -172,13 +172,13 @@
             class="w-full rounded-t-lg object-contain {isDisabled(character.chats.length)
               ? 'blur-sm grayscale'
               : ''}"
-            src={getAvatar(character.data.avatar)}
-            alt={character.data.name}
+            src={getAvatar(character.payload.avatar)}
+            alt={character.payload.name}
           />
         </figure>
         <div class="card-body">
           <h2 class="card-title">
-            {character.data.name}
+            {character.payload.name}
           </h2>
           <p class="text-sm text-base-content">
             <strong>{character.chats.length}</strong>
