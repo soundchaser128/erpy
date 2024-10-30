@@ -6,14 +6,16 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use database::Database;
 use erpy_types::{Character, Chat};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::PgPool;
-use tower_http::trace::TraceLayer;
+use tower_http::{trace::TraceLayer, validate_request::ValidateRequestHeaderLayer};
 use tracing::{error, info};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
-use uuid::Uuid;
+
+mod database;
 
 pub struct Error(anyhow::Error);
 
@@ -45,7 +47,7 @@ impl IntoResponse for Error {
 
 #[derive(Clone)]
 pub struct AppState {
-    pub db: PgPool,
+    pub db: Database,
 }
 
 #[derive(Deserialize)]
@@ -53,48 +55,9 @@ pub struct ClientIdQuery {
     pub client_id: String,
 }
 
-async fn create_client_if_not_exists(db: &PgPool, client_id: &str) -> Result<()> {
-    sqlx::query!(
-        "INSERT INTO client (client_id) VALUES ($1) ON CONFLICT DO NOTHING",
-        client_id
-    )
-    .execute(db)
-    .await
-    .map_err(|e| Error(e.into()))?;
-
-    Ok(())
-}
-
-async fn find_character_id(db: &PgPool, remote_id: i32, client_id: &str) -> Result<Uuid> {
-    sqlx::query_scalar!(
-        "SELECT uuid FROM character WHERE remote_id = $1 AND client_id = $2",
-        remote_id,
-        client_id
-    )
-    .fetch_one(db)
-    .await
-    .map_err(|e| Error(e.into()))
-}
-
 #[axum::debug_handler]
 async fn fetch_chats(state: State<AppState>) -> Result<Json<Vec<Chat>>> {
-    let rows = sqlx::query!("SELECT c.*, ch.remote_id AS character_remote_id FROM chat c INNER JOIN character ch ON c.character_id = ch.uuid")
-        .fetch_all(&state.db)
-        .await
-        .map_err(|e| Error(e.into()))?;
-    let mut chats = vec![];
-
-    for row in rows {
-        chats.push(Chat {
-            uuid: row.uuid,
-            archived: row.archived,
-            created_at: row.created_at.to_string(),
-            character_id: row.character_remote_id,
-            id: row.remote_id,
-            title: row.title,
-            data: serde_json::from_value(row.payload).unwrap(),
-        })
-    }
+    let chats = state.db.fetch_chats().await?;
 
     Ok(Json(chats))
 }
@@ -108,47 +71,14 @@ async fn persist_chat(
     query: Query<ClientIdQuery>,
     chat: Json<Chat>,
 ) -> Result<()> {
-    create_client_if_not_exists(&state.db, &query.client_id).await?;
-    let character_uuid = find_character_id(&state.db, chat.id, &query.client_id).await?;
-    sqlx::query!(
-        "INSERT INTO chat (uuid, remote_id, title, character_id, updated_at, payload, client_id)
-        VALUES ($1, $2, $3, $4, NOW(), $5, $6)
-        ON CONFLICT (uuid) DO UPDATE SET
-            title = $3,
-            character_id = $4,
-            updated_at = NOW(),
-            payload = $5",
-        chat.uuid,
-        chat.id,
-        chat.title,
-        character_uuid,
-        serde_json::to_value(&chat.data).unwrap(),
-        query.client_id,
-    )
-    .execute(&state.db)
-    .await
-    .map_err(|e| Error(e.into()))?;
+    state.db.persist_chat(chat.0, &query.client_id).await?;
 
     Ok(())
 }
 
 #[axum::debug_handler]
 async fn fetch_characters(state: State<AppState>) -> Result<Json<Vec<Character>>> {
-    let rows = sqlx::query!("SELECT * FROM character")
-        .fetch_all(&state.db)
-        .await
-        .map_err(|e| Error(e.into()))?;
-
-    let mut characters = vec![];
-
-    for row in rows {
-        characters.push(Character {
-            id: row.remote_id,
-            url: row.url,
-            payload: serde_json::from_value(row.payload).unwrap(),
-            uuid: Some(row.uuid),
-        });
-    }
+    let characters = state.db.fetch_characters().await?;
 
     Ok(Json(characters))
 }
@@ -159,23 +89,10 @@ async fn persist_character(
     query: Query<ClientIdQuery>,
     character: Json<Character>,
 ) -> Result<()> {
-    create_client_if_not_exists(&state.db, &query.client_id).await?;
-
-    sqlx::query!(
-        "INSERT INTO character (uuid, remote_id, url, payload, client_id)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (uuid) DO UPDATE SET
-            url = $3,
-            payload = $4",
-        character.uuid,
-        character.id,
-        character.url,
-        serde_json::to_value(&character.payload).unwrap(),
-        query.client_id,
-    )
-    .execute(&state.db)
-    .await
-    .map_err(|e| Error(e.into()))?;
+    state
+        .db
+        .persist_character(character.0, &query.client_id)
+        .await?;
 
     Ok(())
 }
@@ -185,7 +102,7 @@ async fn application_health() -> Result<Json<serde_json::Value>> {
     Ok(Json(json!({ "status": "ok" })))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct SyncAllPayload {
     pub characters: Vec<Character>,
     pub chats: Vec<Chat>,
@@ -195,11 +112,14 @@ pub struct SyncAllPayload {
 async fn sync_all(
     state: State<AppState>,
     client_id: Query<ClientIdQuery>,
-    payload: Json<SyncAllPayload>,
-) -> Result<()> {
-    create_client_if_not_exists(&state.db, &client_id.client_id).await?;
+    Json(payload): Json<SyncAllPayload>,
+) -> Result<Json<SyncAllPayload>> {
+    let payload = state
+        .db
+        .sync_all(payload.characters, payload.chats, &client_id.client_id)
+        .await?;
 
-    Ok(())
+    Ok(Json(payload))
 }
 
 #[tokio::main]
@@ -215,6 +135,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
     info!("starting up erpy-sync-server");
 
+    let api_key = std::env::var("ERPY_API_KEY")?;
     let db_url = std::env::var("DATABASE_URL")?;
     let db = PgPool::connect(&db_url).await?;
 
@@ -228,8 +149,11 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/character", get(fetch_characters))
         .route("/api/character", post(persist_character))
         .route("/api/sync", post(sync_all))
-        .with_state(AppState { db })
-        .layer(TraceLayer::new_for_http());
+        .with_state(AppState {
+            db: Database::new(db),
+        })
+        .layer(TraceLayer::new_for_http())
+        .layer(ValidateRequestHeaderLayer::bearer(&api_key));
 
     let bind_addr = std::env::var("ERPY_ADDR").unwrap_or("127.0.0.1".into());
     let port = std::env::var("PORT")
