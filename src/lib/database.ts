@@ -249,7 +249,8 @@ export async function updateChatTitle(chatId: number, title: string) {
 
 export async function setChatArchived(chatId: number, archived: boolean) {
   const database = await getDatabase();
-  await database.execute("UPDATE chats SET archived = $1 WHERE id = $2", [archived, chatId]);
+  const flag = archived ? 1 : 0;
+  await database.execute("UPDATE chats SET archived = $1 WHERE id = $2", [flag, chatId]);
 }
 
 export async function getConfig(): Promise<Config> {

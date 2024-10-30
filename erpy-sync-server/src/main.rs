@@ -185,6 +185,23 @@ async fn application_health() -> Result<Json<serde_json::Value>> {
     Ok(Json(json!({ "status": "ok" })))
 }
 
+#[derive(Deserialize)]
+pub struct SyncAllPayload {
+    pub characters: Vec<Character>,
+    pub chats: Vec<Chat>,
+}
+
+#[axum::debug_handler]
+async fn sync_all(
+    state: State<AppState>,
+    client_id: Query<ClientIdQuery>,
+    payload: Json<SyncAllPayload>,
+) -> Result<()> {
+    create_client_if_not_exists(&state.db, &client_id.client_id).await?;
+
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
@@ -210,6 +227,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/api/chat", post(persist_chat))
         .route("/api/character", get(fetch_characters))
         .route("/api/character", post(persist_character))
+        .route("/api/sync", post(sync_all))
         .with_state(AppState { db })
         .layer(TraceLayer::new_for_http());
 
