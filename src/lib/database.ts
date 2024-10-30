@@ -11,6 +11,8 @@ export interface DbCharacter {
   uuid: string;
   url: string;
   payload: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Character {
@@ -19,6 +21,8 @@ export interface Character {
   url?: string;
   payload: CharacterPayload;
   chatCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DbChat {
@@ -26,6 +30,7 @@ export interface DbChat {
   character_id: number;
   uuid: string;
   created_at: string;
+  updated_at: string;
   payload: string;
   title: string | null;
   archived: number;
@@ -35,6 +40,7 @@ export interface Chat {
   id: number;
   uuid: string;
   createdAt: string;
+  updatedAt: string;
   title: string | null;
   characterId: number;
   data: ChatHistoryItem[];
@@ -73,6 +79,8 @@ export async function getCharacter(id: number): Promise<Character> {
     url: row.url,
     payload: JSON.parse(row.payload),
     chatCount: 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -83,6 +91,8 @@ interface Row {
   payload: string;
   chat_id: number | null;
   chat_payload: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CharacterWithChat extends Character {
@@ -92,7 +102,7 @@ export interface CharacterWithChat extends Character {
 export async function getAllCharacters(): Promise<CharacterWithChat[]> {
   const database = await getDatabase();
   const rows = await database.select<Row[]>(
-    `SELECT c.id, c.url, c.payload, c.uuid, h.id AS chat_id, h.payload AS chat_payload
+    `SELECT c.id, c.created_at, c.updated_at, c.url, c.payload, c.uuid, h.id AS chat_id, h.payload AS chat_payload
     FROM characters c 
     LEFT JOIN chats h ON c.id = h.character_id
     WHERE h.archived = FALSE OR h.archived IS NULL`,
@@ -116,6 +126,8 @@ export async function getAllCharacters(): Promise<CharacterWithChat[]> {
       payload: data,
       chats,
       chatCount: chats.length,
+      createdAt: character.created_at,
+      updatedAt: character.updated_at,
     } satisfies CharacterWithChat;
   });
 
@@ -130,18 +142,22 @@ export interface CharacterPayloadWithUrl {
 }
 
 export async function addCharacters(characters: CharacterPayloadWithUrl[]): Promise<Character[]> {
+  type Row = { id: number; created_at: string };
+
   const database = await getDatabase();
 
   const creactedCharacters: Character[] = [];
   for (const { url, payload } of characters) {
     const uuid = crypto.randomUUID();
-    const row: { id: number }[] = await database.select(
-      "INSERT INTO characters (url, payload, uuid) VALUES ($1, $2, $3) RETURNING id",
+    const row: Row[] = await database.select(
+      "INSERT INTO characters (url, payload, uuid) VALUES ($1, $2, $3) RETURNING id, created_at",
       [url, JSON.stringify(payload), uuid],
     );
 
     creactedCharacters.push({
       id: row[0].id,
+      createdAt: row[0].created_at,
+      updatedAt: row[0].created_at,
       uuid: uuid,
       payload: payload,
       chatCount: 0,
@@ -152,14 +168,16 @@ export async function addCharacters(characters: CharacterPayloadWithUrl[]): Prom
 }
 
 export async function persistCharacters(characters: CharacterPayload[]) {
+  type Row = { created_at: string; id: number };
+
   const database = await getDatabase();
   const directory = await appDataDir();
 
   const data: Character[] = [];
   for (const character of characters) {
     const uuid = crypto.randomUUID();
-    const row: { id: number }[] = await database.select(
-      "INSERT INTO characters (payload, uuid) VALUES ($1, $2) RETURNING id",
+    const row: Row[] = await database.select(
+      "INSERT INTO characters (payload, uuid) VALUES ($1, $2) RETURNING id, created_at",
       [JSON.stringify(character), uuid],
     );
     const id = row[0].id;
@@ -174,6 +192,8 @@ export async function persistCharacters(characters: CharacterPayload[]) {
 
     data.push({
       id,
+      createdAt: row[0].created_at,
+      updatedAt: row[0].created_at,
       payload: character,
       chatCount: 0,
       uuid,
@@ -214,6 +234,7 @@ export async function getAllChats(): Promise<Chat[]> {
     data: JSON.parse(row.payload),
     archived: row.archived === 1,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     uuid: row.uuid,
   }));
 }
@@ -229,6 +250,7 @@ export async function getChatsForCharacter(characterId: number): Promise<Chat[]>
     title: row.title,
     characterId: row.character_id,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     uuid: row.uuid,
     data: JSON.parse(row.payload),
     archived: row.archived === 1,
@@ -249,6 +271,7 @@ export async function getChatById(characterId: number, chatId: number): Promise<
       id: row.id,
       uuid: row.uuid,
       createdAt: row.created_at,
+      updatedAt: row.updated_at,
       characterId: row.character_id,
       data: JSON.parse(row.payload),
       title: row.title,
@@ -301,6 +324,7 @@ export async function getArchivedChats(): Promise<Chat[]> {
     data: JSON.parse(row.payload),
     archived: row.archived === 1,
     createdAt: row.created_at,
+    updatedAt: row.updated_at,
     uuid: row.uuid,
   }));
 }

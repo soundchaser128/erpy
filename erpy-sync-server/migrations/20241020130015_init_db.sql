@@ -12,7 +12,9 @@ CREATE TABLE
         remote_id INTEGER NOT NULL,
         "url" VARCHAR,
         payload JSONB NOT NULL,
-        client_id VARCHAR NOT NULL REFERENCES client (client_id)
+        client_id VARCHAR NOT NULL REFERENCES client (client_id),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
 CREATE TABLE
@@ -23,13 +25,9 @@ CREATE TABLE
         remote_id INTEGER NOT NULL,
         title VARCHAR,
         character_id UUID NOT NULL REFERENCES "character" (uuid),
-        created_at TIMESTAMP
-        WITH
-            TIME ZONE NOT NULL DEFAULT NOW (),
-            updated_at TIMESTAMP
-        WITH
-            TIME ZONE NOT NULL,
-            payload JSONB NOT NULL,
-            archived BOOLEAN NOT NULL DEFAULT false,
-            client_id VARCHAR NOT NULL REFERENCES client (client_id)
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        payload JSONB NOT NULL,
+        archived BOOLEAN NOT NULL DEFAULT false,
+        client_id VARCHAR NOT NULL REFERENCES client (client_id)
     );
