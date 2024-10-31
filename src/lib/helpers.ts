@@ -1,11 +1,16 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import type { Character, ChatHistoryItem } from "./database";
+import { format, lightFormat } from "date-fns";
 
 const pluralRules = new Intl.PluralRules("en-US");
 
-export function formatTimestamp(timestamp: number) {
+export function formatTimestamp(timestamp: number, format: "long" | "short") {
   const date = new Date(timestamp);
-  return date.toLocaleDateString();
+  return lightFormat(date, format === "long" ? "MMMM d, yyyy h:mm a" : "h:mm a");
+}
+
+export function sqliteDateTime(date: Date): string {
+  return format(date, "yyyy-MM-dd HH:mm:ss");
 }
 
 export function clamp(value: number, min: number, max: number) {

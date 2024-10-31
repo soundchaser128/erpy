@@ -1,7 +1,7 @@
 CREATE TABLE
     characters (
         id INTEGER PRIMARY KEY,
-        uuid VARCHAR NOT NULL,
+        uuid VARCHAR NOT NULL UNIQUE,
         "url" VARCHAR,
         payload VARCHAR NOT NULL,
         created_at VARCHAR NOT NULL DEFAULT CURRENT_TIMESTAMP,

@@ -28,6 +28,7 @@
     "@tauri-apps/plugin-os": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.1",
     "@tauri-apps/plugin-sql": "^2.0.0",
+    "date-fns": "^4.1.0",
     "hast-util-find-and-replace": "^5.0.1",
     "hastscript": "^9.0.0",
     "svelte-exmarkdown": "^4.0.1",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
+    "@faker-js/faker": "^9.1.0",
     "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.7.3",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
