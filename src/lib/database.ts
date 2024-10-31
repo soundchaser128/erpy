@@ -234,7 +234,15 @@ export async function persistCharacters(characters: Character[]): Promise<Charac
 //   return data;
 // }
 
-export async function saveChat(chat: Chat): Promise<number> {
+export interface NewChat {
+  characterId: number;
+  uuid: string;
+  title: string;
+  data: ChatHistoryItem[];
+  archived: boolean;
+}
+
+export async function saveChat(chat: NewChat): Promise<number> {
   type Row = { id: number };
 
   const database = await getDatabase();

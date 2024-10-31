@@ -5,7 +5,7 @@
   import {
     type ChatHistoryItem,
     deleteChat,
-    saveChatHistory,
+    saveChat,
     setChatArchived,
     updateChatTitle,
   } from "$lib/database";
@@ -50,9 +50,9 @@
   let hideTabs = $page.url.searchParams.get("tabs") === "false";
 
   $: rowCount = Math.max(1, question.split("\n").length);
-  $: chatHistory = data.history.data;
+  $: chatHistory = data.chat.data;
   $: tokenCount = estimateTokens(chatHistory);
-  $: historyId = data.history.id === -1 ? null : data.history.id;
+  $: historyId = data.chat.id === -1 ? null : data.chat.id;
 
   export const snapshot = {
     capture: () => question,
@@ -134,7 +134,7 @@
         scrollToBottom();
       });
       once("completion_done", async () => {
-        await saveChatHistory(historyId, data.character.id, chatHistory);
+        await saveChat(data.chat);
         unlisten();
         status = "idle";
 
@@ -156,10 +156,10 @@
 
   async function createNewChat() {
     invariant(!!data.activeModel, "No active model selected");
-    const newChatId = await saveChatHistory(
-      null,
-      data.character.id,
-      getInitialChatHistory(data.character, data.config.userName, data.activeModel),
+    const newChatId = await saveChat(
+      {
+
+      }
     );
 
     goto(`/character/${data.character.id}/chat/${newChatId}`);
@@ -178,7 +178,7 @@
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
     entry.chosenAnswer = clamp(entry.chosenAnswer + delta, 0, entry.content.length - 1);
     chatHistory = [...chatHistory];
-    await saveChatHistory(historyId, data.character.id, chatHistory);
+    await saveChat(historyId, data.character.id, chatHistory);
   }
 
   async function deleteMessage(entry: ChatHistoryItem) {
@@ -192,7 +192,7 @@
 
     scrollToBottom();
 
-    await saveChatHistory(historyId, data.character.id, chatHistory);
+    await saveChat(historyId, data.character.id, chatHistory);
   }
 
   function isFirstAssistantMessage(index: number): boolean {

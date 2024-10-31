@@ -9,10 +9,10 @@ export async function load(event) {
   const character = await getCharacter(characterId);
   const allChats = await getChatsForCharacter(characterId);
 
-  let history = await getChatById(characterId, chatId);
-  if (history === undefined) {
+  let chat = await getChatById(characterId, chatId);
+  if (chat === undefined) {
     invariant(!!data.activeModel, "No active model");
-    history = {
+    chat = {
       id: -1,
       characterId: characterId,
       data: getInitialChatHistory(character, data.config.userName, data.activeModel),
@@ -20,11 +20,12 @@ export async function load(event) {
       archived: false,
       createdAt: new Date().toISOString(),
       uuid: crypto.randomUUID(),
+      updatedAt: new Date().toISOString(),
     };
   }
   return {
     character,
-    history,
+    chat,
     allChats,
   };
 }
