@@ -4,7 +4,7 @@ import { format, lightFormat } from "date-fns";
 
 const pluralRules = new Intl.PluralRules("en-US");
 
-export function formatTimestamp(timestamp: number, format: "long" | "short"= "short") {
+export function formatTimestamp(timestamp: number, format: "long" | "short" = "short") {
   const date = new Date(timestamp);
   return lightFormat(date, format === "long" ? "MMMM d, yyyy h:mm a" : "h:mm a");
 }

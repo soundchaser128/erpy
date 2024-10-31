@@ -5,8 +5,9 @@
   import {
     type ChatHistoryItem,
     deleteChat,
-    saveChat,
+    saveNewChat,
     setChatArchived,
+    updateChat,
     updateChatTitle,
   } from "$lib/database";
   import Markdown from "svelte-exmarkdown";
@@ -52,7 +53,7 @@
   $: rowCount = Math.max(1, question.split("\n").length);
   $: chatHistory = data.chat.data;
   $: tokenCount = estimateTokens(chatHistory);
-  $: historyId = data.chat.id === -1 ? null : data.chat.id;
+  $: historyId = data.chat.id;
 
   export const snapshot = {
     capture: () => question,
@@ -134,7 +135,7 @@
         scrollToBottom();
       });
       once("completion_done", async () => {
-        await saveChat(data.chat);
+        await updateChat(historyId, chatHistory);
         unlisten();
         status = "idle";
 
@@ -144,8 +145,7 @@
         }
 
         if (data.sync) {
-          // TODO
-          // await data.sync.storeChat(chatHistory);
+          await data.sync.storeChat(data.chat);
         }
       });
     } else if (status === "loading") {
@@ -156,11 +156,10 @@
 
   async function createNewChat() {
     invariant(!!data.activeModel, "No active model selected");
-    const newChatId = await saveChat(
-      {
-
-      }
-    );
+    const newChatId = await saveNewChat({
+      characterId: data.character.id,
+      data: getInitialChatHistory(data.character, data.config.userName, data.activeModel),
+    });
 
     goto(`/character/${data.character.id}/chat/${newChatId}`);
   }
@@ -178,7 +177,7 @@
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
     entry.chosenAnswer = clamp(entry.chosenAnswer + delta, 0, entry.content.length - 1);
     chatHistory = [...chatHistory];
-    await saveChat(historyId, data.character.id, chatHistory);
+    await updateChat(historyId, chatHistory);
   }
 
   async function deleteMessage(entry: ChatHistoryItem) {
@@ -192,7 +191,7 @@
 
     scrollToBottom();
 
-    await saveChat(historyId, data.character.id, chatHistory);
+    await updateChat(historyId, chatHistory);
   }
 
   function isFirstAssistantMessage(index: number): boolean {
@@ -208,7 +207,10 @@
 
   async function onForkChat(entry: ChatHistoryItem) {
     const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
-    const newChatId = await saveChatHistory(null, data.character.id, forkedHistory);
+    const newChatId = await saveNewChat({
+      characterId: data.character.id,
+      data: forkedHistory,
+    });
     goto(`/character/${data.character.id}/chat/${newChatId}`);
   }
 
@@ -221,7 +223,7 @@
     if (messageToEdit) {
       messageToEdit.content[messageToEdit.chosenAnswer].content = editText;
       chatHistory = [...chatHistory];
-      await saveChatHistory(historyId, data.character.id, chatHistory);
+      await updateChat(historyId, chatHistory);
       messageToEdit = null;
     }
   }
@@ -232,7 +234,7 @@
       "[Pause your roleplay. Generate a title for the content of this chat so far, Limit the summary to 8 words or less. Your response should include nothing but the title.]";
 
     const response = await invoke<string>("summarize", {
-      chat: data.history,
+      chat: data.chat,
       prompt: summarizePrompt,
     });
     newTitle = response;
@@ -242,7 +244,7 @@
   async function onDeleteChat() {
     const chatCount = data.allChats.length - 1;
 
-    await deleteChat(data.history.id);
+    await deleteChat(data.chat.id);
     closeDeleteModal();
     await invalidateAll();
 
@@ -263,7 +265,7 @@
   }
 
   async function onChangeTitle() {
-    await updateChatTitle(data.history.id, newTitle);
+    await updateChatTitle(data.chat.id, newTitle);
     await invalidateAll();
     closeTitleModal();
     newTitle = "";
@@ -306,7 +308,7 @@
   }
 
   async function archiveChat() {
-    await setChatArchived(data.history.id, true);
+    await setChatArchived(data.chat.id, true);
     await invalidateAll();
   }
 </script>
@@ -411,7 +413,7 @@
       {#each data.allChats as chat}
         <a
           href={`/character/${data.character.id}/chat/${chat.id}`}
-          class="tab {chat.id === data.history.id ? 'tab-active' : ''}"
+          class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
         >
           {truncate(chat.title, 40) ||
             formatTimestamp(chat.data[chat.data.length - 1].content[0].timestamp)}

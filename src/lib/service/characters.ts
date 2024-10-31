@@ -1,6 +1,7 @@
-import { addCharacters, persistCharacters, type Character } from "$lib/database";
+import { persistCharacters, type Character, type NewCharacter } from "$lib/database";
 import type { CharacterPayload } from "$lib/types";
 import { invoke } from "@tauri-apps/api/core";
+import { appDataDir, join } from "@tauri-apps/api/path";
 import { BaseDirectory, mkdir, writeFile } from "@tauri-apps/plugin-fs";
 
 async function createDirectory(name: string, baseDir: BaseDirectory) {
@@ -24,10 +25,24 @@ export async function createCharactersFromPngs(files: FileList): Promise<Charact
       });
     }),
   );
+  const directory = await appDataDir();
 
   await createDirectory("avatars", BaseDirectory.AppData);
   const characterPayloads: CharacterPayload[] = await invoke("upload_character_pngs", { pngs });
-  const characters = await persistCharacters(characterPayloads);
+
+  const newCharacters: NewCharacter[] = [];
+  for (const character of characterPayloads) {
+    const uuid = crypto.randomUUID();
+    const path = await join(directory, "avatars", `${character.name} - ${uuid}.png`);
+    const avatarUrl = "asset://" + path;
+    newCharacters.push({
+      payload: { ...character, avatar: avatarUrl },
+      url: null,
+      uuid,
+    });
+  }
+
+  const characters = await persistCharacters(newCharacters);
 
   let i = 0;
   for (const character of characters) {
@@ -53,9 +68,10 @@ export async function createCharacterFromUrls(urls: string[]): Promise<Character
       invoke<CharacterPayload>("fetch_character", { characterUrl: url }).then((result) => ({
         url,
         payload: result,
+        uuid: crypto.randomUUID(),
       })),
     ),
   );
 
-  return await addCharacters(characters);
+  return await persistCharacters(characters);
 }

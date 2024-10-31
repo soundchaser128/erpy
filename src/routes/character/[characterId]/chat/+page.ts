@@ -1,4 +1,4 @@
-import { getCharacter, getChatsForCharacter, saveChatHistory } from "$lib/database";
+import { getCharacter, getChatsForCharacter, saveNewChat } from "$lib/database";
 import { getInitialChatHistory } from "$lib/helpers";
 import { redirect } from "@sveltejs/kit";
 import invariant from "tiny-invariant";
@@ -11,11 +11,10 @@ export const load = async (event) => {
     invariant(!!data.activeModel, "No active model");
 
     const character = await getCharacter(characterId);
-    const id = await saveChatHistory(
-      null,
+    const id = await saveNewChat({
       characterId,
-      getInitialChatHistory(character, data.config.userName, data.activeModel!),
-    );
+      data: getInitialChatHistory(character, data.config.userName, data.activeModel!),
+    });
     redirect(301, `/character/${characterId}/chat/${id}`);
   } else {
     redirect(301, `/character/${characterId}/chat/${chats[0].id}`);

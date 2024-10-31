@@ -88,22 +88,22 @@ export async function getCharacter(id: number): Promise<Character> {
   };
 }
 
-interface Row {
-  id: number;
-  url: string;
-  uuid: string;
-  payload: string;
-  chat_id: number | null;
-  chat_payload: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface CharacterWithChat extends Character {
   chats: { id: number; data: ChatHistoryItem[] }[];
 }
 
 export async function getAllCharacters(): Promise<CharacterWithChat[]> {
+  type Row = {
+    id: number;
+    url: string;
+    uuid: string;
+    payload: string;
+    chat_id: number | null;
+    chat_payload: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+
   const database = await getDatabase();
   const rows = await database.select<Row[]>(
     `SELECT c.id, c.created_at, c.updated_at, c.url, c.payload, c.uuid, h.id AS chat_id, h.payload AS chat_payload
@@ -140,24 +140,29 @@ export async function getAllCharacters(): Promise<CharacterWithChat[]> {
   return characters;
 }
 
-export async function persistCharacters(characters: Character[]): Promise<Character[]> {
+export interface NewCharacter {
+  url: string | null;
+  payload: CharacterPayload;
+  uuid: string;
+}
+
+export async function persistCharacters(characters: NewCharacter[]): Promise<Character[]> {
   type Row = { id: number; created_at: string };
 
   const database = await getDatabase();
   const createdCharacters: Character[] = [];
 
   for (const character of characters) {
-    const uuid = crypto.randomUUID();
     const row = await database.select<Row[]>(
       "INSERT INTO characters (url, payload, uuid) VALUES ($1, $2, $3) RETURNING id, created_at",
-      [character.url, JSON.stringify(character.payload), uuid],
+      [character.url, JSON.stringify(character.payload), character.uuid],
     );
 
     createdCharacters.push({
       id: row[0].id,
       createdAt: row[0].created_at,
       updatedAt: row[0].created_at,
-      uuid: uuid,
+      uuid: character.uuid,
       payload: character.payload,
       chatCount: 0,
     });
@@ -165,96 +170,32 @@ export async function persistCharacters(characters: Character[]): Promise<Charac
 
   return createdCharacters;
 }
-
-// export interface CharacterPayloadWithUrl {
-//   url: string;
-//   payload: CharacterPayload;
-// }
-
-// export async function addCharacters(characters: CharacterPayloadWithUrl[]): Promise<Character[]> {
-//   type Row = { id: number; created_at: string };
-
-//   const database = await getDatabase();
-
-//   const creactedCharacters: Character[] = [];
-//   for (const { url, payload } of characters) {
-//     const uuid = crypto.randomUUID();
-//     const row: Row[] = await database.select(
-//       "INSERT INTO characters (url, payload, uuid) VALUES ($1, $2, $3) RETURNING id, created_at",
-//       [url, JSON.stringify(payload), uuid],
-//     );
-
-//     creactedCharacters.push({
-//       id: row[0].id,
-//       createdAt: row[0].created_at,
-//       updatedAt: row[0].created_at,
-//       uuid: uuid,
-//       payload: payload,
-//       chatCount: 0,
-//     });
-//   }
-
-//   return creactedCharacters;
-// }
-
-// export async function persistCharacters(characters: CharacterPayload[]) {
-//   type Row = { created_at: string; id: number };
-
-//   const database = await getDatabase();
-//   const directory = await appDataDir();
-
-//   const data: Character[] = [];
-//   // TODO get rid of unnecessary insert by just using the UUID as the filename
-//   for (const character of characters) {
-//     const uuid = crypto.randomUUID();
-//     const row: Row[] = await database.select(
-//       "INSERT INTO characters (payload, uuid) VALUES ($1, $2) RETURNING id, created_at",
-//       [JSON.stringify(character), uuid],
-//     );
-//     const id = row[0].id;
-//     const path = await join(directory, "avatars", `${character.name} - ${id}.png`);
-//     const avatarUrl = "asset://" + path;
-//     character.avatar = avatarUrl;
-//     // update payload
-//     await database.execute("UPDATE characters SET payload = $1 WHERE id = $2", [
-//       JSON.stringify(character),
-//       id,
-//     ]);
-
-//     data.push({
-//       id,
-//       createdAt: row[0].created_at,
-//       updatedAt: row[0].created_at,
-//       payload: character,
-//       chatCount: 0,
-//       uuid,
-//     });
-//   }
-
-//   return data;
-// }
-
 export interface NewChat {
   characterId: number;
-  uuid: string;
-  title: string;
   data: ChatHistoryItem[];
-  archived: boolean;
 }
 
-export async function saveChat(chat: NewChat): Promise<number> {
+export async function saveNewChat(chat: NewChat): Promise<number> {
   type Row = { id: number };
 
   const database = await getDatabase();
+  const uuid = crypto.randomUUID();
   const row = await database.select<Row[]>(
     `INSERT INTO chats (character_id, uuid, payload, title, archived)
-     VALUES ($1, $2, $3, $4, $5) 
-     ON CONFLICT (uuid) DO UPDATE SET payload = $3, title = $4, archived = $5
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id`,
-    [chat.characterId, chat.uuid, JSON.stringify(chat.data), chat.title, chat.archived ? 1 : 0],
+    [chat.characterId, uuid, JSON.stringify(chat.data), null, 0],
   );
 
   return row[0].id;
+}
+
+export async function updateChat(id: number, history: ChatHistoryItem[]) {
+  const database = await getDatabase();
+  await database.execute("UPDATE chats SET payload = $1 WHERE id = $2", [
+    JSON.stringify(history),
+    id,
+  ]);
 }
 
 export async function getAllChats(): Promise<Chat[]> {

@@ -1,13 +1,5 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import {
-  getAllCharacters,
-  getAllChats,
-  persistCharacters,
-  saveChat,
-  type Character,
-  type Chat,
-} from "$lib/database";
-import { invalidateAll } from "$app/navigation";
+import { getAllCharacters, getAllChats, type Character, type Chat } from "$lib/database";
 
 const headers = (apiKey: string) => ({
   Authorization: `Bearer ${apiKey}`,
