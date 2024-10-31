@@ -1,5 +1,13 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import { getAllCharacters, getAllChats, type Character, type Chat } from "$lib/database";
+import {
+  getAllCharacters,
+  getAllChats,
+  persistCharacters,
+  saveChat,
+  type Character,
+  type Chat,
+} from "$lib/database";
+import { invalidateAll } from "$app/navigation";
 
 const headers = (apiKey: string) => ({
   Authorization: `Bearer ${apiKey}`,
@@ -11,6 +19,11 @@ export async function healthCheck(baseUrl: string, apiKey: string): Promise<bool
     .then((res) => (res.ok ? res.json() : Promise.resolve({ status: "error" })))
     .then((res) => res.status === "ok")
     .catch(() => false);
+}
+
+export interface SyncAllPayload {
+  characters: Character[];
+  chats: Chat[];
 }
 
 class SyncClient {
@@ -31,7 +44,7 @@ class SyncClient {
     this.#apiKey = apiKey;
 
     if (this.#syncInterval) {
-      this.startSync();
+      // this.startSync();
     }
   }
 
@@ -66,6 +79,15 @@ class SyncClient {
     if (!response.ok) {
       const text = await response.text();
       throw new Error(`Request failed with status code ${response.status}: ${text}`);
+    } else {
+      const syncData: SyncAllPayload = await response.json();
+      // TODO conflict resolution and batch insert
+      // for (const chat of syncData.chats) {
+      //   await saveChat(chat);
+      // }
+      // await persistCharacters(payload.characters.map(c ));
+
+      // await invalidateAll();
     }
   }
 

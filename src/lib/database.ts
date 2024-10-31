@@ -1,3 +1,5 @@
+// TODO refactor and write tests
+
 import Database from "@tauri-apps/plugin-sql";
 import type { CharacterPayload, Config, MessageRole } from "./types";
 import { platform } from "@tauri-apps/plugin-os";
@@ -201,6 +203,14 @@ export async function persistCharacters(characters: CharacterPayload[]) {
   }
 
   return data;
+}
+
+export async function saveChat(chat: Chat) {
+  const database = await getDatabase();
+  await database.execute(
+    "INSERT INTO chats (character_id, payload, uuid) VALUES ($1, $2, $3) ON CONFLICT (uuid) DO UPDATE SET character_id = $1, payload = $2 WHERE chats.uuid = $3",
+    [chat.characterId, JSON.stringify(chat.data), chat.uuid],
+  );
 }
 
 export async function saveChatHistory(

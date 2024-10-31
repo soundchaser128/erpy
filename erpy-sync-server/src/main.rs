@@ -139,7 +139,7 @@ async fn main() -> anyhow::Result<()> {
     let db_url = std::env::var("DATABASE_URL")?;
     let db = PgPool::connect(&db_url).await?;
 
-    sqlx::migrate!("./migrations").run(&db).await?;
+    // sqlx::migrate!("./migrations").run(&db).await?;
 
     let router = Router::new()
         .route("/api/health", get(application_health))

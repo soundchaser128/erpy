@@ -1,6 +1,7 @@
 use anyhow::Result;
 use erpy_types::{Character, Chat};
 use sqlx::PgPool;
+use tracing::info;
 use uuid::Uuid;
 
 use crate::SyncAllPayload;
@@ -133,15 +134,26 @@ impl Database {
         client_id: &str,
     ) -> Result<SyncAllPayload> {
         for character in characters {
+            info!(
+                "Persisting character '{}' (id = {}",
+                character.payload.name, character.id
+            );
             self.persist_character(character, client_id).await?;
         }
 
         for chat in chats {
+            info!("Persisting chat {}", chat.uuid);
             self.persist_chat(chat, client_id).await?;
         }
 
         let all_characters = self.fetch_characters().await?;
         let all_chats = self.fetch_chats().await?;
+
+        info!(
+            "returning {} characters and {} chats",
+            all_characters.len(),
+            all_chats.len()
+        );
 
         Ok(SyncAllPayload {
             characters: all_characters,
