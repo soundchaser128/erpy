@@ -34,6 +34,7 @@
   import { page } from "$app/stores";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { remarkHighlightQuotes } from "$lib/remark.js";
+  import ResizingTextArea from "$lib/components/ResizingTextArea.svelte";
 
   export let data;
 
@@ -496,12 +497,12 @@
           >
             {#if messageToEdit === entry}
               <form class="flex w-full grow flex-col" on:submit={onSubmitEdit}>
-                <textarea
+                <ResizingTextArea
                   class="w-full whitespace-pre-wrap bg-transparent text-white"
                   bind:value={editText}
                   rows={12}
                   cols={160}
-                ></textarea>
+                />
                 <div class="join mt-2 flex self-end">
                   <button on:click={onCancelEdit} type="button" class="btn join-item btn-sm">
                     <Fa icon={faXmark} /> Cancel
@@ -531,14 +532,14 @@
   </section>
   <form on:submit|preventDefault={() => onSubmit()} class="flex shrink items-center gap-2 pb-2">
     <!-- svelte-ignore a11y-autofocus -->
-    <textarea
+    <ResizingTextArea
       bind:value={question}
       class="textarea textarea-primary w-full"
       placeholder="Type your message..."
       autofocus
-      rows={rowCount}
-      on:keydown={handleKeyDown}
-    ></textarea>
+      onkeydown={handleKeyDown}
+      rows={1}
+    />
     <button
       disabled={!data.activeModel}
       class="btn {status === 'loading' ? 'btn-error' : 'btn-success'}"
