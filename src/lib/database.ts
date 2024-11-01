@@ -20,7 +20,7 @@ export interface DbCharacter {
 export interface Character {
   id: number;
   uuid: string;
-  url?: string;
+  url: string | null;
   payload: CharacterPayload;
   chatCount: number;
   createdAt: string;
@@ -165,6 +165,7 @@ export async function persistCharacters(characters: NewCharacter[]): Promise<Cha
       uuid: character.uuid,
       payload: character.payload,
       chatCount: 0,
+      url: character.url,
     });
   }
 

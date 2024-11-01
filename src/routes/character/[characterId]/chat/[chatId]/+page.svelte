@@ -109,6 +109,7 @@
             chosenAnswer: 0,
           };
 
+      scrollToBottom();
       if (!addToExisting) {
         chatHistory = [...chatHistory, answer];
       } else {
@@ -241,6 +242,7 @@
     summarizing = false;
   }
 
+  // FIXME redirects to a 404
   async function onDeleteChat() {
     const chatCount = data.allChats.length - 1;
 
@@ -251,7 +253,9 @@
     if (chatCount === 0) {
       goto("/");
     } else {
-      const chatId = data.allChats[0].id;
+      const newChatIds = data.allChats.filter((chat) => chat.id !== data.chat.id);
+      const chatId = newChatIds[0].id;
+
       goto(`/character/${data.character.id}/chat/${chatId}`);
     }
   }

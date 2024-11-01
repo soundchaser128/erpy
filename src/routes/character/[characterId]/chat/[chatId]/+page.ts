@@ -9,7 +9,7 @@ export async function load(event) {
 
   const chat = await getChatById(characterId, chatId);
   if (chat === undefined) {
-    error(404, "Chat not found");
+    error(404, `Chat with ID ${chatId} not found`);
   } else {
     return {
       character,
