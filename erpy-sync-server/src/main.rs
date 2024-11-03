@@ -1,3 +1,4 @@
+use anyhow::Context;
 use axum::{
     body::Body,
     extract::{Query, State},
@@ -135,8 +136,8 @@ async fn main() -> anyhow::Result<()> {
         .init();
     info!("starting up erpy-sync-server");
 
-    let api_key = std::env::var("ERPY_API_KEY")?;
-    let db_url = std::env::var("DATABASE_URL")?;
+    let api_key = std::env::var("ERPY_API_KEY").context("failed to read ERPY_API_KEY")?;
+    let db_url = std::env::var("DATABASE_URL").context("failed to read DATABASE_URL")?;
     let db = PgPool::connect(&db_url).await?;
 
     // sqlx::migrate!("./migrations").run(&db).await?;

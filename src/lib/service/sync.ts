@@ -1,5 +1,5 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import { getAllCharacters, getAllChats, type Character, type Chat } from "$lib/database";
+import { characterExists, getAllCharacters, getAllChats, persistCharacters, type Character, type Chat } from "$lib/database";
 
 const headers = (apiKey: string) => ({
   Authorization: `Bearer ${apiKey}`,
@@ -73,6 +73,14 @@ class SyncClient {
       throw new Error(`Request failed with status code ${response.status}: ${text}`);
     } else {
       const syncData: SyncAllPayload = await response.json();
+      for (const character of syncData.characters) {
+        const exists = await characterExists(character.payload.name, character.uuid, character.id);
+        if (!exists) {
+          await persistCharacters([character]);
+        }
+      }
+
+
       // TODO conflict resolution and batch insert
       // for (const chat of syncData.chats) {
       //   await saveChat(chat);

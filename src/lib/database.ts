@@ -146,6 +146,15 @@ export interface NewCharacter {
   uuid: string;
 }
 
+export async function characterExists(name: string, uuid: string, id: number): Promise<boolean> {
+  const database = await getDatabase();
+  const rows = await database.select<{uuid: string}[]>(
+    "SELECT uuid FROM characters WHERE uuid = $1 OR (payload->>'name') = $2 OR id != $3",
+    [uuid, name, id],
+  );
+  return rows.length > 0;
+}
+
 export async function persistCharacters(characters: NewCharacter[]): Promise<Character[]> {
   type Row = { id: number; created_at: string };
 
