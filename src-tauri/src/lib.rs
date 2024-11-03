@@ -10,7 +10,6 @@ use erpy_types::Chat;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
-use tauri_plugin_sql::{Migration, MigrationKind};
 use tokio::sync::{oneshot, Mutex};
 use tokio_stream::StreamExt;
 
@@ -252,13 +251,6 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let migrations = vec![Migration {
-        version: 1,
-        description: "create_initial_tables",
-        sql: include_str!("../migrations/1_init.sql"),
-        kind: MigrationKind::Up,
-    }];
-
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
         .setup(|app| {
@@ -275,11 +267,6 @@ pub fn run() {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(LevelFilter::Info)
-                .build(),
-        )
-        .plugin(
-            tauri_plugin_sql::Builder::default()
-                .add_migrations("sqlite:erpy.sqlite3", migrations)
                 .build(),
         )
         .invoke_handler(tauri::generate_handler![

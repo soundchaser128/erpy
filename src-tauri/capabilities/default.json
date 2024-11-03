@@ -8,8 +8,6 @@
   "permissions": [
     "core:default",
     "shell:allow-open",
-    "sql:default",
-    "sql:allow-execute",
     "notification:default",
     "os:default",
     "fs:default",

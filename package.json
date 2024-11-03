@@ -27,7 +27,6 @@
     "@tauri-apps/plugin-notification": "^2.0.0",
     "@tauri-apps/plugin-os": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.1",
-    "@tauri-apps/plugin-sql": "^2.0.0",
     "autosize": "^6.0.1",
     "date-fns": "^4.1.0",
     "hast-util-find-and-replace": "^5.0.1",
