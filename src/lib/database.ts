@@ -103,8 +103,10 @@ export function getDefaultConfig(): Config {
     notifications: {
       newMessage: false,
     },
-    temperature: 0.8,
-    firstTimeSetupCompleted: false,
+    llm: {
+      temperature: 0.8,
+      maxTokens: 250,
+    },
     sync: {},
   } satisfies Config;
 }

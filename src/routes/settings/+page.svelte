@@ -63,7 +63,7 @@
         min="0"
         max="2"
         step="0.1"
-        bind:value={data.config.temperature}
+        bind:value={data.config.llm.temperature}
       />
 
       <div class="label">
@@ -73,6 +73,28 @@
         </span>
       </div>
     </div>
+
+    <div class="form-control">
+      <label class="label" for="temperature">
+        <span class="label-text">Answer length</span>
+      </label>
+
+      <input
+        id="temperature"
+        type="number"
+        class="input input-primary"
+        min="1"
+        max="2048"
+        bind:value={data.config.llm.maxTokens}
+      />
+
+      <div class="label">
+        <span class="label-text-alt">
+          Maximum number of tokens in the generated answer. The default is 250, the maximum is 2048.
+        </span>
+      </div>
+    </div>
+
 
     <h2 class="text-2xl font-bold">Sync settings</h2>
     <div class="form-control">

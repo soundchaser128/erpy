@@ -46,12 +46,7 @@ export interface SyncSettings {
   apiKey?: string;
 }
 
-export interface Config {
-  userName: string;
-  notifications: NotificationsConfig;
-  firstTimeSetupCompleted: boolean;
-
-  // LLM settings
+export interface LlmSettings {
   maxTokens?: number;
   temperature?: number;
   frequencyPenalty?: number;
@@ -59,8 +54,13 @@ export interface Config {
   repeatPenalty?: number;
   topP?: number;
   seed?: number;
+}
 
+export interface Config {
+  userName: string;
+  notifications: NotificationsConfig;
   sync: SyncSettings;
+  llm: LlmSettings;
 }
 
 export interface NotificationsConfig {
