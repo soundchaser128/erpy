@@ -149,9 +149,9 @@
 />
 {#if !loading}
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-    {#each filtered as character (character.id)}
+    {#each filtered as character (character.uuid)}
       <a
-        href={isDisabled(character.chats.length) ? undefined : `/character/${character.id}/chat`}
+        href={isDisabled(character.chats.length) ? undefined : `/character/${character.uuid}/chat`}
         class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >

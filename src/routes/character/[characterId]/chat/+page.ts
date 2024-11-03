@@ -5,7 +5,7 @@ import invariant from "tiny-invariant";
 
 export const load = async (event) => {
   const data = await event.parent();
-  const characterId = parseInt(event.params.characterId, 10);
+  const characterId = event.params.characterId;
   const chats = await getChatsForCharacter(characterId);
   if (chats.length === 0) {
     invariant(!!data.activeModel, "No active model");
@@ -17,6 +17,6 @@ export const load = async (event) => {
     });
     redirect(301, `/character/${characterId}/chat/${id}`);
   } else {
-    redirect(301, `/character/${characterId}/chat/${chats[0].id}`);
+    redirect(301, `/character/${characterId}/chat/${chats[0].uuid}`);
   }
 };

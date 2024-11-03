@@ -5,9 +5,7 @@ import { sqliteDateTime } from "$lib/helpers";
 
 export function randomCharacter(): Character {
   return {
-    chatCount: faker.number.int({ min: 0, max: 10 }),
     createdAt: sqliteDateTime(faker.date.recent()),
-    id: faker.number.int({ min: 1 }),
     updatedAt: sqliteDateTime(new Date()),
     uuid: crypto.randomUUID(),
     payload: {
@@ -20,6 +18,7 @@ export function randomCharacter(): Character {
       avatar: faker.image.avatar(),
     },
     url: faker.internet.url(),
+    chats: [randomChat(), randomChat(), randomChat()],
   };
 }
 
@@ -44,14 +43,13 @@ export function randomChatContent(): ChatHistoryItem[] {
 
 export function randomChat(): Chat {
   return {
-    characterId: faker.number.int({ min: 1 }),
-    createdAt: sqliteDateTime(faker.date.recent()),
-    id: faker.number.int({ min: 1 }),
-    updatedAt: sqliteDateTime(new Date()),
     uuid: crypto.randomUUID(),
+    createdAt: sqliteDateTime(faker.date.recent()),
+    updatedAt: sqliteDateTime(new Date()),
     archived: false,
     title: faker.lorem.sentence(),
     data: randomChatContent(),
+    characterId: crypto.randomUUID(),
   };
 }
 

@@ -54,7 +54,7 @@
   $: rowCount = Math.max(1, question.split("\n").length);
   $: chatHistory = data.chat.data;
   $: tokenCount = estimateTokens(chatHistory);
-  $: historyId = data.chat.id;
+  $: historyId = data.chat.uuid;
 
   export const snapshot = {
     capture: () => question,
@@ -155,11 +155,11 @@
   async function createNewChat() {
     invariant(!!data.activeModel, "No active model selected");
     const newChatId = await saveNewChat({
-      characterId: data.character.id,
+      characterId: data.character.uuid,
       data: getInitialChatHistory(data.character, data.config.userName, data.activeModel),
     });
 
-    goto(`/character/${data.character.id}/chat/${newChatId}`);
+    goto(`/character/${data.character.uuid}/chat/${newChatId}`);
   }
 
   function getContent(entry: ChatHistoryItem): string {
@@ -206,10 +206,10 @@
   async function onForkChat(entry: ChatHistoryItem) {
     const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
     const newChatId = await saveNewChat({
-      characterId: data.character.id,
+      characterId: data.character.uuid,
       data: forkedHistory,
     });
-    goto(`/character/${data.character.id}/chat/${newChatId}`);
+    goto(`/character/${data.character.uuid}/chat/${newChatId}`);
   }
 
   function onCancelEdit() {
@@ -243,17 +243,17 @@
   async function onDeleteChat() {
     const chatCount = data.allChats.length - 1;
 
-    await deleteChat(data.chat.id);
+    await deleteChat(data.chat.uuid);
     closeDeleteModal();
     await invalidateAll();
 
     if (chatCount === 0) {
       goto("/");
     } else {
-      const newChatIds = data.allChats.filter((chat) => chat.id !== data.chat.id);
-      const chatId = newChatIds[0].id;
+      const newChatIds = data.allChats.filter((chat) => chat.uuid !== data.chat.uuid);
+      const chatId = newChatIds[0].uuid;
 
-      goto(`/character/${data.character.id}/chat/${chatId}`);
+      goto(`/character/${data.character.uuid}/chat/${chatId}`);
     }
   }
 
@@ -266,7 +266,7 @@
   }
 
   async function onChangeTitle() {
-    await updateChatTitle(data.chat.id, newTitle);
+    await updateChatTitle(data.chat.uuid, newTitle);
     await invalidateAll();
     closeTitleModal();
     newTitle = "";
@@ -309,7 +309,7 @@
   }
 
   async function archiveChat() {
-    await setChatArchived(data.chat.id, true);
+    await setChatArchived(data.chat.uuid, true);
     await invalidateAll();
   }
 </script>
@@ -413,8 +413,8 @@
     <div role="tablist" class="tabs tabs-bordered">
       {#each data.allChats as chat}
         <a
-          href={`/character/${data.character.id}/chat/${chat.id}`}
-          class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
+          href={`/character/${data.character.uuid}/chat/${chat.uuid}`}
+          class="tab {chat.uuid === data.chat.uuid ? 'tab-active' : ''}"
         >
           {truncate(chat.title, 40) ||
             formatTimestamp(chat.data[chat.data.length - 1].content[0].timestamp)}

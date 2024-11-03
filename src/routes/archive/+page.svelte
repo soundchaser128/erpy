@@ -10,11 +10,11 @@
   export let data: PageData;
 
   function findCharacterName(chat: Chat): string {
-    return data.characters.find((c) => c.id === chat.characterId)?.payload.name || "Unknown";
+    return data.characters.find((c) => c.uuid === chat.characterId)?.payload.name || "Unknown";
   }
 
   async function restoreChat(chat: Chat) {
-    await setChatArchived(chat.id, false);
+    await setChatArchived(chat.uuid, false);
     await invalidateAll();
   }
 </script>
@@ -59,7 +59,7 @@
               Restore</button
             >
             <a
-              href="/character/{chat.characterId}/chat/{chat.id}?tabs=false"
+              href="/character/{chat.characterId}/chat/{chat.uuid}?tabs=false"
               class="btn btn-primary btn-sm"
             >
               <Fa icon={faCaretRight} /></a

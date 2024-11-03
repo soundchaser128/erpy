@@ -47,8 +47,6 @@ export interface SyncSettings {
 }
 
 export interface Config {
-  apiUrl: string;
-  apiKey?: string;
   userName: string;
   notifications: NotificationsConfig;
   firstTimeSetupCompleted: boolean;
