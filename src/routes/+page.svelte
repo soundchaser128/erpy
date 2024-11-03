@@ -2,10 +2,10 @@
   import Fa from "svelte-fa";
   import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
-  import { getAvatar, pluralize } from "$lib/helpers.js";
+  import { getAvatar, pluralize } from "$lib/helpers";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import ExternalLink from "$lib/components/ExternalLink.svelte";
-  import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters.js";
+  import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters";
 
   export let data;
   let addModal: HTMLDialogElement;
@@ -35,12 +35,6 @@
     const newCharacters = await createCharacterFromUrls(urls);
     await invalidateAll();
 
-    if (data.sync) {
-      for (const character of newCharacters) {
-        await data.sync.storeCharacter(character);
-      }
-    }
-
     files = undefined;
     loading = false;
   }
@@ -53,12 +47,6 @@
 
     const newCharacters = await createCharactersFromPngs(files);
     await invalidateAll();
-
-    if (data.sync) {
-      for (const character of newCharacters) {
-        await data.sync.storeCharacter(character);
-      }
-    }
 
     textInput = "";
     loading = false;

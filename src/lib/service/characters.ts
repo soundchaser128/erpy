@@ -7,6 +7,7 @@ import { BaseDirectory, mkdir, writeFile } from "@tauri-apps/plugin-fs";
 async function createDirectory(name: string, baseDir: BaseDirectory) {
   try {
     await mkdir(name, { baseDir });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (error) {
     // ignored
   }

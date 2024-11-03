@@ -145,10 +145,6 @@
           const messageContent = answer.content[answer.chosenAnswer].content;
           await createNotification("erpy", messageContent, false);
         }
-
-        if (data.sync) {
-          await data.sync.storeChat(data.chat);
-        }
       });
     } else if (status === "loading") {
       await emit("cancel");
