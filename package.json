@@ -16,6 +16,9 @@
   },
   "license": "MIT",
   "dependencies": {
+    "@automerge/automerge-repo": ">=2.0.0-alpha.13",
+    "@automerge/automerge-repo-network-websocket": ">=2.0.0-alpha.13",
+    "@automerge/automerge-repo-storage-indexeddb": ">=2.0.0-alpha.13",
     "@fontsource-variable/outfit": "^5.1.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
@@ -61,6 +64,7 @@
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.12.2",
     "vite": "^5.4.10",
+    "vite-plugin-wasm": "^3.3.0",
     "vitest": "^2.1.4"
   }
 }
