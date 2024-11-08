@@ -1,5 +1,5 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import type { Character, ChatHistoryItem } from "./database";
+import type { Character, ChatHistoryItem } from "./storage/storage";
 import { format, lightFormat } from "date-fns";
 
 const pluralRules = new Intl.PluralRules("en-US");

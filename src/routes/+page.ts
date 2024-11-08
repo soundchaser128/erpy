@@ -1,13 +1,6 @@
-import { getAllCharacters } from "$lib/database.js";
-
-export interface DbCharacter {
-  id: number;
-  url: string;
-  payload: string;
-}
-
-export const load = async () => {
-  const characters = await getAllCharacters();
+export const load = async (event) => {
+  const { storage } = await event.parent();
+  const characters = await storage.getAllCharacters();
 
   return {
     characters,

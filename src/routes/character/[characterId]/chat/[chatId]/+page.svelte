@@ -2,14 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { listen, once, emit } from "@tauri-apps/api/event";
   import { toApiRequest, type CompletionResponse } from "$lib/types";
-  import {
-    type ChatHistoryItem,
-    deleteChat,
-    saveNewChat,
-    setChatArchived,
-    updateChat,
-    updateChatTitle,
-  } from "$lib/database";
+  import { type ChatHistoryItem } from "$lib/storage/storage";
   import Markdown from "svelte-exmarkdown";
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
@@ -137,7 +130,7 @@
         scrollToBottom();
       });
       once("completion_done", async () => {
-        await updateChat(historyId, chatHistory);
+        await data.storage.updateChat(historyId, chatHistory);
         unlisten();
         status = "idle";
 
@@ -154,7 +147,7 @@
 
   async function createNewChat() {
     invariant(!!data.activeModel, "No active model selected");
-    const newChatId = await saveNewChat({
+    const newChatId = await data.storage.saveNewChat({
       characterId: data.character.uuid,
       data: getInitialChatHistory(data.character, data.config.userName, data.activeModel),
     });
@@ -175,7 +168,7 @@
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
     entry.chosenAnswer = clamp(entry.chosenAnswer + delta, 0, entry.content.length - 1);
     chatHistory = [...chatHistory];
-    await updateChat(historyId, chatHistory);
+    await data.storage.updateChat(historyId, chatHistory);
   }
 
   async function deleteMessage(entry: ChatHistoryItem) {
@@ -189,7 +182,7 @@
 
     scrollToBottom();
 
-    await updateChat(historyId, chatHistory);
+    await data.storage.updateChat(historyId, chatHistory);
   }
 
   function isFirstAssistantMessage(index: number): boolean {
@@ -205,7 +198,7 @@
 
   async function onForkChat(entry: ChatHistoryItem) {
     const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
-    const newChatId = await saveNewChat({
+    const newChatId = await data.storage.saveNewChat({
       characterId: data.character.uuid,
       data: forkedHistory,
     });
@@ -221,7 +214,7 @@
     if (messageToEdit) {
       messageToEdit.content[messageToEdit.chosenAnswer].content = editText;
       chatHistory = [...chatHistory];
-      await updateChat(historyId, chatHistory);
+      await data.storage.updateChat(historyId, chatHistory);
       messageToEdit = null;
     }
   }
@@ -243,7 +236,7 @@
   async function onDeleteChat() {
     const chatCount = data.allChats.length - 1;
 
-    await deleteChat(data.chat.uuid);
+    await data.storage.deleteChat(data.chat.uuid);
     closeDeleteModal();
     await invalidateAll();
 
@@ -266,7 +259,7 @@
   }
 
   async function onChangeTitle() {
-    await updateChatTitle(data.chat.uuid, newTitle);
+    await data.storage.updateChatTitle(data.chat.uuid, newTitle);
     await invalidateAll();
     closeTitleModal();
     newTitle = "";
@@ -309,7 +302,7 @@
   }
 
   async function archiveChat() {
-    await setChatArchived(data.chat.uuid, true);
+    await data.storage.setChatArchived(data.chat.uuid, true);
     await invalidateAll();
   }
 </script>

@@ -1,11 +1,11 @@
 <script lang="ts">
   import TopMenu from "$lib/components/TopMenu.svelte";
-  import { setChatArchived, type Chat } from "$lib/database";
   import { formatTimestamp } from "$lib/helpers";
   import Fa from "svelte-fa";
   import type { PageData } from "./$types";
   import { faCaretRight, faRotateLeft } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
+  import type { Chat } from "$lib/storage/storage";
 
   export let data: PageData;
 
@@ -14,7 +14,7 @@
   }
 
   async function restoreChat(chat: Chat) {
-    await setChatArchived(chat.uuid, false);
+    await data.storage.setChatArchived(chat.uuid, false);
     await invalidateAll();
   }
 </script>
