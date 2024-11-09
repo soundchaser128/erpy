@@ -1,14 +1,13 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
-  import { saveConfig } from "$lib/database";
   import { faSave } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
 
   export let data;
 
   const onSubmit = async () => {
-    await saveConfig(data.config);
+    await data.storage.saveConfig(data.config);
     await invalidateAll();
   };
 </script>
@@ -94,7 +93,6 @@
         </span>
       </div>
     </div>
-
 
     <h2 class="text-2xl font-bold">Sync settings</h2>
     <div class="form-control">
