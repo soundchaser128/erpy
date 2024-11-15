@@ -1,29 +1,19 @@
-import { Repo } from "@automerge/automerge-repo";
-import { BrowserWebSocketClientAdapter } from "@automerge/automerge-repo-network-websocket";
-import { IndexedDBStorageAdapter } from "@automerge/automerge-repo-storage-indexeddb";
-import type {
-  Character,
-  Chat,
-  ChatHistoryItem,
-  NewCharacter,
-  NewChat,
-  Storage,
-} from "./storage/storage";
-import type { Config } from "./types";
+import type { Character, Chat, ChatHistoryItem, NewCharacter, NewChat, Storage } from "./storage";
+import type { Config } from "../types";
+import * as S from "@effect/schema/Schema";
+import { id, table } from "@evolu/common";
 
-export class AutoMergeStorage implements Storage {
-  // eslint-disable-next-line no-unused-private-class-members
-  #repo: Repo;
+const CharacterId = id("Character");
+type CharacterId = typeof CharacterId.Type;
 
-  constructor() {
-    const repo = new Repo({
-      network: [new BrowserWebSocketClientAdapter("ws://localhost:3030")],
-      storage: new IndexedDBStorageAdapter(),
-    });
+const CharactersTable = table({
+  id: CharacterId,
+  url: S.NonEmptyString,
+  createdAt: S.NonEmptyString,
+  updatedAt: S.NonEmptyString,
+});
 
-    this.#repo = repo;
-  }
-
+export class EvoluStorage implements Storage {
   getCharacter(uuid: string): Promise<Character> {
     throw new Error("Method not implemented.");
   }

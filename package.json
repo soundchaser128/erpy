@@ -16,9 +16,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@automerge/automerge-repo": ">=2.0.0-alpha.13",
-    "@automerge/automerge-repo-network-websocket": ">=2.0.0-alpha.13",
-    "@automerge/automerge-repo-storage-indexeddb": ">=2.0.0-alpha.13",
+    "@effect/schema": "^0.75.5",
+    "@evolu/common": "^5.4.8",
+    "@evolu/common-web": "^8.2.4",
     "@fontsource-variable/outfit": "^5.1.0",
     "@fortawesome/free-brands-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
