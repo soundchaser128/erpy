@@ -1,4 +1,4 @@
-import { type Character, type NewCharacter, type Storage } from "$lib/storage/storage";
+import { type Character, type NewCharacter, type Storage } from "$lib/storage";
 import type { CharacterPayload } from "$lib/types";
 import { invoke } from "@tauri-apps/api/core";
 import { appDataDir, join } from "@tauri-apps/api/path";

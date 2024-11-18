@@ -1,9 +1,10 @@
+import { CharacterId, ChatId } from "$lib/storage";
 import { error } from "@sveltejs/kit";
 
 export async function load(event) {
   const { storage } = await event.parent();
-  const characterId = event.params.characterId;
-  const chatId = event.params.chatId;
+  const characterId = CharacterId.make(event.params.characterId);
+  const chatId = ChatId.make(event.params.chatId);
   const character = await storage.getCharacter(characterId);
   const allChats = await storage.getChatsForCharacter(characterId);
 

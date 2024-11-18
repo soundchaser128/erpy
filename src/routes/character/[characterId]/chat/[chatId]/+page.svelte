@@ -45,7 +45,7 @@
   let hideTabs = $page.url.searchParams.get("tabs") === "false";
 
   $: rowCount = Math.max(1, question.split("\n").length);
-  $: chatHistory = data.chat.data;
+  $: chatHistory = data.chat?.history ?? [];
   $: tokenCount = estimateTokens(chatHistory);
   $: historyId = data.chat.uuid;
 

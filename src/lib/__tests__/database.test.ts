@@ -1,4 +1,4 @@
-import type { Character, Chat, ChatHistoryItem } from "$lib/storage/storage";
+import type { Character, Chat, ChatHistoryItem } from "$lib/storage";
 import { describe, it } from "vitest";
 import { faker } from "@faker-js/faker";
 import { sqliteDateTime } from "$lib/helpers";

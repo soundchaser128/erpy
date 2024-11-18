@@ -1,4 +1,4 @@
-import type { ChatHistoryItem } from "./storage/storage";
+import type { ChatHistoryItem } from "./storage";
 
 export interface CompletionResponse {
   choices: CompletionChoice[];
