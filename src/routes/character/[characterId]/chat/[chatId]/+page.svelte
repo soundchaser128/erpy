@@ -2,7 +2,7 @@
   import { invoke } from "@tauri-apps/api/core";
   import { listen, once, emit } from "@tauri-apps/api/event";
   import { toApiRequest, type CompletionResponse } from "$lib/types";
-  import { type ChatHistoryItem } from "$lib/storage/storage";
+  import { MessageRole, type ChatHistoryItem } from "$lib/storage";
   import Markdown from "svelte-exmarkdown";
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
@@ -47,7 +47,7 @@
   $: rowCount = Math.max(1, question.split("\n").length);
   $: chatHistory = data.chat?.history ?? [];
   $: tokenCount = estimateTokens(chatHistory);
-  $: historyId = data.chat.uuid;
+  $: historyId = data.chat.id;
 
   export const snapshot = {
     capture: () => question,
@@ -80,7 +80,7 @@
       if (lastMessage.role !== "user" && !addToExisting) {
         if (question.trim().length > 0) {
           const q: ChatHistoryItem = {
-            role: "user",
+            role: MessageRole.User,
             content: [
               {
                 content: question.trim(),
@@ -95,7 +95,7 @@
         question = "";
       }
 
-      const answer: ChatHistoryItem = addToExisting
+      const answer = addToExisting
         ? lastMessage
         : {
             role: "assistant",
@@ -273,7 +273,7 @@
     deleteModal.close();
   }
 
-  function estimateTokens(chat: ChatHistoryItem[]): number {
+  function estimateTokens(chat: ChatHistory): number {
     const totalLength = chat.reduce(
       (acc, item) => acc + item.content[item.chosenAnswer].content.length,
       0,
@@ -302,7 +302,7 @@
   }
 
   async function archiveChat() {
-    await data.storage.setChatArchived(data.chat.uuid, true);
+    await data.storage.setChatArchived(data.chat.id, true);
     await invalidateAll();
   }
 </script>

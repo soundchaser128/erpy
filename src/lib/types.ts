@@ -1,4 +1,4 @@
-import type { ChatHistoryItem } from "./storage";
+import type { ChatHistory, ChatHistoryItem, MessageRole } from "./storage";
 
 export interface CompletionResponse {
   choices: CompletionChoice[];
@@ -11,8 +11,6 @@ export interface CompletionChoice {
 export interface DeltaContent {
   content: string;
 }
-
-export type MessageRole = "user" | "assistant" | "system";
 
 export interface MessageHistoryItem {
   role: MessageRole;
@@ -29,7 +27,7 @@ export interface CharacterPayload {
   avatar?: string;
 }
 
-export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {
+export function toApiRequest(chat:ChatHistory): MessageHistoryItem[] {
   return chat
     .map((item) => {
       return {

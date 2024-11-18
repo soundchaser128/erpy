@@ -23,7 +23,7 @@ export type Character = typeof CharactersTable.Type;
 export const ChatId = id("chats");
 export type ChatId = typeof ChatId.Type;
 
-enum MessageRole {
+export enum MessageRole {
   User = "user",
   Assistant = "assistant",
   System = "system",
@@ -50,6 +50,8 @@ const ChatsTable = table({
 });
 
 export type Chat = typeof ChatsTable.Type;
+
+export type ChatHistory = typeof ChatsTable.Type["history"];
 
 const Database = database({
   characters: CharactersTable,
@@ -87,12 +89,12 @@ export class Storage {
     this.#evolu = createEvolu(Database);
   }
 
-  getCharacter(id: CharacterId): Promise<Character> {
-    // return this.#evulu.createQuery((db) =>
-    //   db.selectFrom("characters").where("id", "=", uuid).executeTakeFirstOrThrow(),
-    // )
-
-    throw new Error("Method not implemented.");
+  async getCharacter(id: CharacterId) {
+    const query = this.#evolu.createQuery((db) =>
+      db.selectFrom("characters").where("id", "=", id).selectAll(),
+    );
+    const data = await this.#evolu.loadQuery(query);
+    return data.row;
   }
 
   async getAllCharacters() {
