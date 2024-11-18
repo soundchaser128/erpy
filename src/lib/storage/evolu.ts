@@ -1,7 +1,7 @@
 import type { Character, Chat, ChatHistoryItem, NewCharacter, NewChat, Storage } from "./storage";
 import type { Config } from "../types";
 import * as S from "@effect/schema/Schema";
-import { id, table } from "@evolu/common";
+import { id, SqliteDate, table } from "@evolu/common";
 
 const CharacterId = id("Character");
 type CharacterId = typeof CharacterId.Type;
@@ -9,8 +9,17 @@ type CharacterId = typeof CharacterId.Type;
 const CharactersTable = table({
   id: CharacterId,
   url: S.NonEmptyString,
-  createdAt: S.NonEmptyString,
-  updatedAt: S.NonEmptyString,
+  name: S.NonEmptyString,
+});
+
+const ChatId = id("Chat");
+
+const ChatsTable = table({
+  id: ChatId,
+  title: S.NonEmptyString,
+  archived: S.Boolean,
+  characterId: CharacterId,
+  history: S.Array(S.Struct({ timestamp: S.NonEmptyString, message: S.NonEmptyString })),
 });
 
 export class EvoluStorage implements Storage {
