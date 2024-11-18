@@ -54,7 +54,7 @@ export async function createCharactersFromPngs(
     if (!file) continue;
     const data = await file.arrayBuffer();
     const array = new Uint8Array(data);
-    const path = character.payload.avatar!.replace("asset://", "");
+    const path = character.avatar.replace("asset://", "");
 
     await writeFile(path, array, {
       baseDir: BaseDirectory.AppData,

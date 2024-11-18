@@ -1,10 +1,12 @@
 import type { CharacterPayload, Config } from "$lib/types";
 import * as S from "@effect/schema/Schema";
-import { database, id, SqliteBoolean, table, type Evolu } from "@evolu/common";
+import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
 
 export const CharacterId = id("characters");
 export type CharacterId = typeof CharacterId.Type;
+
+type Nullable<T> = { [K in keyof T]: T[K] | null };
 
 const CharactersTable = table({
   id: CharacterId,
@@ -18,7 +20,35 @@ const CharactersTable = table({
   avatar: S.String,
 });
 
-export type Character = typeof CharactersTable.Type;
+export type CharacterRow = typeof CharactersTable.Type;
+
+export interface Character {
+  id: CharacterId;
+  url: string;
+  name: string;
+  description: string;
+  personality: string;
+  firstMessages: string[];
+  tags: string[];
+  systemPrompt: string;
+  avatar: string;
+  chatCount: number | null;
+}
+
+function convertCharacter(character: Nullable<CharacterRow>): Character {
+  return {
+    id: character.id!,
+    url: character.url!,
+    name: character.name!,
+    description: character.description!,
+    personality: character.personality!,
+    firstMessages: (character.firstMessages ?? []) as string[],
+    tags: (character.tags ?? []) as string[],
+    systemPrompt: character.systemPrompt!,
+    avatar: character.avatar!,
+    chatCount: null,
+  };
+}
 
 export const ChatId = id("chats");
 export type ChatId = typeof ChatId.Type;
@@ -41,7 +71,7 @@ const ChatsTable = table({
       content: S.Array(
         S.Struct({
           content: S.NonEmptyString,
-          timestamp: S.Number,
+          timestamp: SqliteDate,
           modelId: S.NonEmptyString,
         }),
       ),
@@ -49,9 +79,50 @@ const ChatsTable = table({
   ),
 });
 
-export type Chat = typeof ChatsTable.Type;
+export type ChatRow = typeof ChatsTable.Type;
 
-export type ChatHistory = typeof ChatsTable.Type["history"];
+export interface ChatContent {
+  content: string;
+  timestamp: Date;
+  modelId: string;
+}
+
+export interface ChatHistoryItem {
+  role: MessageRole;
+  chosenAnswer: number;
+  content: ChatContent[];
+}
+
+export interface Chat {
+  id: ChatId;
+  createdAt: Date;
+  updatedAt: Date;
+  title: string | null;
+  characterId: CharacterId;
+  archived: boolean;
+  history: ChatHistoryItem[];
+}
+
+function convertChat(chat: Nullable<ChatRow>): Chat {
+  return {
+    // required
+    id: chat.id!,
+    title: chat.title,
+    characterId: chat.characterId!,
+    createdAt: cast(chat.createdAt!),
+    updatedAt: cast(chat.updatedAt!),
+    archived: cast(chat.archived ?? SqliteBoolean.make(0)),
+    history: (chat.history ?? []).map((item) => ({
+      role: item.role,
+      chosenAnswer: item.chosenAnswer,
+      content: item.content.map((content) => ({
+        content: content.content,
+        timestamp: cast(content.timestamp),
+        modelId: content.modelId,
+      })),
+    })),
+  };
+}
 
 const Database = database({
   characters: CharactersTable,
@@ -60,19 +131,14 @@ const Database = database({
 
 type Database = typeof Database.Type;
 
-export interface ChatHistoryItem {
-  role: MessageRole;
-  content: ChatContent[];
-  chosenAnswer: number;
-}
-
 export interface ChatContent {
   content: string;
-  timestamp: number;
+  timestamp: Date;
   modelId: string;
 }
+
 export interface NewChat {
-  characterId: string;
+  characterId: CharacterId;
   data: ChatHistoryItem[];
 }
 
@@ -89,19 +155,23 @@ export class Storage {
     this.#evolu = createEvolu(Database);
   }
 
-  async getCharacter(id: CharacterId) {
+  async getCharacter(id: CharacterId): Promise<Character | null> {
     const query = this.#evolu.createQuery((db) =>
       db.selectFrom("characters").where("id", "=", id).selectAll(),
     );
     const data = await this.#evolu.loadQuery(query);
-    return data.row;
+    if (data.row) {
+      return convertCharacter(data.row);
+    } else {
+      return null;
+    }
   }
 
-  async getAllCharacters() {
+  async getAllCharacters(): Promise<Character[]> {
     const characters = this.#evolu.createQuery((db) => db.selectFrom("characters").selectAll());
     const query = await this.#evolu.loadQuery(characters);
 
-    return query.rows;
+    return query.rows.map(convertCharacter);
   }
 
   characterExists(name: string, uuid: string, id: number): Promise<boolean> {
@@ -120,27 +190,28 @@ export class Storage {
     throw new Error("Method not implemented.");
   }
 
-  async getAllChats() {
+  async getAllChats(): Promise<Chat[]> {
     const query = this.#evolu.createQuery((db) => db.selectFrom("chats").selectAll());
     const data = await this.#evolu.loadQuery(query);
-    return data.rows;
+    return data.rows.map(convertChat);
   }
 
-  async getChatsForCharacter(characterId: CharacterId) {
+  async getChatsForCharacter(characterId: CharacterId): Promise<Chat[]> {
     const query = this.#evolu.createQuery((db) =>
       db.selectFrom("chats").where("characterId", "=", characterId).selectAll(),
     );
     const data = await this.#evolu.loadQuery(query);
 
-    return data.rows;
+    return data.rows.map(convertChat);
   }
 
-  async getChatById(characterId: CharacterId, chatId: ChatId) {
+  async getChatById(characterId: CharacterId, chatId: ChatId): Promise<Chat | null> {
     const query = this.#evolu.createQuery((db) =>
       db.selectFrom("chats").where("id", "=", chatId).selectAll(),
     );
     const data = await this.#evolu.loadQuery(query);
-    return data.row;
+
+    return data.row ? convertChat(data.row) : null;
   }
 
   deleteChat(uuid: string): Promise<void> {

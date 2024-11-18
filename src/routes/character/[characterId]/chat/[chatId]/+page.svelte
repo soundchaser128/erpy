@@ -45,7 +45,7 @@
   let hideTabs = $page.url.searchParams.get("tabs") === "false";
 
   $: rowCount = Math.max(1, question.split("\n").length);
-  $: chatHistory = data.chat?.history ?? [];
+  $: chatHistory = data.chat.history;
   $: tokenCount = estimateTokens(chatHistory);
   $: historyId = data.chat.id;
 
@@ -73,7 +73,7 @@
 
     if (status === "idle") {
       status = "loading";
-      const timestamp = Date.now();
+      const timestamp = new Date();
       invariant(!!data.activeModel, "No active model selected");
 
       const lastMessage = chatHistory[chatHistory.length - 1];
@@ -95,10 +95,10 @@
         question = "";
       }
 
-      const answer = addToExisting
+      const answer: ChatHistoryItem = addToExisting
         ? lastMessage
         : {
-            role: "assistant",
+            role: MessageRole.Assistant,
             content: [{ content: "", timestamp, modelId: data.activeModel }],
             chosenAnswer: 0,
           };
@@ -148,11 +148,11 @@
   async function createNewChat() {
     invariant(!!data.activeModel, "No active model selected");
     const newChatId = await data.storage.saveNewChat({
-      characterId: data.character.uuid,
+      characterId: data.character.id,
       data: getInitialChatHistory(data.character, data.config.userName, data.activeModel),
     });
 
-    goto(`/character/${data.character.uuid}/chat/${newChatId}`);
+    goto(`/character/${data.character.id}/chat/${newChatId}`);
   }
 
   function getContent(entry: ChatHistoryItem): string {
@@ -199,10 +199,10 @@
   async function onForkChat(entry: ChatHistoryItem) {
     const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
     const newChatId = await data.storage.saveNewChat({
-      characterId: data.character.uuid,
+      characterId: data.character?.id!,
       data: forkedHistory,
     });
-    goto(`/character/${data.character.uuid}/chat/${newChatId}`);
+    goto(`/character/${data.character.id}/chat/${newChatId}`);
   }
 
   function onCancelEdit() {
@@ -236,17 +236,17 @@
   async function onDeleteChat() {
     const chatCount = data.allChats.length - 1;
 
-    await data.storage.deleteChat(data.chat.uuid);
+    await data.storage.deleteChat(data.chat.id);
     closeDeleteModal();
     await invalidateAll();
 
     if (chatCount === 0) {
       goto("/");
     } else {
-      const newChatIds = data.allChats.filter((chat) => chat.uuid !== data.chat.uuid);
-      const chatId = newChatIds[0].uuid;
+      const newChatIds = data.allChats.filter((chat) => chat.id !== data.chat.id);
+      const chatId = newChatIds[0].id;
 
-      goto(`/character/${data.character.uuid}/chat/${chatId}`);
+      goto(`/character/${data.character.id}/chat/${chatId}`);
     }
   }
 
@@ -259,7 +259,7 @@
   }
 
   async function onChangeTitle() {
-    await data.storage.updateChatTitle(data.chat.uuid, newTitle);
+    await data.storage.updateChatTitle(data.chat.id, newTitle);
     await invalidateAll();
     closeTitleModal();
     newTitle = "";
@@ -273,7 +273,7 @@
     deleteModal.close();
   }
 
-  function estimateTokens(chat: ChatHistory): number {
+  function estimateTokens(chat: ChatHistoryItem[]): number {
     const totalLength = chat.reduce(
       (acc, item) => acc + item.content[item.chosenAnswer].content.length,
       0,
@@ -361,7 +361,7 @@
     <svelte:fragment slot="breadcrumbs">
       <ul>
         <li><a href="/">Home</a></li>
-        <li>Chat with {data.character.payload.name}</li>
+        <li>Chat with {data.character.name}</li>
       </ul>
     </svelte:fragment>
     <svelte:fragment slot="right">
@@ -406,11 +406,11 @@
     <div role="tablist" class="tabs tabs-bordered">
       {#each data.allChats as chat}
         <a
-          href={`/character/${data.character.uuid}/chat/${chat.uuid}`}
-          class="tab {chat.uuid === data.chat.uuid ? 'tab-active' : ''}"
+          href={`/character/${data.character.id}/chat/${chat.id}`}
+          class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
         >
           {truncate(chat.title, 40) ||
-            formatTimestamp(chat.data[chat.data.length - 1].content[0].timestamp)}
+            formatTimestamp(chat.history[chat.history.length - 1].content[0].timestamp)}
         </a>
       {/each}
     </div>
@@ -424,15 +424,15 @@
             <div class="avatar chat-image">
               <div class="w-20 rounded-full shadow-xl">
                 <img
-                  alt="Avatar image for {data.character.payload.name}"
-                  src={getAvatar(data.character.payload.avatar)}
+                  alt="Avatar image for {data.character.name}"
+                  src={getAvatar(data.character.avatar)}
                 />
               </div>
             </div>
           {/if}
           <div class="chat-header flex flex-row items-baseline gap-4 py-2">
             <span>
-              {entry.role === "assistant" ? data.character.payload.name : data.config.userName}
+              {entry.role === "assistant" ? data.character.name : data.config.userName}
             </span>
 
             <span class="join flex items-center">

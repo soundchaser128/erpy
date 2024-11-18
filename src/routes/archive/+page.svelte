@@ -5,16 +5,16 @@
   import type { PageData } from "./$types";
   import { faCaretRight, faRotateLeft } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
-  import type { Chat } from "$lib/storage/storage";
+  import type { Chat } from "$lib/storage";
 
   export let data: PageData;
 
   function findCharacterName(chat: Chat): string {
-    return data.characters.find((c) => c.uuid === chat.characterId)?.payload.name || "Unknown";
+    return data.characters.find((c) => c.id === chat.characterId)?.name || "Unknown";
   }
 
   async function restoreChat(chat: Chat) {
-    await data.storage.setChatArchived(chat.uuid, false);
+    await data.storage.setChatArchived(chat.id, false);
     await invalidateAll();
   }
 </script>
@@ -51,15 +51,15 @@
         <tr class="hover">
           <td><strong>{findCharacterName(chat)}</strong></td>
           <td>{chat.title || "<No title>"}</td>
-          <td>{formatTimestamp(chat.data[0].content[0].timestamp)}</td>
-          <td>{formatTimestamp(chat.data[chat.data.length - 1].content[0].timestamp)}</td>
+          <td>{formatTimestamp(chat.history[0].content[0].timestamp)}</td>
+          <td>{formatTimestamp(chat.history[chat.history.length - 1].content[0].timestamp)}</td>
           <td>
             <button on:click={() => restoreChat(chat)} class="btn btn-secondary btn-sm">
               <Fa icon={faRotateLeft} />
               Restore</button
             >
             <a
-              href="/character/{chat.characterId}/chat/{chat.uuid}?tabs=false"
+              href="/character/{chat.characterId}/chat/{chat.id}?tabs=false"
               class="btn btn-primary btn-sm"
             >
               <Fa icon={faCaretRight} /></a

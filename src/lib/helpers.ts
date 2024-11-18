@@ -1,10 +1,10 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
-import type { Character, ChatHistoryItem } from "./storage";
+import { MessageRole, type Character, type ChatHistoryItem } from "./storage";
 import { format, lightFormat } from "date-fns";
 
 const pluralRules = new Intl.PluralRules("en-US");
 
-export function formatTimestamp(timestamp: number, format: "long" | "short" = "short") {
+export function formatTimestamp(timestamp: number | Date, format: "long" | "short" = "short") {
   const date = new Date(timestamp);
   return lightFormat(date, format === "long" ? "MMMM d, yyyy h:mm a" : "h:mm a");
 }
@@ -38,9 +38,9 @@ export function getInitialChatHistory(
   modelId: string,
 ): ChatHistoryItem[] {
   const systemPrompts = [
-    character.payload.system_prompt,
-    character.payload.personality,
-    character.payload.description,
+    character.systemPrompt,
+    character.personality,
+    character.description,
   ].filter((s) => s.trim().length > 0);
   let systemMessage = "";
   for (const msg of systemPrompts) {
@@ -49,11 +49,11 @@ export function getInitialChatHistory(
 
   const messages: ChatHistoryItem[] = [
     {
-      role: "system",
+      role: MessageRole.System,
       content: [
         {
           content: systemMessage,
-          timestamp: Date.now(),
+          timestamp: new Date(),
           modelId,
         },
       ],
@@ -62,10 +62,10 @@ export function getInitialChatHistory(
   ];
 
   messages.push({
-    role: "assistant",
-    content: character.payload.first_messages.map((content) => ({
+    role: MessageRole.Assistant,
+    content: character.firstMessages.map((content) => ({
       content,
-      timestamp: Date.now(),
+      timestamp: new Date(),
       modelId,
     })),
     chosenAnswer: 0,
@@ -74,7 +74,7 @@ export function getInitialChatHistory(
   return messages.map((message) => ({
     ...message,
     content: message.content.map((content) => ({
-      content: substituteParams(content.content, userName, character.payload.name, content.content),
+      content: substituteParams(content.content, userName, character.name, content.content),
       timestamp: content.timestamp,
       modelId,
     })),

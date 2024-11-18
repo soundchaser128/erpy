@@ -16,7 +16,7 @@
 
   $: filtered = searchInput.trim()
     ? data.characters.filter((character) =>
-        character.payload.name.toLowerCase().includes(searchInput.toLowerCase()),
+        character.name.toLowerCase().includes(searchInput.toLowerCase()),
       )
     : data.characters;
 
@@ -149,28 +149,28 @@
 />
 {#if !loading}
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-    {#each filtered as character (character.uuid)}
+    {#each filtered as character (character.id)}
       <a
-        href={isDisabled(character.chats.length) ? undefined : `/character/${character.uuid}/chat`}
+        href={isDisabled(character.chatCount ?? 0) ? undefined : `/character/${character.id}/chat`}
         class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >
         <figure class="aspect-square">
           <img
-            class="w-full rounded-t-lg object-contain {isDisabled(character.chats.length)
+            class="w-full rounded-t-lg object-contain {isDisabled(character.id.length)
               ? 'blur-sm grayscale'
               : ''}"
-            src={getAvatar(character.payload.avatar)}
-            alt={character.payload.name}
+            src={getAvatar(character.avatar)}
+            alt={character.name}
           />
         </figure>
         <div class="card-body">
           <h2 class="card-title">
-            {character.payload.name}
+            {character.name}
           </h2>
           <p class="text-sm text-base-content">
-            <strong>{character.chats.length}</strong>
-            {pluralize(character.chats.length, "chat", "chats")}
+            <strong>{character.chatCount ?? 0}</strong>
+            {pluralize(character.chatCount ?? 0, "chat", "chats")}
           </p>
         </div>
       </a>

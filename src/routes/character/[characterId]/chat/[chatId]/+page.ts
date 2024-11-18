@@ -1,6 +1,5 @@
 import { CharacterId, ChatId } from "$lib/storage";
 import { error } from "@sveltejs/kit";
-import invariant from "tiny-invariant";
 
 export async function load(event) {
   const { storage } = await event.parent();
@@ -12,6 +11,8 @@ export async function load(event) {
   const chat = await storage.getChatById(characterId, chatId);
   if (chat === null) {
     error(404, `Chat with ID ${chatId} not found`);
+  } else if (character === null) {
+    error(404, `Character with ID ${characterId} not found`);
   } else {
     return {
       character,
