@@ -1,7 +1,9 @@
 import type { Character, Chat, ChatHistoryItem, NewCharacter, NewChat, Storage } from "./storage";
 import type { Config } from "../types";
 import * as S from "@effect/schema/Schema";
-import { id, SqliteDate, table } from "@evolu/common";
+import { database, id, SqliteBoolean, table, type Evolu } from "@evolu/common";
+import { createEvolu } from "@evolu/common-web";
+import { th } from "@faker-js/faker";
 
 const CharacterId = id("Character");
 type CharacterId = typeof CharacterId.Type;
@@ -10,20 +12,65 @@ const CharactersTable = table({
   id: CharacterId,
   url: S.NonEmptyString,
   name: S.NonEmptyString,
+  description: S.String,
+  personality: S.String,
+  firstMessages: S.Array(S.NonEmptyString),
+  tags: S.Array(S.NonEmptyString),
+  systemPrompt: S.NonEmptyString,
+  avatar: S.String,
 });
 
 const ChatId = id("Chat");
 
+enum MessageRole {
+  User = "user",
+  Assistant = "assistant",
+  System = "system",
+}
+
 const ChatsTable = table({
   id: ChatId,
   title: S.NonEmptyString,
-  archived: S.Boolean,
   characterId: CharacterId,
-  history: S.Array(S.Struct({ timestamp: S.NonEmptyString, message: S.NonEmptyString })),
+  archived: SqliteBoolean,
+  history: S.Array(
+    S.Struct({
+      role: S.Enums(MessageRole),
+      chosenAnswer: S.Number,
+      content: S.Array(
+        S.Struct({
+          content: S.NonEmptyString,
+          timestamp: S.Number,
+          modelId: S.NonEmptyString,
+        }),
+      ),
+    }),
+  ),
 });
 
+const Database = database({
+  characters: CharactersTable,
+  chats: ChatsTable,
+});
+
+type Database = typeof Database.Type;
+
 export class EvoluStorage implements Storage {
+  #evulu: Evolu<Database>;
+
+  constructor() {
+    this.#evulu = createEvolu(Database);
+  }
+
   getCharacter(uuid: string): Promise<Character> {
+    // return this.#evulu.createQuery((db) =>
+    //   db.selectFrom("characters").where("id", "=", uuid).executeTakeFirstOrThrow(),
+    // );
+
+    const character = this.#evulu.createQuery((db) =>
+      db.selectFrom("characters").selectAll().executeTakeFirstOrThrow(),
+    );
+
     throw new Error("Method not implemented.");
   }
   getAllCharacters(): Promise<Character[]> {
