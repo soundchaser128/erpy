@@ -56,26 +56,25 @@ const Database = database({
 type Database = typeof Database.Type;
 
 export class EvoluStorage implements Storage {
-  #evulu: Evolu<Database>;
+  #evolu: Evolu<Database>;
 
   constructor() {
-    this.#evulu = createEvolu(Database);
+    this.#evolu = createEvolu(Database);
   }
 
   getCharacter(uuid: string): Promise<Character> {
     // return this.#evulu.createQuery((db) =>
     //   db.selectFrom("characters").where("id", "=", uuid).executeTakeFirstOrThrow(),
-    // );
-
-    const character = this.#evulu.createQuery((db) =>
-      db.selectFrom("characters").selectAll().executeTakeFirstOrThrow(),
-    );
+    // )
 
     throw new Error("Method not implemented.");
   }
+
   getAllCharacters(): Promise<Character[]> {
-    throw new Error("Method not implemented.");
+    const characters = this.#evolu.createQuery((db) => db.selectFrom("characters").selectAll());
+    return this.#evolu.loadQuery(characters);
   }
+
   characterExists(name: string, uuid: string, id: number): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
