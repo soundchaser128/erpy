@@ -36,7 +36,7 @@
 </div>
 
 <div class="overflow-x-auto">
-  <table class="table table-zebra table-sm">
+  <table class="table-zebra table-sm table">
     <thead>
       <tr>
         <th>Character</th>

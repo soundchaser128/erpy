@@ -377,7 +377,7 @@
           <Fa icon={faBars} />
         </summary>
         <ul
-          class="menu dropdown-content z-[1] flex w-52 flex-col gap-2 rounded-box bg-base-200 p-2 shadow"
+          class="menu dropdown-content rounded-box bg-base-200 z-[1] flex w-52 flex-col gap-2 p-2 shadow"
         >
           <li>
             <button on:click={showTitleModal} class="btn btn-secondary btn-sm">
