@@ -11,7 +11,7 @@ export default defineConfig(
       plugins: [sveltekit()],
 
       optimizeDeps: {
-        exclude: ["@evolu/react", "@sqlite.org/sqlite-wasm"],
+        exclude: ["@evolu/common-web", "@sqlite.org/sqlite-wasm"],
         include: ["react-dom"],
       },
       worker: { format: "es" },
