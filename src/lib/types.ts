@@ -38,33 +38,6 @@ export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {
     .filter((i) => i.content.length > 0);
 }
 
-export interface SyncSettings {
-  serverUrl?: string;
-  clientId?: string;
-  apiKey?: string;
-}
-
-export interface LlmSettings {
-  maxTokens?: number;
-  temperature?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  repeatPenalty?: number;
-  topP?: number;
-  seed?: number;
-}
-
-export interface Config {
-  userName: string;
-  notifications: NotificationsConfig;
-  sync: SyncSettings;
-  llm: LlmSettings;
-}
-
-export interface NotificationsConfig {
-  newMessage: boolean;
-}
-
 export type LoadModel =
   | {
       type: "open-ai";

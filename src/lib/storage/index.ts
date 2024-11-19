@@ -1,7 +1,74 @@
-import type { CharacterPayload, Config } from "$lib/types";
+import type { CharacterPayload } from "$lib/types";
 import * as S from "@effect/schema/Schema";
 import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
+
+const ConfigId = id("config");
+export type ConfigId = typeof ConfigId.Type;
+
+export interface SyncSettings {
+  serverUrl?: string;
+  clientId?: string;
+  apiKey?: string;
+}
+
+export interface LlmSettings {
+  maxTokens?: number;
+  temperature?: number;
+  frequencyPenalty?: number;
+  presencePenalty?: number;
+  repeatPenalty?: number;
+  topP?: number;
+  seed?: number;
+}
+
+export interface NotificationSettings {
+  newMessage: boolean;
+}
+export interface Config {
+  userName: string;
+  notifications: NotificationSettings;
+  sync: SyncSettings;
+  llm: LlmSettings;
+}
+
+const ConfigTable = table({
+  id: ConfigId,
+  data: S.Struct({
+    userName: S.NonEmptyString,
+    notifications: S.Struct({
+      newMessage: S.Boolean,
+    }),
+    sync: S.Struct({
+      serverUrl: S.String,
+      clientId: S.String,
+      apiKey: S.String,
+    }),
+    llm: S.Struct({
+      maxTokens: S.Number,
+      temperature: S.Number,
+      frequencyPenalty: S.Number,
+      presencePenalty: S.Number,
+      repeatPenalty: S.Number,
+      topP: S.Number,
+      seed: S.Number,
+    }),
+  }),
+});
+
+type ConfigRow = typeof ConfigTable.Type;
+
+function convertConfig(config: Nullable<ConfigRow>): Config {
+  return {
+    userName: config.data?.userName ?? "User",
+    notifications: config.data?.notifications ?? { newMessage: false },
+    sync: config.data?.sync ?? {},
+    llm: config.data?.llm ?? {
+      maxTokens: 350,
+      temperature: 0.8,
+    },
+  };
+}
 
 export const CharacterId = id("characters");
 export type CharacterId = typeof CharacterId.Type;
@@ -127,6 +194,7 @@ function convertChat(chat: Nullable<ChatRow>): Chat {
 const Database = database({
   characters: CharactersTable,
   chats: ChatsTable,
+  config: ConfigTable,
 });
 
 type Database = typeof Database.Type;
@@ -174,19 +242,19 @@ export class Storage {
     return query.rows.map(convertCharacter);
   }
 
-  characterExists(name: string, uuid: string, id: number): Promise<boolean> {
+  async characterExists(name: string, uuid: string, id: number): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
 
-  persistCharacters(characters: NewCharacter[]): Promise<Character[]> {
+  async persistCharacters(characters: NewCharacter[]): Promise<Character[]> {
     throw new Error("Method not implemented.");
   }
 
-  saveNewChat(chat: NewChat): Promise<number> {
+  async saveNewChat(chat: NewChat): Promise<number> {
     throw new Error("Method not implemented.");
   }
 
-  updateChat(uuid: string, history: ChatHistoryItem[]): Promise<void> {
+  async updateChat(uuid: string, history: ChatHistoryItem[]): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
@@ -214,23 +282,40 @@ export class Storage {
     return data.row ? convertChat(data.row) : null;
   }
 
-  deleteChat(uuid: string): Promise<void> {
+  async deleteChat(uuid: string): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
-  updateChatTitle(chatId: string, title: string): Promise<void> {
+  async updateChatTitle(chatId: string, title: string): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  setChatArchived(chatId: string, archived: boolean): Promise<void> {
+
+  async setChatArchived(chatId: string, archived: boolean): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  getConfig(): Promise<Config> {
+
+  async getConfig(): Promise<Config> {
+    const query = this.#evolu.createQuery((db) => db.selectFrom("config").selectAll());
+    const data = await this.#evolu.loadQuery(query);
+    if (data.row) {
+      return convertConfig(data.row);
+    } else {
+      return {
+        userName: "User",
+        notifications: {
+          newMessage: true,
+        },
+        sync: {},
+        llm: {},
+      };
+    }
+  }
+
+  async getArchivedChats(): Promise<Chat[]> {
     throw new Error("Method not implemented.");
   }
-  getArchivedChats(): Promise<Chat[]> {
-    throw new Error("Method not implemented.");
-  }
-  saveConfig(config: Config): Promise<void> {
+
+  async saveConfig(config: Config): Promise<void> {
     throw new Error("Method not implemented.");
   }
 }
