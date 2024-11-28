@@ -7,24 +7,25 @@ const ConfigId = id("config");
 export type ConfigId = typeof ConfigId.Type;
 
 export interface SyncSettings {
-  serverUrl?: string;
-  clientId?: string;
-  apiKey?: string;
+  serverUrl: string | null;
+  clientId: string | null;
+  apiKey: string | null;
 }
 
 export interface LlmSettings {
-  maxTokens?: number;
-  temperature?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  repeatPenalty?: number;
-  topP?: number;
-  seed?: number;
+  maxTokens: number | null;
+  temperature: number | null;
+  frequencyPenalty: number | null;
+  presencePenalty: number | null;
+  repeatPenalty: number | null;
+  topP: number | null;
+  seed: number | null;
 }
 
 export interface NotificationSettings {
   newMessage: boolean;
 }
+
 export interface Config {
   userName: string;
   notifications: NotificationSettings;
@@ -40,18 +41,18 @@ const ConfigTable = table({
       newMessage: S.Boolean,
     }),
     sync: S.Struct({
-      serverUrl: S.String,
-      clientId: S.String,
-      apiKey: S.String,
+      serverUrl: S.NullOr(S.String),
+      clientId: S.NullOr(S.String),
+      apiKey: S.NullOr(S.String),
     }),
     llm: S.Struct({
-      maxTokens: S.Number,
-      temperature: S.Number,
-      frequencyPenalty: S.Number,
-      presencePenalty: S.Number,
-      repeatPenalty: S.Number,
-      topP: S.Number,
-      seed: S.Number,
+      maxTokens: S.NullOr(S.Number),
+      temperature: S.NullOr(S.Number),
+      frequencyPenalty: S.NullOr(S.Number),
+      presencePenalty: S.NullOr(S.Number),
+      repeatPenalty: S.NullOr(S.Number),
+      topP: S.NullOr(S.Number),
+      seed: S.NullOr(S.Number),
     }),
   }),
 });
@@ -62,10 +63,19 @@ function convertConfig(config: Nullable<ConfigRow>): Config {
   return {
     userName: config.data?.userName ?? "User",
     notifications: config.data?.notifications ?? { newMessage: false },
-    sync: config.data?.sync ?? {},
+    sync: config.data?.sync ?? {
+      apiKey: null,
+      clientId: null,
+      serverUrl: null,
+    },
     llm: config.data?.llm ?? {
       maxTokens: 350,
       temperature: 0.8,
+      frequencyPenalty: null,
+      presencePenalty: null,
+      repeatPenalty: null,
+      seed: null,
+      topP: null,
     },
   };
 }
@@ -247,11 +257,46 @@ export class Storage {
   }
 
   async persistCharacters(characters: NewCharacter[]): Promise<Character[]> {
-    throw new Error("Method not implemented.");
+    const inserted: Character[] = [];
+    for (const character of characters) {
+      const toInsert = {
+        url: character.url!,
+        name: character.payload.name,
+        personality: character.payload.personality,
+        avatar: character.payload.avatar!,
+        description: character.payload.description,
+        firstMessages: character.payload.first_messages,
+        tags: character.payload.tags,
+        systemPrompt: character.payload.system_prompt,
+      };
+      const data = this.#evolu.create("characters", toInsert);
+      inserted.push({
+        ...toInsert,
+        chatCount: 0,
+        id: data.id,
+      });
+    }
+
+    return inserted;
   }
 
-  async saveNewChat(chat: NewChat): Promise<number> {
-    throw new Error("Method not implemented.");
+  async saveNewChat(chat: NewChat): Promise<ChatId> {
+    const data = this.#evolu.create("chats", {
+      archived: false,
+      characterId: chat.characterId,
+      history: chat.data.map((item) => ({
+        role: item.role,
+        chosenAnswer: item.chosenAnswer,
+        content: item.content.map((content) => ({
+          content: content.content,
+          timestamp: cast(content.timestamp),
+          modelId: content.modelId,
+        })),
+      })),
+      title: "",
+    });
+
+    return data.id;
   }
 
   async updateChat(uuid: string, history: ChatHistoryItem[]): Promise<void> {
@@ -287,11 +332,11 @@ export class Storage {
   }
 
   async updateChatTitle(chatId: string, title: string): Promise<void> {
-    throw new Error("Method not implemented.");
+    this.#evolu.update("chats", { id: ChatId.make(chatId), title });
   }
 
   async setChatArchived(chatId: string, archived: boolean): Promise<void> {
-    throw new Error("Method not implemented.");
+    this.#evolu.update("chats", { id: ChatId.make(chatId), archived });
   }
 
   async getConfig(): Promise<Config> {
@@ -305,17 +350,41 @@ export class Storage {
         notifications: {
           newMessage: true,
         },
-        sync: {},
-        llm: {},
+        sync: {
+          apiKey: null,
+          clientId: null,
+          serverUrl: null,
+        },
+        llm: {
+          temperature: 0.8,
+          frequencyPenalty: null,
+          maxTokens: null,
+          presencePenalty: null,
+          repeatPenalty: null,
+          seed: null,
+          topP: null,
+        },
       };
     }
   }
 
   async getArchivedChats(): Promise<Chat[]> {
-    throw new Error("Method not implemented.");
+    const query = this.#evolu.createQuery((db) =>
+      db.selectFrom("chats").where("archived", "==", cast(true)).selectAll(),
+    );
+    const data = await this.#evolu.loadQuery(query);
+    return data.rows.map(convertChat);
   }
 
   async saveConfig(config: Config): Promise<void> {
-    throw new Error("Method not implemented.");
+    this.#evolu.createOrUpdate("config", {
+      id: ConfigId.make(""),
+      data: {
+        llm: config.llm,
+        notifications: config.notifications,
+        sync: config.sync,
+        userName: config.userName,
+      },
+    });
   }
 }
