@@ -229,8 +229,10 @@ export interface NewCharacter {
 export class Storage {
   #evolu: Evolu<Database>;
 
-  constructor() {
-    this.#evolu = createEvolu(Database);
+  constructor(syncUrl?: string) {
+    this.#evolu = createEvolu(Database, {
+      syncUrl,
+    });
   }
 
   async getCharacter(id: CharacterId): Promise<Character | null> {

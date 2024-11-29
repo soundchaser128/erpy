@@ -61,15 +61,15 @@ async fn chat_completion(
 
     let request = CompletionRequest {
         messages: message_history,
-        temperature: config.temperature,
+        temperature: config.llm.temperature,
         model: Default::default(),
         stream: true,
-        max_tokens: config.max_tokens,
-        frequency_penalty: config.frequency_penalty,
-        presence_penalty: config.presence_penalty,
-        repeat_penalty: config.repeat_penalty,
-        top_p: config.top_p,
-        seed: config.seed,
+        max_tokens: config.llm.max_tokens,
+        frequency_penalty: config.llm.frequency_penalty,
+        presence_penalty: config.llm.presence_penalty,
+        repeat_penalty: config.llm.repeat_penalty,
+        top_p: config.llm.top_p,
+        seed: config.llm.seed,
     };
 
     let mut stream = api.get_completions_stream(&request).await?;

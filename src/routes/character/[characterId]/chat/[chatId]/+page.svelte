@@ -49,10 +49,10 @@
   $: tokenCount = estimateTokens(chatHistory);
   $: historyId = data.chat.id;
 
-  export const snapshot = {
-    capture: () => question,
-    restore: (value) => (question = value),
-  };
+  // export const snapshot = {
+  //   capture: () => question,
+  //   restore: (value) => (question = value),
+  // };
 
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
     messageContainer.scrollTo({ top: messageContainer.scrollHeight, behavior: type });
@@ -77,7 +77,8 @@
       invariant(!!data.activeModel, "No active model selected");
 
       const lastMessage = chatHistory[chatHistory.length - 1];
-      if (lastMessage.role !== "user" && !addToExisting) {
+      console.log({ question });
+      if (lastMessage.role !== MessageRole.User && !addToExisting) {
         if (question.trim().length > 0) {
           const q: ChatHistoryItem = {
             role: MessageRole.User,
@@ -377,7 +378,7 @@
           <Fa icon={faBars} />
         </summary>
         <ul
-          class="menu dropdown-content rounded-box bg-base-200 z-[1] flex w-52 flex-col gap-2 p-2 shadow"
+          class="menu dropdown-content z-[1] flex w-52 flex-col gap-2 rounded-box bg-base-200 p-2 shadow"
         >
           <li>
             <button on:click={showTitleModal} class="btn btn-secondary btn-sm">
