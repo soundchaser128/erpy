@@ -1,7 +1,17 @@
 import type { CharacterPayload } from "$lib/types";
 import * as S from "@effect/schema/Schema";
-import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from "@evolu/common";
+import {
+  cast,
+  database,
+  id,
+  parseMnemonic,
+  SqliteBoolean,
+  SqliteDate,
+  table,
+  type Evolu,
+} from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
+import { loadMnemonic } from "./mnemonic";
 
 const ConfigId = id("config");
 export type ConfigId = typeof ConfigId.Type;
@@ -245,6 +255,15 @@ export class Storage {
     this.#evolu = createEvolu(Database, {
       syncUrl,
     });
+
+    const mnemonic = loadMnemonic();
+    if (mnemonic) {
+      this.#evolu.restoreOwner(mnemonic);
+    }
+  }
+
+  get mnemonic(): string {
+    return this.#evolu.getOwner()!.mnemonic;
   }
 
   async getCharacter(id: CharacterId): Promise<Character | null> {
