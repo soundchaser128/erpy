@@ -152,7 +152,7 @@
     {#each filtered as character (character.id)}
       <a
         href={isDisabled(character.chatCount ?? 0) ? undefined : `/character/${character.id}/chat`}
-        class="card card-compact bg-base-100 w-full shadow-xl"
+        class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >
         <figure class="aspect-square">
@@ -168,7 +168,7 @@
           <h2 class="card-title">
             {character.name}
           </h2>
-          <p class="text-base-content text-sm">
+          <p class="text-sm text-base-content">
             <strong>{character.chatCount ?? 0}</strong>
             {pluralize(character.chatCount ?? 0, "chat", "chats")}
           </p>

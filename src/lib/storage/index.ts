@@ -201,6 +201,18 @@ function convertChat(chat: Nullable<ChatRow>): Chat {
   };
 }
 
+function convertHistory(history: ChatHistoryItem[]) {
+  return history.map((item) => ({
+    role: item.role,
+    chosenAnswer: item.chosenAnswer,
+    content: item.content.map((content) => ({
+      content: content.content,
+      timestamp: cast(content.timestamp),
+      modelId: content.modelId,
+    })),
+  }));
+}
+
 const Database = database({
   characters: CharactersTable,
   chats: ChatsTable,
@@ -286,23 +298,15 @@ export class Storage {
     const data = this.#evolu.create("chats", {
       archived: false,
       characterId: chat.characterId,
-      history: chat.data.map((item) => ({
-        role: item.role,
-        chosenAnswer: item.chosenAnswer,
-        content: item.content.map((content) => ({
-          content: content.content,
-          timestamp: cast(content.timestamp),
-          modelId: content.modelId,
-        })),
-      })),
+      history: convertHistory(chat.data),
       title: "",
     });
 
     return data.id;
   }
 
-  async updateChat(uuid: string, history: ChatHistoryItem[]): Promise<void> {
-    throw new Error("Method not implemented.");
+  async updateChat(id: ChatId, history: ChatHistoryItem[]): Promise<void> {
+    this.#evolu.update("chats", { id, history: convertHistory(history) });
   }
 
   async getAllChats(): Promise<Chat[]> {
@@ -329,8 +333,8 @@ export class Storage {
     return data.row ? convertChat(data.row) : null;
   }
 
-  async deleteChat(uuid: string): Promise<void> {
-    throw new Error("Method not implemented.");
+  async deleteChat(id: ChatId): Promise<void> {
+    this.#evolu.update("chats", { id, isDeleted: true });
   }
 
   async updateChatTitle(chatId: string, title: string): Promise<void> {
