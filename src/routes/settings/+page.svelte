@@ -110,25 +110,12 @@
     </div>
 
     <div class="form-control">
-      <label for="syncClientId" class="label">
-        <span class="label-text">Client ID</span>
-      </label>
-
-      <input
-        id="syncClientId"
-        type="text"
-        bind:value={data.config.sync.clientId}
-        class="input input-primary"
-        placeholder="A unique identifier for this machine."
-      />
-    </div>
-    <div class="form-control">
-      <label for="syncApiKey" class="label">
+      <label for="syncMnemonc" class="label">
         <span class="label-text">API key</span>
       </label>
 
       <input
-        id="syncApiKey"
+        id="syncMnemonc"
         type="text"
         bind:value={data.config.sync.apiKey}
         class="input input-primary"
