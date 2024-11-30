@@ -252,14 +252,11 @@ export class Storage {
   #evolu: Evolu<Database>;
 
   constructor(syncUrl?: string) {
+    const mnemonic = loadMnemonic();
     this.#evolu = createEvolu(Database, {
       syncUrl,
+      mnemonic,
     });
-
-    const mnemonic = loadMnemonic();
-    if (mnemonic) {
-      this.#evolu.restoreOwner(mnemonic);
-    }
   }
 
   get mnemonic(): string {

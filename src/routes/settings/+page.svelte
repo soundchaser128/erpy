@@ -1,10 +1,13 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
+  import { loadMnemonic } from "$lib/storage/mnemonic.js";
   import { faSave } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
 
   export let data;
+
+  let mnemonic = loadMnemonic();
 
   const onSubmit = async () => {
     await data.storage.saveConfig(data.config);
@@ -110,17 +113,11 @@
     </div>
 
     <div class="form-control">
-      <label for="syncMnemonc" class="label">
-        <span class="label-text">API key</span>
+      <label for="mnemonic" class="label">
+        <span class="label-text">Mnemonic</span>
       </label>
 
-      <input
-        id="syncMnemonc"
-        type="text"
-        bind:value={data.config.sync.apiKey}
-        class="input input-primary"
-        placeholder="The API key configured on the server"
-      />
+      <input id="mnemonic" type="text" bind:value={mnemonic} class="input input-primary" disabled />
     </div>
 
     <button type="submit" class="btn btn-primary mt-4 self-end">

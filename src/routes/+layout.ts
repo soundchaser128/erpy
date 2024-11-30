@@ -9,7 +9,7 @@ export const load = async (event) => {
   const isSetup = setupCompleted();
   if (!isSetup && !event.url.pathname.startsWith("/first-time-setup")) {
     console.log("First time setup not completed, redirecting to /first-time-setup");
-    // redirect(302, "/first-time-setup");
+    redirect(302, "/first-time-setup");
   } else {
     const storage = new Storage();
     const config = await storage.getConfig();

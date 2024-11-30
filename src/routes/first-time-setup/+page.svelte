@@ -33,17 +33,18 @@
   }
 </script>
 
-<div class="w-full max-w-2xl self-center">
+<section>
   <h1 class="mb-2 text-4xl font-black">Setup</h1>
   <p>Welcome to erpy! Is this the first time you're using the app?</p>
-</div>
-<div class="mb-4 mt-4 grid w-full max-w-2xl grid-cols-2 gap-2 self-center">
-  <button onclick={() => (mode = "new")} class="btn btn-primary"> Yes</button>
-  <button onclick={generateNew} class="btn btn-secondary">No, I want to enter my mnemonic.</button>
-</div>
+  <div class="my-4 grid w-full grid-cols-2 gap-2">
+    <button onclick={() => (mode = "new")} class="btn btn-primary"> Yes</button>
+    <button onclick={generateNew} class="btn btn-secondary">No, I want to enter my mnemonic.</button
+    >
+  </div>
+</section>
 
 {#if mode === "existing"}
-  <form onsubmit={onSubmitExisting} class="flex w-full max-w-2xl flex-col self-center">
+  <form onsubmit={onSubmitExisting} class="flex w-full flex-col self-center">
     <p class="mb-2">Enter your mnemonic from another machine:</p>
 
     <div class="form-control">
@@ -59,7 +60,7 @@
     </div>
   </form>
 {:else if mode === "new"}
-  <section class="flex w-full max-w-2xl flex-col self-center">
+  <section class="flex w-full flex-col self-center">
     <p class="mb-2">
       Generated a mnemonic for you. <strong>Make sure to store it somewhere safe</strong> (like a password
       manager). If you lose it, you won't be able to access your data if you uninstall the app.

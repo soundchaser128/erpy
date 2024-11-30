@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 const localStorageKey = "evoluMnemonic";
 
-export function loadMnemonic(): Mnemonic | null {
+export function loadMnemonic(): Mnemonic | undefined {
   const string = window.localStorage.getItem(localStorageKey);
 
   if (string) {
@@ -11,10 +11,10 @@ export function loadMnemonic(): Mnemonic | null {
       return Effect.runSync(parseMnemonic(string));
     } catch (e) {
       console.error("failed to parse mnemonic:", e);
-      return null;
+      return undefined;
     }
   } else {
-    return null;
+    return undefined;
   }
 }
 
