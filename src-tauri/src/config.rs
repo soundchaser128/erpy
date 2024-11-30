@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -13,7 +11,7 @@ pub struct SyncSettings {
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct LlmSettings {
-    pub max_tokens: Option<u32>,
+    pub max_tokens: Option<usize>,
     pub temperature: Option<f64>,
     pub frequency_penalty: Option<f32>,
     pub presence_penalty: Option<f32>,

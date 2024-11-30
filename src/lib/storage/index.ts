@@ -1,4 +1,4 @@
-import type { CharacterPayload } from "$lib/types";
+import type { CharacterInformation } from "$lib/types";
 import * as S from "@effect/schema/Schema";
 import {
   cast,
@@ -105,6 +105,7 @@ const CharactersTable = table({
   tags: S.Array(S.NonEmptyString),
   systemPrompt: S.NonEmptyString,
   avatar: S.String,
+  imageBase64: S.String,
 });
 
 export type CharacterRow = typeof CharactersTable.Type;
@@ -120,6 +121,7 @@ export interface Character {
   systemPrompt: string;
   avatar: string;
   chatCount: number | null;
+  imageBase64: string;
 }
 
 function convertCharacter(character: Nullable<CharacterRow>): Character {
@@ -134,6 +136,7 @@ function convertCharacter(character: Nullable<CharacterRow>): Character {
     systemPrompt: character.systemPrompt!,
     avatar: character.avatar!,
     chatCount: null,
+    imageBase64: character.imageBase64!,
   };
 }
 
@@ -244,8 +247,8 @@ export interface NewChat {
 
 export interface NewCharacter {
   url: string | null;
-  payload: CharacterPayload;
-  uuid: string;
+  payload: CharacterInformation;
+  imageBase64: string;
 }
 
 export class Storage {
@@ -256,6 +259,7 @@ export class Storage {
     this.#evolu = createEvolu(Database, {
       syncUrl,
       mnemonic,
+      minimumLogLevel: "debug",
     });
   }
 
@@ -298,6 +302,7 @@ export class Storage {
         firstMessages: character.payload.first_messages,
         tags: character.payload.tags,
         systemPrompt: character.payload.system_prompt,
+        imageBase64: character.imageBase64,
       };
       const data = this.#evolu.create("characters", toInsert);
       inserted.push({

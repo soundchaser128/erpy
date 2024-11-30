@@ -39,7 +39,7 @@ pub struct CompletionRequest {
     pub model: String,
     pub stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub max_tokens: Option<u32>,
+    pub max_tokens: Option<usize>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f64>,

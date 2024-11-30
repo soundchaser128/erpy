@@ -72,6 +72,8 @@ pub struct CharacterCardData {
 }
 
 pub async fn character_from_chub_ai(url: &str) -> Result<CharacterInformation> {
+    use base64::prelude::*;
+
     let parsed_url = reqwest::Url::parse(url)?;
     let api_url = format!("https://api.chub.ai/api{}?full=true", parsed_url.path());
     let response: ChubAiCharacter = reqwest::get(&api_url).await?.json().await?;
@@ -79,6 +81,13 @@ pub async fn character_from_chub_ai(url: &str) -> Result<CharacterInformation> {
 
     let mut first_messages = vec![response.node.definition.first_message];
     first_messages.extend(response.node.definition.alternate_greetings);
+
+    let image_bytes = reqwest::get(&response.node.definition.avatar)
+        .await?
+        .bytes()
+        .await?;
+
+    let base64 = BASE64_STANDARD.encode(image_bytes);
 
     Ok(CharacterInformation {
         name: response.node.definition.name,
@@ -92,6 +101,7 @@ pub async fn character_from_chub_ai(url: &str) -> Result<CharacterInformation> {
             response.node.definition.system_prompt
         },
         avatar: Some(response.node.definition.avatar),
+        image_base64: Some(base64),
     })
 }
 
@@ -115,8 +125,7 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
 
     let json = BASE64_STANDARD.decode(base64)?;
     let json: CharacterCard = serde_json::from_slice(&json)?;
-
-    // TODO when avatar is "none"/None/not a URL, store it on the server somewhere (not sure how static files work in tauri)
+    let base64 = String::from_utf8(base64.to_vec())?;
 
     let mut first_messages = vec![json.data.first_message];
     first_messages.extend(json.data.alternate_greetings);
@@ -133,6 +142,7 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
         },
         first_messages,
         avatar: json.data.avatar,
+        image_base64: Some(base64),
     })
 }
 

@@ -160,7 +160,7 @@
             class="w-full rounded-t-lg object-contain {isDisabled(character.id.length)
               ? 'blur-sm grayscale'
               : ''}"
-            src={getAvatar(character.avatar)}
+            src="data:image/png;base64,{character.imageBase64}"
             alt={character.name}
           />
         </figure>

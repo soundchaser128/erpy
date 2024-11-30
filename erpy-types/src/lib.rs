@@ -57,6 +57,7 @@ pub struct CharacterInformation {
     pub tags: Vec<String>,
     pub system_prompt: String,
     pub avatar: Option<String>,
+    pub image_base64: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

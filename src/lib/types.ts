@@ -17,7 +17,7 @@ export interface MessageHistoryItem {
   content: string;
 }
 
-export interface CharacterPayload {
+export interface CharacterInformation {
   name: string;
   description: string;
   personality: string;
@@ -25,6 +25,7 @@ export interface CharacterPayload {
   tags: string[];
   system_prompt: string;
   avatar?: string;
+  image_base64?: string;
 }
 
 export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {

@@ -54,7 +54,7 @@
 
       <input type="text" class="input input-bordered" id="mnemonic-input" bind:value={mnemonic} />
 
-      <button class="btn btn-success">
+      <button class="btn btn-success mt-4 self-end">
         <Fa icon={faCheck} /> Continue
       </button>
     </div>
