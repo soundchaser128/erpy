@@ -2,14 +2,8 @@
   import { invoke } from "@tauri-apps/api/core";
   import { listen, once, emit } from "@tauri-apps/api/event";
   import { toApiRequest, type CompletionResponse } from "$lib/types";
-  import {
-    type ChatHistoryItem,
-    deleteChat,
-    saveChatHistory,
-    setChatArchived,
-    updateChatTitle,
-  } from "$lib/database";
-  import SvelteMarkdown from "svelte-markdown";
+  import { MessageRole, type ChatHistoryItem } from "$lib/storage";
+  import Markdown from "svelte-exmarkdown";
   import { onMount } from "svelte";
   import Fa from "svelte-fa";
   import {
@@ -31,6 +25,9 @@
   import { goto, invalidateAll } from "$app/navigation";
   import invariant from "tiny-invariant";
   import { page } from "$app/stores";
+  import { gfmPlugin } from "svelte-exmarkdown/gfm";
+  import { remarkHighlightQuotes } from "$lib/remark.js";
+  import ResizingTextArea from "$lib/components/ResizingTextArea.svelte";
 
   export let data;
 
@@ -39,6 +36,7 @@
   let editText = "";
   let summarizing = false;
   let newTitle = "";
+  let plugins = [gfmPlugin(), remarkHighlightQuotes()];
 
   let messageContainer: HTMLElement;
   let deleteModal: HTMLDialogElement;
@@ -47,14 +45,14 @@
   let hideTabs = $page.url.searchParams.get("tabs") === "false";
 
   $: rowCount = Math.max(1, question.split("\n").length);
-  $: chatHistory = data.history.data;
+  $: chatHistory = data.chat.history;
   $: tokenCount = estimateTokens(chatHistory);
-  $: historyId = data.history.id === -1 ? null : data.history.id;
+  $: historyId = data.chat.id;
 
-  export const snapshot = {
-    capture: () => question,
-    restore: (value) => (question = value),
-  };
+  // export const snapshot = {
+  //   capture: () => question,
+  //   restore: (value) => (question = value),
+  // };
 
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
     messageContainer.scrollTo({ top: messageContainer.scrollHeight, behavior: type });
@@ -75,14 +73,15 @@
 
     if (status === "idle") {
       status = "loading";
-      const timestamp = Date.now();
+      const timestamp = new Date();
       invariant(!!data.activeModel, "No active model selected");
 
       const lastMessage = chatHistory[chatHistory.length - 1];
-      if (lastMessage.role !== "user" && !addToExisting) {
+      console.log({ question });
+      if (lastMessage.role !== MessageRole.User && !addToExisting) {
         if (question.trim().length > 0) {
           const q: ChatHistoryItem = {
-            role: "user",
+            role: MessageRole.User,
             content: [
               {
                 content: question.trim(),
@@ -100,11 +99,12 @@
       const answer: ChatHistoryItem = addToExisting
         ? lastMessage
         : {
-            role: "assistant",
+            role: MessageRole.Assistant,
             content: [{ content: "", timestamp, modelId: data.activeModel }],
             chosenAnswer: 0,
           };
 
+      scrollToBottom();
       if (!addToExisting) {
         chatHistory = [...chatHistory, answer];
       } else {
@@ -117,20 +117,21 @@
         chatHistory = [...chatHistory];
       }
 
+      scrollToBottom();
+
       const history = addToExisting ? chatHistory.slice(0, -1) : chatHistory;
       invoke("chat_completion", {
         messageHistory: toApiRequest(history),
         config: data.config,
       });
 
-      scrollToBottom();
       const unlisten = await listen<CompletionResponse>("completion", (response) => {
         answer.content[answer.chosenAnswer].content += response.payload.choices[0].delta.content;
         chatHistory = [...chatHistory];
         scrollToBottom();
       });
       once("completion_done", async () => {
-        await saveChatHistory(historyId, data.character.id, chatHistory);
+        await data.storage.updateChat(historyId, chatHistory);
         unlisten();
         status = "idle";
 
@@ -147,11 +148,10 @@
 
   async function createNewChat() {
     invariant(!!data.activeModel, "No active model selected");
-    const newChatId = await saveChatHistory(
-      null,
-      data.character.id,
-      getInitialChatHistory(data.character, data.config.userName, data.activeModel),
-    );
+    const newChatId = await data.storage.saveNewChat({
+      characterId: data.character.id,
+      data: getInitialChatHistory(data.character, data.config.userName, data.activeModel),
+    });
 
     goto(`/character/${data.character.id}/chat/${newChatId}`);
   }
@@ -169,7 +169,7 @@
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
     entry.chosenAnswer = clamp(entry.chosenAnswer + delta, 0, entry.content.length - 1);
     chatHistory = [...chatHistory];
-    await saveChatHistory(historyId, data.character.id, chatHistory);
+    await data.storage.updateChat(historyId, chatHistory);
   }
 
   async function deleteMessage(entry: ChatHistoryItem) {
@@ -181,7 +181,9 @@
       chatHistory = chatHistory.filter((item) => item !== entry);
     }
 
-    await saveChatHistory(historyId, data.character.id, chatHistory);
+    scrollToBottom();
+
+    await data.storage.updateChat(historyId, chatHistory);
   }
 
   function isFirstAssistantMessage(index: number): boolean {
@@ -197,7 +199,10 @@
 
   async function onForkChat(entry: ChatHistoryItem) {
     const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
-    const newChatId = await saveChatHistory(null, data.character.id, forkedHistory);
+    const newChatId = await data.storage.saveNewChat({
+      characterId: data.character?.id!,
+      data: forkedHistory,
+    });
     goto(`/character/${data.character.id}/chat/${newChatId}`);
   }
 
@@ -210,7 +215,7 @@
     if (messageToEdit) {
       messageToEdit.content[messageToEdit.chosenAnswer].content = editText;
       chatHistory = [...chatHistory];
-      await saveChatHistory(historyId, data.character.id, chatHistory);
+      await data.storage.updateChat(historyId, chatHistory);
       messageToEdit = null;
     }
   }
@@ -218,27 +223,30 @@
   async function summarize() {
     summarizing = true;
     const summarizePrompt =
-      "Give me a summary of the following conversation between a user and a chat bot in less than ten words. Reply only with the sumamry and nothing else.";
+      "[Pause your roleplay. Generate a title for the content of this chat so far, Limit the summary to 8 words or less. Your response should include nothing but the title.]";
+
     const response = await invoke<string>("summarize", {
-      chat: data.history,
-      config: data.config,
+      chat: data.chat,
       prompt: summarizePrompt,
     });
     newTitle = response;
     summarizing = false;
   }
 
+  // FIXME redirects to a 404
   async function onDeleteChat() {
     const chatCount = data.allChats.length - 1;
 
-    await deleteChat(data.history.id);
+    await data.storage.deleteChat(data.chat.id);
     closeDeleteModal();
     await invalidateAll();
 
     if (chatCount === 0) {
       goto("/");
     } else {
-      const chatId = data.allChats[0].id;
+      const newChatIds = data.allChats.filter((chat) => chat.id !== data.chat.id);
+      const chatId = newChatIds[0].id;
+
       goto(`/character/${data.character.id}/chat/${chatId}`);
     }
   }
@@ -252,9 +260,10 @@
   }
 
   async function onChangeTitle() {
-    await updateChatTitle(data.history.id, newTitle);
+    await data.storage.updateChatTitle(data.chat.id, newTitle);
     await invalidateAll();
     closeTitleModal();
+    newTitle = "";
   }
 
   function showDeleteModal() {
@@ -276,21 +285,25 @@
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter" && e.shiftKey) {
       e.preventDefault();
-      question += "\n";
+      const textarea = e.target as HTMLTextAreaElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      question = question.slice(0, start) + "\n" + question.slice(end);
+      textarea.selectionStart = textarea.selectionEnd = start + 1;
     } else if (e.key === "Enter" && e.ctrlKey) {
       e.preventDefault();
       onSubmit(true);
     } else if (e.key === "Enter") {
       e.preventDefault();
       onSubmit();
-    } else if (e.key === "ArrowUp" && rowCount === 1) {
+    } else if (e.key === "ArrowUp" && question.length === 0) {
       e.preventDefault();
       onStartEdit(chatHistory[chatHistory.length - 1]);
     }
   }
 
   async function archiveChat() {
-    await setChatArchived(data.history.id, true);
+    await data.storage.setChatArchived(data.chat.id, true);
     await invalidateAll();
   }
 </script>
@@ -323,12 +336,13 @@
         bind:value={newTitle}
         class="input input-primary w-full"
         placeholder="Enter a title for this chat"
+        disabled={summarizing}
       />
       <div class="modal-action">
         <button on:click={closeTitleModal} type="button" class="btn">
           <Fa icon={faXmark} /> Cancel
         </button>
-        <button type="button" on:click={summarize} class="btn btn-secondary">
+        <button type="button" on:click={summarize} class="btn btn-secondary" disabled={summarizing}>
           <Fa icon={faPenToSquare} /> Generate summary
         </button>
         <button type="submit" class="btn btn-success">
@@ -348,7 +362,7 @@
     <svelte:fragment slot="breadcrumbs">
       <ul>
         <li><a href="/">Home</a></li>
-        <li>Chat with {data.character.data.name}</li>
+        <li>Chat with {data.character.name}</li>
       </ul>
     </svelte:fragment>
     <svelte:fragment slot="right">
@@ -394,10 +408,10 @@
       {#each data.allChats as chat}
         <a
           href={`/character/${data.character.id}/chat/${chat.id}`}
-          class="tab {chat.id === data.history.id ? 'tab-active' : ''}"
+          class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
         >
           {truncate(chat.title, 40) ||
-            formatTimestamp(chat.data[chat.data.length - 1].content[0].timestamp)}
+            formatTimestamp(chat.history[chat.history.length - 1].content[0].timestamp)}
         </a>
       {/each}
     </div>
@@ -411,15 +425,15 @@
             <div class="avatar chat-image">
               <div class="w-20 rounded-full shadow-xl">
                 <img
-                  alt="Avatar image for {data.character.data.name}"
-                  src={getAvatar(data.character.data.avatar)}
+                  alt="Avatar image for {data.character.name}"
+                  src={getAvatar(data.character.avatar)}
                 />
               </div>
             </div>
           {/if}
           <div class="chat-header flex flex-row items-baseline gap-4 py-2">
             <span>
-              {entry.role === "assistant" ? data.character.data.name : data.config.userName}
+              {entry.role === "assistant" ? data.character.name : data.config.userName}
             </span>
 
             <span class="join flex items-center">
@@ -489,10 +503,8 @@
                 </div>
               </form>
             {:else if getContent(entry).length > 0}
-              <div
-                class="prose-invert prose-ol:list-inside prose-ol:list-decimal prose-img:float-left prose-img:m-2 prose-img:max-h-96"
-              >
-                <SvelteMarkdown options={{ gfm: true, breaks: true }} source={getContent(entry)} />
+              <div class="prose prose-invert text-neutral-content">
+                <Markdown {plugins} md={getContent(entry)} />
               </div>
             {:else}
               <span class="flex items-end gap-2"
@@ -515,8 +527,8 @@
       class="textarea textarea-primary w-full"
       placeholder="Type your message..."
       autofocus
-      rows={rowCount}
       on:keydown={handleKeyDown}
+      rows={1}
     ></textarea>
     <button
       disabled={!data.activeModel}

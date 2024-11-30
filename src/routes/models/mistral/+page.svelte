@@ -65,7 +65,7 @@
   <svelte:fragment slot="right"></svelte:fragment>
 </TopMenu>
 
-<main class="container mx-auto">
+<main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">Load model</h1>
 
   {#if data.modelsOnDisk.length > 0}

@@ -2,10 +2,10 @@
   import Fa from "svelte-fa";
   import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
-  import { getAvatar, pluralize } from "$lib/helpers.js";
+  import { getAvatar, pluralize } from "$lib/helpers";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import ExternalLink from "$lib/components/ExternalLink.svelte";
-  import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters.js";
+  import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters";
 
   export let data;
   let addModal: HTMLDialogElement;
@@ -16,7 +16,7 @@
 
   $: filtered = searchInput.trim()
     ? data.characters.filter((character) =>
-        character.data.name.toLowerCase().includes(searchInput.toLowerCase()),
+        character.name.toLowerCase().includes(searchInput.toLowerCase()),
       )
     : data.characters;
 
@@ -25,11 +25,14 @@
   }
 
   async function addCharactersFromUrls() {
+    const urls = textInput.split("\n").map((url) => url.trim());
+    if (urls.length === 0) {
+      return;
+    }
     loading = true;
     addModal.close();
-    const urls = textInput.split("\n").map((url) => url.trim());
 
-    await createCharacterFromUrls(urls);
+    const newCharacters = await createCharacterFromUrls(urls, data.storage);
     await invalidateAll();
 
     files = undefined;
@@ -42,9 +45,9 @@
     loading = true;
     addModal.close();
 
-    await createCharactersFromPngs(files);
-
+    const newCharacters = await createCharactersFromPngs(files, data.storage);
     await invalidateAll();
+
     textInput = "";
     loading = false;
   }
@@ -75,7 +78,7 @@
             placeholder="https://chub.ai/characters/..."
           ></textarea>
         </div>
-        <button type="submit" class="btn btn-primary self-end">
+        <button disabled={textInput.length === 0} type="submit" class="btn btn-primary self-end">
           <Fa icon={faPlus} />
           Add</button
         >
@@ -96,7 +99,7 @@
           />
         </label>
 
-        <button disabled={files?.length === 0} type="submit" class="btn btn-primary self-end">
+        <button disabled={!files?.length} type="submit" class="btn btn-primary self-end">
           <Fa icon={faFileImport} />
           Upload</button
         >
@@ -148,26 +151,26 @@
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
     {#each filtered as character (character.id)}
       <a
-        href={isDisabled(character.chats.length) ? undefined : `/character/${character.id}/chat`}
+        href={isDisabled(character.chatCount ?? 0) ? undefined : `/character/${character.id}/chat`}
         class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >
         <figure class="aspect-square">
           <img
-            class="w-full rounded-t-lg object-contain {isDisabled(character.chats.length)
+            class="w-full rounded-t-lg object-contain {isDisabled(character.id.length)
               ? 'blur-sm grayscale'
               : ''}"
-            src={getAvatar(character.data.avatar)}
-            alt={character.data.name}
+            src="data:image/png;base64,{character.imageBase64}"
+            alt={character.name}
           />
         </figure>
         <div class="card-body">
           <h2 class="card-title">
-            {character.data.name}
+            {character.name}
           </h2>
           <p class="text-sm text-base-content">
-            <strong>{character.chats.length}</strong>
-            {pluralize(character.chats.length, "chat", "chats")}
+            <strong>{character.chatCount ?? 0}</strong>
+            {pluralize(character.chatCount ?? 0, "chat", "chats")}
           </p>
         </div>
       </a>

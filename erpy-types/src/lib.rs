@@ -1,9 +1,14 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Chat {
     pub id: i32,
+    pub uuid: Uuid,
+    pub created_at: String,
     pub title: Option<String>,
     pub character_id: i32,
     pub data: Vec<ChatHistoryItem>,
@@ -34,8 +39,17 @@ pub enum MessageRole {
     System,
 }
 
-#[derive(Debug, Serialize)]
-pub struct Character {
+impl fmt::Display for MessageRole {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MessageRole::User => write!(f, "user"),
+            MessageRole::Assistant => write!(f, "assistant"),
+            MessageRole::System => write!(f, "system"),
+        }
+    }
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CharacterInformation {
     pub name: String,
     pub description: String,
     pub personality: String,
@@ -43,4 +57,13 @@ pub struct Character {
     pub tags: Vec<String>,
     pub system_prompt: String,
     pub avatar: Option<String>,
+    pub image_base64: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Character {
+    pub id: i32,
+    pub url: Option<String>,
+    pub payload: CharacterInformation,
+    pub uuid: Option<Uuid>,
 }

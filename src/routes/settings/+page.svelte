@@ -1,14 +1,16 @@
 <script lang="ts">
   import { invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
-  import { saveConfig } from "$lib/database";
+  import { loadMnemonic } from "$lib/storage/mnemonic.js";
   import { faSave } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
 
   export let data;
 
+  let mnemonic = loadMnemonic();
+
   const onSubmit = async () => {
-    await saveConfig(data.config);
+    await data.storage.saveConfig(data.config);
     await invalidateAll();
   };
 </script>
@@ -23,7 +25,7 @@
   <svelte:fragment slot="right"></svelte:fragment>
 </TopMenu>
 
-<main class="container mx-auto">
+<main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">Settings</h1>
   <form class="flex flex-col" on:submit|preventDefault={onSubmit}>
     <div class="form-control">
@@ -62,8 +64,8 @@
         class="input input-primary"
         min="0"
         max="2"
-        step="0.01"
-        bind:value={data.config.temperature}
+        step="0.1"
+        bind:value={data.config.llm.temperature}
       />
 
       <div class="label">
@@ -72,6 +74,50 @@
           values are more creative, values between 0 and 2.
         </span>
       </div>
+    </div>
+
+    <div class="form-control">
+      <label class="label" for="temperature">
+        <span class="label-text">Answer length</span>
+      </label>
+
+      <input
+        id="temperature"
+        type="number"
+        class="input input-primary"
+        min="1"
+        max="2048"
+        bind:value={data.config.llm.maxTokens}
+      />
+
+      <div class="label">
+        <span class="label-text-alt">
+          Maximum number of tokens in the generated answer. The default is 250, the maximum is 2048.
+        </span>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-bold">Sync settings</h2>
+    <div class="form-control">
+      <label for="syncServerUrl" class="label">
+        <span class="label-text"> Server URL </span>
+      </label>
+
+      <input
+        id="syncServerUrl"
+        type="url"
+        bind:value={data.config.sync.serverUrl}
+        class="input input-primary"
+        placeholder="http://localhost:4041"
+      />
+    </div>
+
+    <div class="form-control">
+      <label for="mnemonic" class="label">
+        <span class="label-text">Mnemonic</span>
+      </label>
+
+      <input id="mnemonic" type="text" bind:value={mnemonic} class="input input-primary" disabled />
     </div>
 
     <button type="submit" class="btn btn-primary mt-4 self-end">

@@ -1,28 +1,23 @@
-import { getChatById, getCharacter, getAllChats } from "$lib/database.js";
-import { getInitialChatHistory } from "$lib/helpers";
-import invariant from "tiny-invariant";
+import { CharacterId, ChatId } from "$lib/storage";
+import { error } from "@sveltejs/kit";
 
 export async function load(event) {
-  const data = await event.parent();
-  const characterId = parseInt(event.params.characterId, 10);
-  const chatId = parseInt(event.params.chatId, 10);
-  const character = await getCharacter(characterId);
-  const allChats = await getAllChats(characterId);
+  const { storage } = await event.parent();
+  const characterId = CharacterId.make(event.params.characterId);
+  const chatId = ChatId.make(event.params.chatId);
+  const character = await storage.getCharacter(characterId);
+  const allChats = await storage.getChatsForCharacter(characterId);
 
-  let history = await getChatById(characterId, chatId);
-  if (history === undefined) {
-    invariant(!!data.activeModel, "No active model");
-    history = {
-      id: -1,
-      characterId: characterId,
-      data: getInitialChatHistory(character, data.config.userName, data.activeModel),
-      title: null,
-      archived: false,
+  const chat = await storage.getChatById(characterId, chatId);
+  if (chat === null) {
+    error(404, `Chat with ID ${chatId} not found`);
+  } else if (character === null) {
+    error(404, `Character with ID ${characterId} not found`);
+  } else {
+    return {
+      character,
+      chat,
+      allChats,
     };
   }
-  return {
-    character,
-    history,
-    allChats,
-  };
 }

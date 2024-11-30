@@ -4,11 +4,9 @@ default:
   @just --list
 
 format:
-    npm run format
-    cd src-tauri; cargo fmt
-    cd erpy-ai; cargo fmt
-    cd erpy-sync-server; cargo fmt
+  npm run format
+  cargo fmt --all  
 
 lint:
-    npm run lint
-    cd src-tauri; cargo clippy
+  npm run lint
+  cd src-tauri; cargo clippy
