@@ -1,15 +1,6 @@
 import type { CharacterInformation } from "$lib/types";
 import * as S from "@effect/schema/Schema";
-import {
-  cast,
-  database,
-  id,
-  parseMnemonic,
-  SqliteBoolean,
-  SqliteDate,
-  table,
-  type Evolu,
-} from "@evolu/common";
+import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
 import { loadMnemonic } from "./mnemonic";
 
@@ -260,6 +251,7 @@ export class Storage {
       syncUrl,
       mnemonic,
       minimumLogLevel: "debug",
+      enableWebsocketConnection: true,
     });
   }
 
