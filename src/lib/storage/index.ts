@@ -278,10 +278,6 @@ export class Storage {
     return query.rows.map(convertCharacter);
   }
 
-  async characterExists(name: string, uuid: string, id: number): Promise<boolean> {
-    throw new Error("Method not implemented.");
-  }
-
   async persistCharacters(characters: NewCharacter[]): Promise<Character[]> {
     const inserted: Character[] = [];
     for (const character of characters) {
@@ -405,5 +401,11 @@ export class Storage {
         userName: config.userName,
       },
     });
+  }
+
+  async clearStorage() {
+    const fileSystem = await navigator.storage.getDirectory();
+    const directory = await fileSystem.getDirectoryHandle("evolu");
+    await directory.removeEntry("evolu.db");
   }
 }

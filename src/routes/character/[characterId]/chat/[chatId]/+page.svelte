@@ -19,7 +19,7 @@
     faBars,
     faArchive,
   } from "@fortawesome/free-solid-svg-icons";
-  import { clamp, formatTimestamp, getAvatar, getInitialChatHistory, truncate } from "$lib/helpers";
+  import { clamp, formatTimestamp, getInitialChatHistory, truncate } from "$lib/helpers";
   import { createNotification } from "$lib/notifications";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { goto, invalidateAll } from "$app/navigation";
@@ -426,7 +426,7 @@
               <div class="w-20 rounded-full shadow-xl">
                 <img
                   alt="Avatar image for {data.character.name}"
-                  src={getAvatar(data.character.avatar)}
+                  src="data:image/png;base64,{data.character.imageBase64}"
                 />
               </div>
             </div>

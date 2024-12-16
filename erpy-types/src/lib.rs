@@ -48,7 +48,7 @@ impl fmt::Display for MessageRole {
         }
     }
 }
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct CharacterInformation {
     pub name: String,
     pub description: String,
@@ -58,6 +58,21 @@ pub struct CharacterInformation {
     pub system_prompt: String,
     pub avatar: Option<String>,
     pub image_base64: Option<String>,
+}
+
+impl fmt::Debug for CharacterInformation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CharacterInformation")
+            .field("name", &self.name)
+            .field("description", &self.description)
+            .field("personality", &self.personality)
+            .field("first_messages", &self.first_messages)
+            .field("tags", &self.tags)
+            .field("system_prompt", &self.system_prompt)
+            .field("avatar", &self.avatar)
+            .field("image_base64", &self.image_base64.is_some())
+            .finish()
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

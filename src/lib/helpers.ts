@@ -93,18 +93,6 @@ export function pluralize(count: number, singular: string, plural: string) {
   }
 }
 
-export function getAvatar(url: string | undefined): string {
-  if (!url) {
-    return "";
-  }
-
-  if (url.startsWith("http")) {
-    return url;
-  } else {
-    return convertFileSrc(url.replace("asset://", ""));
-  }
-}
-
 export function truncate(str: string | undefined | null, maxLen: number): string | undefined {
   if (str == null) {
     return undefined;

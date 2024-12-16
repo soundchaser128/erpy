@@ -2,7 +2,7 @@
   import Fa from "svelte-fa";
   import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
-  import { getAvatar, pluralize } from "$lib/helpers";
+  import { pluralize } from "$lib/helpers";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import ExternalLink from "$lib/components/ExternalLink.svelte";
   import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters";
