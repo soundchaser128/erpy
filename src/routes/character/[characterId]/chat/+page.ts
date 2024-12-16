@@ -1,6 +1,6 @@
 // import { getCharacter, getChatsForCharacter, saveNewChat } from "$lib/database";
 import { getInitialChatHistory } from "$lib/helpers";
-import { CharacterId } from "$lib/storage/index.js";
+import { CharacterId } from "$lib/storage";
 import { error, redirect } from "@sveltejs/kit";
 import invariant from "tiny-invariant";
 

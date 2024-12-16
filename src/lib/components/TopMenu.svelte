@@ -6,7 +6,7 @@
   export let modelName: string | undefined;
 </script>
 
-<section class="bg-base-200 -mx-4 mb-4 flex justify-between px-4 py-2">
+<section class="-mx-4 mb-4 flex justify-between bg-base-200 px-4 py-2">
   <div class="breadcrumbs text-sm">
     <slot name="breadcrumbs"></slot>
   </div>

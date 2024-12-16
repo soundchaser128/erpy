@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
+  import { storeMnemonic } from "$lib/service/mnemonic";
   import { setSetupCompleted } from "$lib/service/setup";
-  import { storeMnemonic } from "$lib/storage/mnemonic";
   import { createMnemonic } from "@evolu/common";
   import { faCheck, faClipboard } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
@@ -10,11 +10,16 @@
   let mnemonic = $state("");
   let generatedMnemonic = createMnemonic();
 
-  function onSubmitExisting() {
+  async function finish(mnemonic: string) {
     setSetupCompleted();
+    await invalidateAll();
     storeMnemonic(mnemonic);
 
     goto("/");
+  }
+
+  async function onSubmitExisting() {
+    await finish(mnemonic);
   }
 
   function generateNew() {
@@ -25,11 +30,8 @@
     await navigator.clipboard.writeText(generatedMnemonic);
   }
 
-  function onFinished() {
-    setSetupCompleted();
-    storeMnemonic(generatedMnemonic);
-
-    goto("/");
+  async function onFinished() {
+    await finish(generatedMnemonic);
   }
 </script>
 

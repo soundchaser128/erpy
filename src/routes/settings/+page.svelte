@@ -1,19 +1,53 @@
 <script lang="ts">
-  import { invalidateAll } from "$app/navigation";
+  import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
-  import { loadMnemonic } from "$lib/storage/mnemonic.js";
-  import { faSave } from "@fortawesome/free-solid-svg-icons";
+  import { faSave, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
 
   export let data;
 
-  let mnemonic = loadMnemonic();
+  let mnemonic = data.storage.mnemonic;
+  let confirmModal: HTMLDialogElement;
 
-  const onSubmit = async () => {
+  async function onSubmit() {
     await data.storage.saveConfig(data.config);
     await invalidateAll();
-  };
+  }
+
+  function showConfirmModal() {
+    confirmModal.showModal();
+  }
+
+  function closeConfirmModal() {
+    confirmModal.close();
+  }
+
+  async function onDeleteUserData() {
+    await data.storage.resetData();
+    window.localStorage.clear();
+    await invalidateAll();
+    await goto("/");
+  }
 </script>
+
+<dialog bind:this={confirmModal} class="modal">
+  <div class="modal-box">
+    <h3 class="mb-2 text-lg font-bold">Confirmation</h3>
+    <p>Are you sure you want to delete all your local data? This can not be undone.</p>
+    <div class="modal-action">
+      <button on:click={closeConfirmModal} class="btn btn-secondary">
+        <Fa icon={faXmark} /> Cancel
+      </button>
+      <button on:click={onDeleteUserData} class="btn btn-error">
+        <Fa icon={faTrash} /> Yes, delete all data
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
 
 <TopMenu modelName={data.activeModel}>
   <svelte:fragment slot="breadcrumbs">
@@ -119,10 +153,19 @@
 
       <input id="mnemonic" type="text" bind:value={mnemonic} class="input input-primary" disabled />
     </div>
-
     <button type="submit" class="btn btn-primary mt-4 self-end">
       <Fa icon={faSave} />
       Save</button
     >
   </form>
+
+  <div class="mt-8 flex w-full flex-col rounded-xl border-4 border-error p-4">
+    <h2 class="text-2xl font-bold text-error">Danger Zone</h2>
+    <p>The actions in this section are irreversible, so be careful!</p>
+
+    <button type="button" class="btn btn-error mt-4 self-end" on:click={showConfirmModal}>
+      <Fa icon={faTrash} />
+      Reset User Data
+    </button>
+  </div>
 </main>

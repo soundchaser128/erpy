@@ -1,5 +1,6 @@
+import { loadMnemonic } from "$lib/service/mnemonic.js";
 import { setupCompleted } from "$lib/service/setup";
-import { Storage } from "$lib/storage";
+import { ErpyStorage } from "$lib/storage";
 import { redirect } from "@sveltejs/kit";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -13,7 +14,8 @@ export const load = async (event) => {
   } else {
     const url = import.meta.env.VITE_EVOLU_URL;
     console.log("using evolu server URL", url);
-    const storage = new Storage(url);
+    const mnemonic = loadMnemonic();
+    const storage = new ErpyStorage(mnemonic);
     const config = await storage.getConfig();
     const activeModel: string | null = await invoke("active_model", { config });
 

@@ -1,4 +1,4 @@
-import { type Character, type NewCharacter, type Storage } from "$lib/storage";
+import { type Character, type NewCharacter, type ErpyStorage } from "$lib/storage";
 import type { CharacterInformation } from "$lib/types";
 import { invoke } from "@tauri-apps/api/core";
 import { appDataDir, join } from "@tauri-apps/api/path";
@@ -15,7 +15,7 @@ async function createDirectory(name: string, baseDir: BaseDirectory) {
 
 export async function createCharactersFromPngs(
   files: FileList,
-  storage: Storage,
+  storage: ErpyStorage,
 ): Promise<Character[]> {
   const pngs = await Promise.all(
     Array.from(files).map(async (file) => {
@@ -66,7 +66,7 @@ export async function createCharactersFromPngs(
 
 export async function createCharacterFromUrls(
   urls: string[],
-  storage: Storage,
+  storage: ErpyStorage,
 ): Promise<Character[]> {
   const data = await Promise.all(
     urls.map((url) => invoke<CharacterInformation>("fetch_character", { characterUrl: url })),

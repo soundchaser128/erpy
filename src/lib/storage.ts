@@ -2,7 +2,8 @@ import type { CharacterInformation } from "$lib/types";
 import * as S from "@effect/schema/Schema";
 import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
-import { loadMnemonic } from "./mnemonic";
+import { parseMnemonic } from "@evolu/common";
+import * as Effect from "effect/Effect";
 
 const ConfigId = id("config");
 export type ConfigId = typeof ConfigId.Type;
@@ -242,16 +243,23 @@ export interface NewCharacter {
   imageBase64: string;
 }
 
-export class Storage {
+export class ErpyStorage {
   #evolu: Evolu<Database>;
 
-  constructor(syncUrl?: string) {
-    const mnemonic = loadMnemonic();
+  constructor(mnemonic?: string) {
     this.#evolu = createEvolu(Database, {
-      syncUrl,
-      mnemonic,
+      syncUrl: import.meta.env.VITE_EVOLU_URL,
       minimumLogLevel: "debug",
       enableWebsocketConnection: true,
+      mnemonic: mnemonic ? Effect.runSync(parseMnemonic(mnemonic)) : undefined,
+    });
+
+    this.#evolu.subscribeOwner(() => {
+      console.log("Owner changed", this.#evolu.getOwner());
+    });
+
+    this.#evolu.subscribeSyncState(() => {
+      console.log("Sync state changed", this.#evolu.getSyncState());
     });
   }
 
@@ -403,9 +411,7 @@ export class Storage {
     });
   }
 
-  async clearStorage() {
-    const fileSystem = await navigator.storage.getDirectory();
-    const directory = await fileSystem.getDirectoryHandle("evolu");
-    await directory.removeEntry("evolu.db");
+  async resetData() {
+    await this.#evolu.resetOwner({ reload: false });
   }
 }
