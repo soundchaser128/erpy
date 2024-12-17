@@ -1,9 +1,16 @@
 import type { CharacterInformation } from "$lib/types";
 import * as S from "@effect/schema/Schema";
-import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from "@evolu/common";
+import {
+  cast,
+  database,
+  id,
+  SqliteBoolean,
+  SqliteDate,
+  table,
+  type Evolu,
+  type Mnemonic,
+} from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
-import { parseMnemonic } from "@evolu/common";
-import * as Effect from "effect/Effect";
 import { log } from "./log";
 
 const ConfigId = id("config");
@@ -245,7 +252,7 @@ export interface NewCharacter {
 export class ErpyStorage {
   #evolu: Evolu<Database>;
 
-  constructor(mnemonic: string) {
+  constructor(mnemonic: Mnemonic) {
     const serverUrl = import.meta.env.VITE_EVOLU_URL;
     log("using server url", serverUrl);
 
@@ -253,7 +260,7 @@ export class ErpyStorage {
       syncUrl: serverUrl,
       // minimumLogLevel: "debug",
       enableWebsocketConnection: true,
-      mnemonic: mnemonic ? Effect.runSync(parseMnemonic(mnemonic)) : undefined,
+      mnemonic,
     });
 
     this.#evolu.subscribeOwner(() => {

@@ -3,7 +3,7 @@ import * as Effect from "effect/Effect";
 
 const localStorageKey = "evoluMnemonic";
 
-export function loadMnemonic(): Mnemonic | undefined {
+export function loadMnemonic(): Mnemonic {
   const string = window.localStorage.getItem(localStorageKey);
 
   if (string) {
