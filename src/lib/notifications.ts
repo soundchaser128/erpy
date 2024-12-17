@@ -16,6 +16,10 @@ export async function createNotification(title: string, body: string, isLarge = 
 
   // Once permission has been granted we can send the notification
   if (permissionGranted) {
-    sendNotification({ title, [isLarge ? "largeBody" : "body"]: body });
+    const isWindowFocused = document.hasFocus();
+
+    if (!isWindowFocused) {
+      sendNotification({ title, [isLarge ? "largeBody" : "body"]: body });
+    }
   }
 }
