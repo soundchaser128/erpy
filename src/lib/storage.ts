@@ -247,8 +247,11 @@ export class ErpyStorage {
   #evolu: Evolu<Database>;
 
   constructor(mnemonic?: string) {
+    const serverUrl = import.meta.env.VITE_EVOLU_URL;
+    console.log("using server url", serverUrl);
+
     this.#evolu = createEvolu(Database, {
-      syncUrl: import.meta.env.VITE_EVOLU_URL,
+      syncUrl: serverUrl,
       minimumLogLevel: "debug",
       enableWebsocketConnection: true,
       mnemonic: mnemonic ? Effect.runSync(parseMnemonic(mnemonic)) : undefined,
