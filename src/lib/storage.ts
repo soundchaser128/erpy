@@ -113,7 +113,6 @@ export interface Character {
   tags: string[];
   systemPrompt: string;
   avatar: string;
-  chatCount: number | null;
   imageBase64: string;
 }
 
@@ -128,7 +127,6 @@ function convertCharacter(character: Nullable<CharacterRow>): Character {
     tags: (character.tags ?? []) as string[],
     systemPrompt: character.systemPrompt!,
     avatar: character.avatar!,
-    chatCount: null,
     imageBase64: character.imageBase64!,
   };
 }
@@ -307,7 +305,6 @@ export class ErpyStorage {
       const data = this.#evolu.create("characters", toInsert);
       inserted.push({
         ...toInsert,
-        chatCount: 0,
         id: data.id,
       });
     }

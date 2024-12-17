@@ -520,7 +520,6 @@
     {/each}
   </section>
   <form on:submit|preventDefault={() => onSubmit()} class="flex shrink items-center gap-2 pb-2">
-    <!-- svelte-ignore a11y-autofocus -->
     <textarea
       bind:value={question}
       class="textarea textarea-primary w-full"
