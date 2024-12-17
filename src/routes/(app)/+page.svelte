@@ -5,6 +5,8 @@
   import TopMenu from "$lib/components/TopMenu.svelte";
   import ExternalLink from "$lib/components/ExternalLink.svelte";
   import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters";
+  import type { Character } from "$lib/storage.js";
+  import { pluralize } from "$lib/helpers.js";
 
   export let data;
   let addModal: HTMLDialogElement;
@@ -51,8 +53,8 @@
     loading = false;
   }
 
-  function isDisabled(): boolean {
-    return !data.activeModel;
+  function isDisabled(character: Character): boolean {
+    return !data.activeModel && character.chatCount === 0;
   }
 </script>
 
@@ -148,13 +150,15 @@
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
     {#each filtered as character (character.id)}
       <a
-        href={isDisabled() ? undefined : `/character/${character.id}/chat`}
+        href={isDisabled(character) ? undefined : `/character/${character.id}/chat`}
         class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >
         <figure class="aspect-square">
           <img
-            class="w-full rounded-t-lg object-contain {isDisabled() ? 'blur-sm grayscale' : ''}"
+            class="w-full rounded-t-lg object-contain {isDisabled(character)
+              ? 'blur-sm grayscale'
+              : ''}"
             src="data:image/png;base64,{character.imageBase64}"
             alt={character.name}
           />
@@ -163,6 +167,10 @@
           <h2 class="card-title">
             {character.name}
           </h2>
+          <p class="text-sm text-base-content">
+            <strong>{character.chatCount ?? 0}</strong>
+            {pluralize(character.chatCount ?? 0, "chat", "chats")}
+          </p>
         </div>
       </a>
     {/each}

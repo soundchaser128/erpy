@@ -159,13 +159,17 @@
     >
   </form>
 
-  <div class="mt-8 flex w-full flex-col rounded-xl border-4 border-error p-4">
+  <div class="my-8 flex w-full flex-col rounded-xl border-4 border-error p-4">
     <h2 class="text-2xl font-bold text-error">Danger Zone</h2>
     <p>The actions in this section are irreversible, so be careful!</p>
 
-    <button type="button" class="btn btn-error mt-4 self-end" on:click={showConfirmModal}>
-      <Fa icon={faTrash} />
-      Reset User Data
-    </button>
+    <div class="flex items-baseline justify-between">
+      <span> Deletes all your local data. </span>
+
+      <button type="button" class="btn btn-error mt-4" on:click={showConfirmModal}>
+        <Fa icon={faTrash} />
+        Reset User Data
+      </button>
+    </div>
   </div>
 </main>

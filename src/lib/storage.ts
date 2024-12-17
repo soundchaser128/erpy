@@ -121,9 +121,10 @@ export interface Character {
   systemPrompt: string;
   avatar: string;
   imageBase64: string;
+  chatCount?: number;
 }
 
-function convertCharacter(character: Nullable<CharacterRow>): Character {
+function convertCharacter(character: Nullable<CharacterRow & { chatCount: number }>): Character {
   return {
     id: character.id!,
     url: character.url!,
@@ -135,6 +136,7 @@ function convertCharacter(character: Nullable<CharacterRow>): Character {
     systemPrompt: character.systemPrompt!,
     avatar: character.avatar!,
     imageBase64: character.imageBase64!,
+    chatCount: character.chatCount ?? undefined,
   };
 }
 
@@ -278,7 +280,17 @@ export class ErpyStorage {
 
   async getCharacter(id: CharacterId): Promise<Character | null> {
     const query = this.#evolu.createQuery((db) =>
-      db.selectFrom("characters").where("id", "=", id).selectAll(),
+      db
+        .selectFrom("characters")
+        .select((eb) =>
+          eb
+            .selectFrom("chats")
+            .where("characterId", "=", id)
+            .select((eb2) => eb2.fn.count<number>("chats.id").as("chatCount"))
+            .as("chatCount"),
+        )
+        .where("id", "=", id)
+        .selectAll(),
     );
     const data = await this.#evolu.loadQuery(query);
     if (data.row) {
@@ -289,7 +301,18 @@ export class ErpyStorage {
   }
 
   async getAllCharacters(): Promise<Character[]> {
-    const characters = this.#evolu.createQuery((db) => db.selectFrom("characters").selectAll());
+    const characters = this.#evolu.createQuery((db) =>
+      db
+        .selectFrom("characters")
+        .selectAll()
+        .select((eb) =>
+          eb
+            .selectFrom("chats")
+            .whereRef("chats.characterId", "=", "characters.id")
+            .select((eb2) => eb2.fn.count<number>("chats.id").as("chatCount"))
+            .as("chatCount"),
+        ),
+    );
     const query = await this.#evolu.loadQuery(characters);
 
     return query.rows.map(convertCharacter);
