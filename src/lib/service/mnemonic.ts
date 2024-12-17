@@ -7,14 +7,9 @@ export function loadMnemonic(): Mnemonic | undefined {
   const string = window.localStorage.getItem(localStorageKey);
 
   if (string) {
-    try {
-      return Effect.runSync(parseMnemonic(string));
-    } catch (e) {
-      console.error("failed to parse mnemonic:", e);
-      return undefined;
-    }
+    return Effect.runSync(parseMnemonic(string));
   } else {
-    return undefined;
+    throw new Error("No mnemonic found in localStorge");
   }
 }
 

@@ -11,9 +11,9 @@
   let generatedMnemonic = createMnemonic();
 
   async function finish(mnemonic: string) {
+    storeMnemonic(mnemonic);
     setSetupCompleted();
     await invalidateAll();
-    storeMnemonic(mnemonic);
 
     goto("/");
   }
