@@ -2,11 +2,14 @@
   import autosize from "autosize";
   import { onMount } from "svelte";
 
-  let textarea: HTMLTextAreaElement;
+  let { value = $bindable(), ...rest } = $props();
+  let textarea: HTMLTextAreaElement | undefined = $state();
 
   onMount(() => {
-    autosize(textarea);
+    if (textarea) {
+      autosize(textarea);
+    }
   });
 </script>
 
-<textarea bind:this={textarea} {...$$restProps}></textarea>
+<textarea bind:this={textarea} {...rest}></textarea>

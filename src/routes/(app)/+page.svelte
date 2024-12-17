@@ -2,7 +2,6 @@
   import Fa from "svelte-fa";
   import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
-  import { pluralize } from "$lib/helpers";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import ExternalLink from "$lib/components/ExternalLink.svelte";
   import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters";
@@ -52,8 +51,8 @@
     loading = false;
   }
 
-  function isDisabled(chatCount: number): boolean {
-    return !data.activeModel && chatCount === 0;
+  function isDisabled(): boolean {
+    return !data.activeModel;
   }
 </script>
 
@@ -133,9 +132,7 @@
   <div role="alert" class="alert alert-warning mb-4">
     <Fa icon={faWarning} />
     <span>
-      No model loaded. You can only view chats. Load a model or connect to an API from <a
-        class="link"
-        href="/models">here</a
+      No model loaded. Load a model or connect to an API from <a class="link" href="/models">here</a
       >.
     </span>
   </div>
@@ -151,15 +148,13 @@
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
     {#each filtered as character (character.id)}
       <a
-        href={isDisabled(character.chatCount ?? 0) ? undefined : `/character/${character.id}/chat`}
+        href={isDisabled() ? undefined : `/character/${character.id}/chat`}
         class="card card-compact w-full bg-base-100 shadow-xl"
         data-sveltekit-preload-data="off"
       >
         <figure class="aspect-square">
           <img
-            class="w-full rounded-t-lg object-contain {isDisabled(character.id.length)
-              ? 'blur-sm grayscale'
-              : ''}"
+            class="w-full rounded-t-lg object-contain {isDisabled() ? 'blur-sm grayscale' : ''}"
             src="data:image/png;base64,{character.imageBase64}"
             alt={character.name}
           />
@@ -168,10 +163,6 @@
           <h2 class="card-title">
             {character.name}
           </h2>
-          <p class="text-sm text-base-content">
-            <strong>{character.chatCount ?? 0}</strong>
-            {pluralize(character.chatCount ?? 0, "chat", "chats")}
-          </p>
         </div>
       </a>
     {/each}

@@ -4,6 +4,7 @@ import { cast, database, id, SqliteBoolean, SqliteDate, table, type Evolu } from
 import { createEvolu } from "@evolu/common-web";
 import { parseMnemonic } from "@evolu/common";
 import * as Effect from "effect/Effect";
+import { log } from "./log";
 
 const ConfigId = id("config");
 export type ConfigId = typeof ConfigId.Type;
@@ -112,7 +113,6 @@ export interface Character {
   tags: string[];
   systemPrompt: string;
   avatar: string;
-  chatCount: number | null;
   imageBase64: string;
 }
 
@@ -127,7 +127,6 @@ function convertCharacter(character: Nullable<CharacterRow>): Character {
     tags: (character.tags ?? []) as string[],
     systemPrompt: character.systemPrompt!,
     avatar: character.avatar!,
-    chatCount: null,
     imageBase64: character.imageBase64!,
   };
 }
@@ -246,23 +245,23 @@ export interface NewCharacter {
 export class ErpyStorage {
   #evolu: Evolu<Database>;
 
-  constructor(mnemonic?: string) {
+  constructor(mnemonic: string) {
     const serverUrl = import.meta.env.VITE_EVOLU_URL;
-    console.log("using server url", serverUrl);
+    log("using server url", serverUrl);
 
     this.#evolu = createEvolu(Database, {
       syncUrl: serverUrl,
-      minimumLogLevel: "debug",
+      // minimumLogLevel: "debug",
       enableWebsocketConnection: true,
       mnemonic: mnemonic ? Effect.runSync(parseMnemonic(mnemonic)) : undefined,
     });
 
     this.#evolu.subscribeOwner(() => {
-      console.log("Owner changed", this.#evolu.getOwner());
+      log("Owner changed", this.#evolu.getOwner());
     });
 
     this.#evolu.subscribeSyncState(() => {
-      console.log("Sync state changed", this.#evolu.getSyncState());
+      log("Sync state changed", this.#evolu.getSyncState());
     });
   }
 
@@ -306,7 +305,6 @@ export class ErpyStorage {
       const data = this.#evolu.create("characters", toInsert);
       inserted.push({
         ...toInsert,
-        chatCount: 0,
         id: data.id,
       });
     }

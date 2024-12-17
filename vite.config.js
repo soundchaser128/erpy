@@ -12,7 +12,6 @@ export default defineConfig(
 
       optimizeDeps: {
         exclude: ["@evolu/common-web", "@sqlite.org/sqlite-wasm"],
-        include: ["react-dom"],
       },
       worker: { format: "es" },
 

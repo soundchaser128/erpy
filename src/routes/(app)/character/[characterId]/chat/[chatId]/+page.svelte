@@ -77,7 +77,6 @@
       invariant(!!data.activeModel, "No active model selected");
 
       const lastMessage = chatHistory[chatHistory.length - 1];
-      console.log({ question });
       if (lastMessage.role !== MessageRole.User && !addToExisting) {
         if (question.trim().length > 0) {
           const q: ChatHistoryItem = {
@@ -521,7 +520,6 @@
     {/each}
   </section>
   <form on:submit|preventDefault={() => onSubmit()} class="flex shrink items-center gap-2 pb-2">
-    <!-- svelte-ignore a11y-autofocus -->
     <textarea
       bind:value={question}
       class="textarea textarea-primary w-full"

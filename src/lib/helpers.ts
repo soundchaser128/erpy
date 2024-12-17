@@ -1,16 +1,17 @@
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { MessageRole, type Character, type ChatHistoryItem } from "./storage";
-import { format, lightFormat } from "date-fns";
+import { DateTime } from "luxon";
 
 const pluralRules = new Intl.PluralRules("en-US");
 
 export function formatTimestamp(timestamp: number | Date, format: "long" | "short" = "short") {
-  const date = new Date(timestamp);
-  return lightFormat(date, format === "long" ? "MMMM d, yyyy h:mm a" : "h:mm a");
+  const date =
+    timestamp instanceof Date ? DateTime.fromJSDate(timestamp) : DateTime.fromMillis(timestamp);
+
+  return date.toLocaleString(format === "long" ? DateTime.DATETIME_FULL : DateTime.TIME_SIMPLE);
 }
 
 export function sqliteDateTime(date: Date): string {
-  return format(date, "yyyy-MM-dd HH:mm:ss");
+  return DateTime.fromJSDate(date).toFormat("yyyy-MM-dd HH:mm:ss");
 }
 
 export function clamp(value: number, min: number, max: number) {
