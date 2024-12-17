@@ -9,6 +9,8 @@ import {
   table,
   type Evolu,
   type Mnemonic,
+  type SyncState,
+  type Unsubscribe,
 } from "@evolu/common";
 import { createEvolu } from "@evolu/common-web";
 import { log } from "./log";
@@ -260,22 +262,19 @@ export class ErpyStorage {
 
     this.#evolu = createEvolu(Database, {
       syncUrl: serverUrl,
-      // minimumLogLevel: "debug",
       enableWebsocketConnection: true,
       mnemonic,
-    });
-
-    this.#evolu.subscribeOwner(() => {
-      log("Owner changed", this.#evolu.getOwner());
-    });
-
-    this.#evolu.subscribeSyncState(() => {
-      log("Sync state changed", this.#evolu.getSyncState());
     });
   }
 
   get mnemonic(): string {
     return this.#evolu.getOwner()!.mnemonic;
+  }
+
+  onSyncStateChange(callback: (state: SyncState) => void): Unsubscribe {
+    return this.#evolu.subscribeSyncState(() => {
+      callback(this.#evolu.getSyncState());
+    });
   }
 
   async getCharacter(id: CharacterId): Promise<Character | null> {
