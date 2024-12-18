@@ -20,7 +20,13 @@
     faArchive,
     faArrowDown,
   } from "@fortawesome/free-solid-svg-icons";
-  import { clamp, formatTimestamp, getInitialChatHistory, truncate } from "$lib/helpers";
+  import {
+    clamp,
+    formatNumber,
+    formatTimestamp,
+    getInitialChatHistory,
+    truncate,
+  } from "$lib/helpers";
   import { createNotification } from "$lib/notifications";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { goto, invalidateAll } from "$app/navigation";
@@ -379,7 +385,7 @@
     </svelte:fragment>
     <svelte:fragment slot="right">
       <p class="hidden text-sm lg:block">
-        Estimated token count: {tokenCount}
+        Estimated token count: {formatNumber(tokenCount)}
       </p>
       <button disabled={!data.activeModel} on:click={createNewChat} class="btn btn-success btn-sm">
         <Fa icon={faEnvelope} />
@@ -430,14 +436,14 @@
   {/if}
 
   <section bind:this={messageContainer} class="relative mb-4 h-full w-full grow overflow-x-auto">
-    {#if showScrollDown}
+    <!-- {#if showScrollDown}
       <button
         on:click={() => scrollToBottom("smooth")}
         class="btn btn-square fixed bottom-20 right-8 z-20 shadow-xl"
       >
         <Fa icon={faArrowDown} />
       </button>
-    {/if}
+    {/if} -->
 
     {#each chatHistory as entry, index}
       {#if entry.role !== "system"}

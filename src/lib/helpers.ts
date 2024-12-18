@@ -1,6 +1,7 @@
 import { MessageRole, type Character, type ChatHistoryItem } from "./storage";
 import { DateTime } from "luxon";
 
+const numberFormat = new Intl.NumberFormat("en-US");
 const pluralRules = new Intl.PluralRules("en-US");
 
 export function formatTimestamp(timestamp: number | Date, format: "long" | "short" = "short") {
@@ -16,6 +17,10 @@ export function sqliteDateTime(date: Date): string {
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+export function formatNumber(n: number): string {
+  return numberFormat.format(n);
 }
 
 export function substituteParams(
