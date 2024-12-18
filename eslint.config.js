@@ -28,7 +28,7 @@ export default [
     },
   },
   {
-    ignores: ["build/", ".svelte-kit/", "dist/", "src-tauri/", "tailwind.config.js"],
+    ignores: ["build/", ".svelte-kit/", "dist/", "src-tauri/", "tailwind.config.js", "target/"],
   },
   { rules: { "@typescript-eslint/no-unused-vars": "warn" } },
 ];

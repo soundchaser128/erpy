@@ -39,6 +39,7 @@ export interface NotificationSettings {
 }
 
 export interface Config {
+  id: ConfigId;
   userName: string;
   notifications: NotificationSettings;
   sync: SyncSettings;
@@ -73,6 +74,7 @@ type ConfigRow = typeof ConfigTable.Type;
 
 function convertConfig(config: Nullable<ConfigRow>): Config {
   return {
+    id: config.id!,
     userName: config.data?.userName ?? "User",
     notifications: config.data?.notifications ?? { newMessage: false },
     sync: config.data?.sync ?? {
@@ -153,7 +155,7 @@ export enum MessageRole {
 
 const ChatsTable = table({
   id: ChatId,
-  title: S.NonEmptyString,
+  title: S.String,
   characterId: CharacterId,
   archived: SqliteBoolean,
   history: S.Array(
@@ -162,7 +164,7 @@ const ChatsTable = table({
       chosenAnswer: S.Number,
       content: S.Array(
         S.Struct({
-          content: S.NonEmptyString,
+          content: S.String,
           timestamp: SqliteDate,
           modelId: S.NonEmptyString,
         }),
@@ -400,6 +402,7 @@ export class ErpyStorage {
     } else {
       return {
         userName: "User",
+        id: ConfigId.make(""),
         notifications: {
           newMessage: true,
         },
@@ -431,7 +434,7 @@ export class ErpyStorage {
 
   async saveConfig(config: Config): Promise<void> {
     this.#evolu.createOrUpdate("config", {
-      id: ConfigId.make(""),
+      id: config.id,
       data: {
         llm: config.llm,
         notifications: config.notifications,

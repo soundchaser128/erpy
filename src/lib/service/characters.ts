@@ -1,7 +1,6 @@
 import { type Character, type NewCharacter, type ErpyStorage } from "$lib/storage";
 import type { CharacterInformation } from "$lib/types";
 import { invoke } from "@tauri-apps/api/core";
-import { appDataDir, join } from "@tauri-apps/api/path";
 import { BaseDirectory, mkdir, writeFile } from "@tauri-apps/plugin-fs";
 
 async function createDirectory(name: string, baseDir: BaseDirectory) {

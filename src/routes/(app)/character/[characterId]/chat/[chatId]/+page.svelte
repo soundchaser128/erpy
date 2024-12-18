@@ -49,6 +49,13 @@
   $: tokenCount = estimateTokens(chatHistory);
   $: historyId = data.chat.id;
 
+  $: {
+    if (observer && messageContainer.lastElementChild) {
+      observer.disconnect();
+      observer.observe(messageContainer.lastElementChild);
+    }
+  }
+
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
     messageContainer.scrollTo({ top: messageContainer.scrollHeight, behavior: type });
   }
@@ -63,7 +70,9 @@
       },
       { root: messageContainer, rootMargin: "0px 0px 100% 0px" },
     );
-    observer.observe(messageContainer.lastElementChild!);
+    if (messageContainer.lastElementChild) {
+      observer.observe(messageContainer.lastElementChild);
+    }
   });
 
   async function onAddNewSwipe() {

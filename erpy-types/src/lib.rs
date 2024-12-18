@@ -6,12 +6,10 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Chat {
-    pub id: i32,
-    pub uuid: Uuid,
-    pub created_at: String,
-    pub title: Option<String>,
-    pub character_id: i32,
-    pub data: Vec<ChatHistoryItem>,
+    pub id: String,
+    pub title: String,
+    pub character_id: String,
+    pub history: Vec<ChatHistoryItem>,
     pub archived: bool,
 }
 
@@ -27,7 +25,7 @@ pub struct ChatHistoryItem {
 #[serde(rename_all = "camelCase")]
 pub struct ChatContent {
     pub content: String,
-    pub timestamp: i64,
+    pub timestamp: String,
     pub model_id: String,
 }
 
@@ -77,8 +75,7 @@ impl fmt::Debug for CharacterInformation {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Character {
-    pub id: i32,
+    pub id: String,
     pub url: Option<String>,
     pub payload: CharacterInformation,
-    pub uuid: Option<Uuid>,
 }

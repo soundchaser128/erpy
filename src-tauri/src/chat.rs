@@ -4,7 +4,7 @@ use erpy_types::{Chat, MessageRole};
 
 pub async fn summarize(chat: &Chat, client: &CompletionApis, prompt: &str) -> Result<String> {
     let mut history: Vec<_> = chat
-        .data
+        .history
         .iter()
         .map(|entry| MessageHistoryItem {
             role: entry.role,

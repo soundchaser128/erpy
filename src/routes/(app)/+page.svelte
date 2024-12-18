@@ -120,9 +120,6 @@
     </ul>
   </svelte:fragment>
   <svelte:fragment slot="right">
-    <button on:click={showModal} class="btn btn-success btn-sm">
-      <Fa icon={faFileImport} /> Import characters
-    </button>
     <a href="/archive" class="btn btn-secondary btn-sm">
       <Fa icon={faBoxArchive} />
       Archive
@@ -140,12 +137,17 @@
   </div>
 {/if}
 
-<input
-  bind:value={searchInput}
-  type="search"
-  class="input input-primary mb-4 w-full"
-  placeholder="Search characters"
-/>
+<div class="mb-4 flex items-center gap-2">
+  <input
+    bind:value={searchInput}
+    type="search"
+    class="input input-primary w-full"
+    placeholder="Search characters"
+  />
+  <button on:click={showModal} class="btn btn-success">
+    <Fa icon={faFileImport} /> Import characters
+  </button>
+</div>
 {#if !loading}
   <section class="mb-4 grid w-full grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
     {#each filtered as character (character.id)}
