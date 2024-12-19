@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
 use tokio::sync::{oneshot, Mutex};
 use tokio_stream::StreamExt;
+use tts::Backends;
+use tts::Tts;
 
 pub mod character;
 pub mod chat;
@@ -19,6 +21,7 @@ pub mod config;
 
 struct State {
     completions: Mutex<Option<CompletionApis>>,
+    tts: Tts,
 }
 
 #[tauri::command]
@@ -81,6 +84,7 @@ async fn chat_completion(
         }
     });
 
+    let mut full_text = String::new();
     while let Some(response) = stream.next().await {
         if let Ok(_) = tx.try_recv() {
             info!("cancelling completion stream");
@@ -94,6 +98,8 @@ async fn chat_completion(
 
     app.emit("completion_done", ())
         .expect("failed to emit completion-done");
+
+    state.tts.speak(full_text, false)?;
 
     Ok(())
 }
@@ -249,6 +255,21 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
     }
 }
 
+#[cfg(target_os = "windows")]
+fn tts_backend() -> Backends {
+    Backends::WinRt
+}
+
+#[cfg(target_os = "macos")]
+fn tts_backend() -> Backends {
+    Backends::AppKit
+}
+
+#[cfg(target_os = "linux")]
+fn tts_backend() -> Backends {
+    Backends::SpeechDispatcher
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -256,6 +277,7 @@ pub fn run() {
         .setup(|app| {
             app.manage(State {
                 completions: Mutex::new(None),
+                tts: Tts::new(tts_backend())?,
             });
             Ok(())
         })
