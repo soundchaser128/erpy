@@ -2,6 +2,7 @@
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { faSave, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+  import { invoke } from "@tauri-apps/api/core";
   import Fa from "svelte-fa";
 
   export let data;
@@ -27,6 +28,10 @@
     window.localStorage.clear();
     await invalidateAll();
     await goto("/");
+  }
+
+  async function speak() {
+    await invoke("speak", { text: "Hello, world!" });
   }
 </script>
 
@@ -159,7 +164,7 @@
     >
   </form>
 
-  <div class="my-8 flex w-full flex-col rounded-xl border-4 border-error p-4">
+  <section class="my-8 flex w-full flex-col rounded-xl border-4 border-error p-4">
     <h2 class="text-2xl font-bold text-error">Danger Zone</h2>
     <p>The actions in this section are irreversible, so be careful!</p>
 
@@ -171,5 +176,7 @@
         Reset User Data
       </button>
     </div>
-  </div>
+
+    <button class="btn btn-secondary mt-4" on:click={speak}> Speak </button>
+  </section>
 </main>

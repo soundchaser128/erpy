@@ -7,12 +7,12 @@ use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, Mes
 use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::CharacterInformation;
 use erpy_types::Chat;
+use log::warn;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
 use tokio::sync::{oneshot, Mutex};
 use tokio_stream::StreamExt;
-use tts::Backends;
 use tts::Tts;
 
 pub mod character;
@@ -21,7 +21,7 @@ pub mod config;
 
 struct State {
     completions: Mutex<Option<CompletionApis>>,
-    tts: Tts,
+    tts: Mutex<Tts>,
 }
 
 #[tauri::command]
@@ -92,14 +92,24 @@ async fn chat_completion(
             break;
         }
 
+        if let Some(text) = response.choices.get(0).map(|c| &c.delta.content) {
+            full_text.push_str(&text);
+        }
+
         app.emit("completion", response)
             .expect("failed to emit completion");
     }
 
+    info!("completion stream finished");
     app.emit("completion_done", ())
         .expect("failed to emit completion-done");
 
-    state.tts.speak(full_text, false)?;
+    // state.tts.speak(full_text, false)?;
+    let mut tts = state.tts.lock().await;
+    info!("speaking: '{}'", full_text);
+    if let Err(e) = tts.speak(full_text, false) {
+        info!("failed to speak: {:#?}", e);
+    }
 
     Ok(())
 }
@@ -255,19 +265,14 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
     }
 }
 
-#[cfg(target_os = "windows")]
-fn tts_backend() -> Backends {
-    Backends::WinRt
-}
-
-#[cfg(target_os = "macos")]
-fn tts_backend() -> Backends {
-    Backends::AppKit
-}
-
-#[cfg(target_os = "linux")]
-fn tts_backend() -> Backends {
-    Backends::SpeechDispatcher
+#[tauri::command]
+async fn speak(app: AppHandle, text: String) -> TAResult<()> {
+    let state = app.state::<State>();
+    let mut tts = state.tts.lock().await;
+    if let Err(e) = tts.speak(text, false) {
+        warn!("failed to speak: {:#?}", e);
+    }
+    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -277,7 +282,7 @@ pub fn run() {
         .setup(|app| {
             app.manage(State {
                 completions: Mutex::new(None),
-                tts: Tts::new(tts_backend())?,
+                tts: Mutex::new(Tts::default()?),
             });
             Ok(())
         })
@@ -302,7 +307,8 @@ pub fn run() {
             unload_model,
             test_connection,
             list_models_on_disk,
-            get_backends
+            get_backends,
+            speak,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
