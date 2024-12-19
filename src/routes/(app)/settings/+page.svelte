@@ -31,7 +31,7 @@
   }
 
   async function speak() {
-    await invoke("speak", { text: "Hello, world!" });
+    await invoke("speak", { text: "Hello, world!", speaker: "tifa" });
   }
 </script>
 

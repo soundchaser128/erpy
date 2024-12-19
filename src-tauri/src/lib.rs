@@ -7,21 +7,21 @@ use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, Mes
 use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::CharacterInformation;
 use erpy_types::Chat;
-use log::warn;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
 use tokio::sync::{oneshot, Mutex};
 use tokio_stream::StreamExt;
-use tts::Tts;
+use tts::Xtts2Client;
 
 pub mod character;
 pub mod chat;
 pub mod config;
+pub mod tts;
 
 struct State {
     completions: Mutex<Option<CompletionApis>>,
-    tts: Mutex<Tts>,
+    tts: Xtts2Client,
 }
 
 #[tauri::command]
@@ -103,13 +103,6 @@ async fn chat_completion(
     info!("completion stream finished");
     app.emit("completion_done", ())
         .expect("failed to emit completion-done");
-
-    // state.tts.speak(full_text, false)?;
-    let mut tts = state.tts.lock().await;
-    info!("speaking: '{}'", full_text);
-    if let Err(e) = tts.speak(full_text, false) {
-        info!("failed to speak: {:#?}", e);
-    }
 
     Ok(())
 }
@@ -266,12 +259,15 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
 }
 
 #[tauri::command]
-async fn speak(app: AppHandle, text: String) -> TAResult<()> {
+async fn speak(
+    app: AppHandle,
+    text: String,
+    speaker: String,
+    reader: tauri::ipc::Channel<&[u8]>,
+) -> TAResult<()> {
     let state = app.state::<State>();
-    let mut tts = state.tts.lock().await;
-    if let Err(e) = tts.speak(text, false) {
-        warn!("failed to speak: {:#?}", e);
-    }
+    state.tts.speak(&text, &speaker, "en", reader).await?;
+
     Ok(())
 }
 
@@ -282,7 +278,7 @@ pub fn run() {
         .setup(|app| {
             app.manage(State {
                 completions: Mutex::new(None),
-                tts: Mutex::new(Tts::default()?),
+                tts: Xtts2Client::new("http://localhost:8020")?,
             });
             Ok(())
         })
