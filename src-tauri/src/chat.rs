@@ -1,49 +1,21 @@
 use anyhow::Result;
-use erpy_ai::{CompletionApi, CompletionRequest, MessageHistoryItem, MessageRole};
-use erpy_types::Chat;
-use serde::Serialize;
+use erpy_ai::{CompletionApis, CompletionRequest, MessageHistoryItem};
+use erpy_types::{Chat, MessageRole};
 
-pub fn chat_to_string(chat: &Chat) -> String {
-    let max_tokens = 8192;
+pub async fn summarize(chat: &Chat, client: &CompletionApis, prompt: &str) -> Result<String> {
+    let mut history: Vec<_> = chat
+        .history
+        .iter()
+        .map(|entry| MessageHistoryItem {
+            role: entry.role,
+            content: entry.content[entry.chosen_answer].content.clone(),
+        })
+        .collect();
 
-    #[derive(Serialize)]
-    struct Entry {
-        role: String,
-        content: String,
-    }
-
-    let mut total_tokens = 0;
-    let mut pairs = vec![];
-    for entry in chat.data.iter().rev() {
-        let answer = &entry.content[entry.chosen_answer];
-        let token_count = answer.content.len() / 4;
-        if total_tokens + token_count > max_tokens {
-            break;
-        }
-
-        pairs.push(Entry {
-            role: format!("{:?}", entry.role),
-            content: answer.content.clone(),
-        });
-        total_tokens += token_count;
-    }
-
-    serde_json::to_string_pretty(&pairs).unwrap()
-}
-
-pub async fn summarize(chat: &Chat, client: impl CompletionApi, prompt: &str) -> Result<String> {
-    let template = format!("{}\n\n{}", prompt, chat_to_string(chat));
-
-    let history = vec![
-        MessageHistoryItem {
-            role: MessageRole::System,
-            content: "You are a knowledgeable and friendly AI assistant".into(),
-        },
-        MessageHistoryItem {
-            role: MessageRole::User,
-            content: template,
-        },
-    ];
+    history.push(MessageHistoryItem {
+        role: MessageRole::User,
+        content: prompt.into(),
+    });
 
     let request = CompletionRequest {
         messages: history,

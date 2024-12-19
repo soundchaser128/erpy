@@ -1,5 +1,5 @@
 [workspace]
-members = ["src-tauri", "erpy-types", "erpy-ai", "erpy-sync-server"]
+members = ["src-tauri", "erpy-types", "erpy-ai"]
 resolver = "2"
 
 [profile.dev.package.erpy-ai]
