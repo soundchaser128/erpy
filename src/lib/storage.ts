@@ -301,8 +301,8 @@ export class ErpyStorage {
     }
   }
 
-  async getAllCharacters(): Promise<Character[]> {
-    const characters = this.#evolu.createQuery((db) =>
+  #allCharactersQuery() {
+    return this.#evolu.createQuery((db) =>
       db
         .selectFrom("characters")
         .selectAll()
@@ -314,9 +314,18 @@ export class ErpyStorage {
             .as("chatCount"),
         ),
     );
+  }
+
+  async getAllCharacters(): Promise<Character[]> {
+    const characters = this.#allCharactersQuery();
     const query = await this.#evolu.loadQuery(characters);
 
     return query.rows.map(convertCharacter);
+  }
+
+  subscribeAllCharacters() {
+    const characters = this.#allCharactersQuery();
+    return this.#evolu.subscribeQuery(characters);
   }
 
   async persistCharacters(characters: NewCharacter[]): Promise<Character[]> {

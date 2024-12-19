@@ -24,6 +24,7 @@
     clamp,
     formatNumber,
     formatTimestamp,
+    getChatTitle,
     getInitialChatHistory,
     truncate,
   } from "$lib/helpers";
@@ -428,8 +429,7 @@
           href={`/character/${data.character.id}/chat/${chat.id}`}
           class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
         >
-          {truncate(chat.title, 40) ||
-            formatTimestamp(chat.history[chat.history.length - 1].content[0].timestamp)}
+          {getChatTitle(chat)}
         </a>
       {/each}
     </div>

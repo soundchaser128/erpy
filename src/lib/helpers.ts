@@ -1,4 +1,4 @@
-import { MessageRole, type Character, type ChatHistoryItem } from "./storage";
+import { MessageRole, type Character, type Chat, type ChatHistoryItem } from "./storage";
 import { DateTime } from "luxon";
 
 const numberFormat = new Intl.NumberFormat("en-US");
@@ -109,4 +109,12 @@ export function truncate(str: string | undefined | null, maxLen: number): string
   }
 
   return str.slice(0, maxLen - 1) + "…";
+}
+
+export function getChatTitle(chat: Chat): string {
+  return (
+    truncate(chat.title, 40) ||
+    truncate(chat.history.at(2)?.content.at(0)?.content, 40) ||
+    "Untitled"
+  );
 }
