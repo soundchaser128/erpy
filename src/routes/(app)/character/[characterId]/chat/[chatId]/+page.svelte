@@ -18,7 +18,6 @@
     faCodeFork,
     faBars,
     faArchive,
-    faArrowDown,
   } from "@fortawesome/free-solid-svg-icons";
   import {
     clamp,
@@ -26,7 +25,6 @@
     formatTimestamp,
     getChatTitle,
     getInitialChatHistory,
-    truncate,
   } from "$lib/helpers";
   import { createNotification } from "$lib/notifications";
   import TopMenu from "$lib/components/TopMenu.svelte";
@@ -48,7 +46,7 @@
   let deleteModal: HTMLDialogElement;
   let titleModal: HTMLDialogElement;
   let messageToEdit: ChatHistoryItem | null = null;
-  let hideTabs = $page.url.searchParams.get("tabs") === "false";
+  let readOnly = $page.url.searchParams.get("readOnly") === "true";
   let showScrollDown = false;
   let observer: IntersectionObserver;
 
@@ -211,7 +209,8 @@
   }
 
   function onStartEdit(entry: ChatHistoryItem) {
-    scrollToBottom();
+    // TODO replace by scrolling to the actual element
+    // scrollToBottom();
     editText = entry.content[entry.chosenAnswer].content;
     messageToEdit = entry;
   }
@@ -388,7 +387,7 @@
       <p class="hidden text-sm lg:block">
         Estimated token count: {formatNumber(tokenCount)}
       </p>
-      <button disabled={!data.activeModel} on:click={createNewChat} class="btn btn-success btn-sm">
+      <button disabled={readOnly} on:click={createNewChat} class="btn btn-success btn-sm">
         <Fa icon={faEnvelope} />
         New chat
       </button>
@@ -422,15 +421,17 @@
     </svelte:fragment>
   </TopMenu>
 
-  {#if data.allChats.length > 1 && !hideTabs}
+  {#if data.allChats.length > 1 && !readOnly}
     <div role="tablist" class="tabs tabs-bordered">
       {#each data.allChats as chat}
-        <a
-          href={`/character/${data.character.id}/chat/${chat.id}`}
-          class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
-        >
-          {getChatTitle(chat)}
-        </a>
+        {#if !chat.archived}
+          <a
+            href={`/character/${data.character.id}/chat/${chat.id}`}
+            class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
+          >
+            {getChatTitle(chat)}
+          </a>
+        {/if}
       {/each}
     </div>
   {/if}
@@ -463,49 +464,51 @@
               {entry.role === "assistant" ? data.character.name : data.config.userName}
             </span>
 
-            <span class="join flex items-center">
-              {#if entry.content.length > 1}
-                <button
-                  disabled={entry.chosenAnswer === 0}
-                  class="btn join-item btn-sm"
-                  on:click={() => changeSelectedAnswer(entry, -1)}
-                >
-                  <Fa icon={faCaretLeft} />
-                </button>
-                <button
-                  disabled={entry.chosenAnswer === entry.content.length - 1}
-                  class="btn join-item btn-sm"
-                  on:click={() => changeSelectedAnswer(entry, 1)}
-                >
-                  <Fa icon={faCaretRight} />
-                </button>
-                <span class="px-2">
-                  {entry.chosenAnswer + 1}/{entry.content.length}
-                </span>
-              {/if}
-
-              {#if !isFirstAssistantMessage(index)}
-                <button on:click={() => deleteMessage(entry)} class="btn join-item btn-sm">
-                  <Fa icon={faTrash} />
-                </button>
-
-                {#if entry.role === "assistant"}
-                  <button on:click={onAddNewSwipe} class="btn join-item btn-sm">
-                    <Fa icon={faRotateRight} />
+            {#if !readOnly}
+              <span class="join flex items-center">
+                {#if entry.content.length > 1}
+                  <button
+                    disabled={entry.chosenAnswer === 0}
+                    class="btn join-item btn-sm"
+                    on:click={() => changeSelectedAnswer(entry, -1)}
+                  >
+                    <Fa icon={faCaretLeft} />
                   </button>
+                  <button
+                    disabled={entry.chosenAnswer === entry.content.length - 1}
+                    class="btn join-item btn-sm"
+                    on:click={() => changeSelectedAnswer(entry, 1)}
+                  >
+                    <Fa icon={faCaretRight} />
+                  </button>
+                  <span class="px-2">
+                    {entry.chosenAnswer + 1}/{entry.content.length}
+                  </span>
                 {/if}
-              {/if}
-              <button on:click={() => onForkChat(entry)} class="btn join-item btn-sm">
-                <Fa icon={faCodeFork} />
-              </button>
-              <button
-                on:click={() => onStartEdit(entry)}
-                class="btn join-item btn-sm"
-                disabled={entry === messageToEdit}
-              >
-                <Fa icon={faPenToSquare} />
-              </button>
-            </span>
+
+                {#if !isFirstAssistantMessage(index)}
+                  <button on:click={() => deleteMessage(entry)} class="btn join-item btn-sm">
+                    <Fa icon={faTrash} />
+                  </button>
+
+                  {#if entry.role === "assistant"}
+                    <button on:click={onAddNewSwipe} class="btn join-item btn-sm">
+                      <Fa icon={faRotateRight} />
+                    </button>
+                  {/if}
+                {/if}
+                <button on:click={() => onForkChat(entry)} class="btn join-item btn-sm">
+                  <Fa icon={faCodeFork} />
+                </button>
+                <button
+                  on:click={() => onStartEdit(entry)}
+                  class="btn join-item btn-sm"
+                  disabled={entry === messageToEdit}
+                >
+                  <Fa icon={faPenToSquare} />
+                </button>
+              </span>
+            {/if}
           </div>
           <div
             class="chat-bubble shadow-xl lg:max-w-4xl {entry.role === 'user'
@@ -547,25 +550,27 @@
       {/if}
     {/each}
   </section>
-  <form on:submit|preventDefault={() => onSubmit()} class="flex shrink items-center gap-2 pb-2">
-    <!-- svelte-ignore a11y_autofocus -->
-    <textarea
-      bind:value={question}
-      class="textarea textarea-primary w-full"
-      placeholder="Type your message..."
-      autofocus
-      on:keydown={handleKeyDown}
-      rows={1}
-    ></textarea>
-    <button
-      disabled={!data.activeModel}
-      class="btn {status === 'loading' ? 'btn-error' : 'btn-success'}"
-    >
-      {#if status === "loading"}
-        <Fa icon={faXmark} /> Cancel
-      {:else}
-        <Fa icon={faEnvelope} /> Send
-      {/if}
-    </button>
-  </form>
+  {#if !readOnly}
+    <form on:submit|preventDefault={() => onSubmit()} class="flex shrink items-center gap-2 pb-2">
+      <!-- svelte-ignore a11y_autofocus -->
+      <textarea
+        bind:value={question}
+        class="textarea textarea-primary w-full"
+        placeholder="Type your message..."
+        autofocus
+        on:keydown={handleKeyDown}
+        rows={1}
+      ></textarea>
+      <button
+        disabled={!data.activeModel}
+        class="btn {status === 'loading' ? 'btn-error' : 'btn-success'}"
+      >
+        {#if status === "loading"}
+          <Fa icon={faXmark} /> Cancel
+        {:else}
+          <Fa icon={faEnvelope} /> Send
+        {/if}
+      </button>
+    </form>
+  {/if}
 </div>

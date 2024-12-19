@@ -59,7 +59,7 @@
               Restore</button
             >
             <a
-              href="/character/{chat.characterId}/chat/{chat.id}?tabs=false"
+              href="/character/{chat.characterId}/chat/{chat.id}?readOnly=true"
               class="btn btn-primary btn-sm"
             >
               <Fa icon={faCaretRight} /></a
