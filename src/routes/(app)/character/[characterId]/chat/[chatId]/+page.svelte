@@ -47,19 +47,19 @@
   let titleModal: HTMLDialogElement;
   let messageToEdit: ChatHistoryItem | null = null;
   let readOnly = $page.url.searchParams.get("readOnly") === "true";
-  let showScrollDown = false;
-  let observer: IntersectionObserver;
+  // let showScrollDown = false;
+  // let observer: IntersectionObserver;
 
   $: chatHistory = data.chat.history;
   $: tokenCount = estimateTokens(chatHistory);
   $: historyId = data.chat.id;
 
-  $: {
-    if (observer && messageContainer.lastElementChild) {
-      observer.disconnect();
-      observer.observe(messageContainer.lastElementChild);
-    }
-  }
+  // $: {
+  //   if (observer && messageContainer.lastElementChild) {
+  //     observer.disconnect();
+  //     observer.observe(messageContainer.lastElementChild);
+  //   }
+  // }
 
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
     messageContainer.scrollTo({ top: messageContainer.scrollHeight, behavior: type });
@@ -67,17 +67,17 @@
 
   onMount(() => {
     scrollToBottom("instant");
-    observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          showScrollDown = !entry.isIntersecting;
-        });
-      },
-      { root: messageContainer, rootMargin: "0px 0px 100% 0px" },
-    );
-    if (messageContainer.lastElementChild) {
-      observer.observe(messageContainer.lastElementChild);
-    }
+    // observer = new IntersectionObserver(
+    //   (entries) => {
+    //     entries.forEach((entry) => {
+    //       showScrollDown = !entry.isIntersecting;
+    //     });
+    //   },
+    //   { root: messageContainer, rootMargin: "0px 0px 100% 0px" },
+    // );
+    // if (messageContainer.lastElementChild) {
+    //   observer.observe(messageContainer.lastElementChild);
+    // }
   });
 
   async function onAddNewSwipe() {

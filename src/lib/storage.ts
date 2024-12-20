@@ -323,9 +323,17 @@ export class ErpyStorage {
     return query.rows.map(convertCharacter);
   }
 
-  subscribeAllCharacters() {
+  subscribeAllCharacters(callback: (characters: Character[]) => void): Unsubscribe {
     const characters = this.#allCharactersQuery();
-    return this.#evolu.subscribeQuery(characters);
+    const subscription = this.#evolu.subscribeQuery(characters);
+    const unsub = subscription(() => {
+      const result = this.#evolu.getQuery(characters);
+      if (result) {
+        callback(result.rows.map(convertCharacter));
+      }
+    });
+
+    return unsub;
   }
 
   async persistCharacters(characters: NewCharacter[]): Promise<Character[]> {

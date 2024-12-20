@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { preventDefault } from "svelte/legacy";
+
   import Fa from "svelte-fa";
   import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
@@ -7,22 +9,35 @@
   import { createCharacterFromUrls, createCharactersFromPngs } from "$lib/service/characters";
   import type { Character } from "$lib/storage.js";
   import { pluralize } from "$lib/helpers.js";
+  import { allCharacters, subscribeCharacters } from "$lib/subscriptions.svelte";
+  import { onMount } from "svelte";
 
-  export let data;
-  let addModal: HTMLDialogElement;
-  let textInput = "";
-  let searchInput = "";
-  let loading = false;
-  let files: FileList | undefined;
+  let { data } = $props();
+  let addModal: HTMLDialogElement | undefined = $state();
+  let textInput = $state("");
+  let searchInput = $state("");
+  let loading = $state(false);
+  let files: FileList | undefined = $state();
+  let { characters } = allCharacters;
 
-  $: filtered = searchInput.trim()
-    ? data.characters.filter((character) =>
-        character.name.toLowerCase().includes(searchInput.toLowerCase()),
-      )
-    : data.characters;
+  let filtered = $derived(
+    searchInput.trim()
+      ? characters.filter((character) =>
+          character.name.toLowerCase().includes(searchInput.toLowerCase()),
+        )
+      : characters,
+  );
+
+  onMount(() => {
+    const unsubscribe = subscribeCharacters(data.storage);
+
+    return () => {
+      unsubscribe();
+    };
+  });
 
   function showModal() {
-    addModal.showModal();
+    addModal?.showModal();
   }
 
   async function addCharactersFromUrls() {
@@ -31,7 +46,7 @@
       return;
     }
     loading = true;
-    addModal.close();
+    addModal?.close();
 
     const newCharacters = await createCharacterFromUrls(urls, data.storage);
     await invalidateAll();
@@ -44,7 +59,7 @@
     if (!files) return;
 
     loading = true;
-    addModal.close();
+    addModal?.close();
 
     const newCharacters = await createCharactersFromPngs(files, data.storage);
     await invalidateAll();
@@ -62,7 +77,7 @@
   <div class="modal-box">
     <div class="flex flex-col">
       <h3 class="text-lg font-bold">Import characters</h3>
-      <form on:submit|preventDefault={addCharactersFromUrls} class="flex w-full flex-col gap-4">
+      <form onsubmit={preventDefault(addCharactersFromUrls)} class="flex w-full flex-col gap-4">
         <div class="form-control">
           <label class="label" for="character-urls">
             <span class="label-text"
@@ -86,7 +101,7 @@
       </form>
       <div class="divider">OR</div>
 
-      <form on:submit|preventDefault={addCharactersFromImages} class="flex w-full flex-col gap-4">
+      <form onsubmit={preventDefault(addCharactersFromImages)} class="flex w-full flex-col gap-4">
         <label class="form-control w-full max-w-sm self-center">
           <div class="label">
             <span class="label-text">Upload one or more PNG character cards (version 2).</span>
@@ -114,17 +129,17 @@
 </dialog>
 
 <TopMenu modelName={data.activeModel}>
-  <svelte:fragment slot="breadcrumbs">
+  {#snippet breadcrumbs()}
     <ul>
       <li>Home</li>
     </ul>
-  </svelte:fragment>
-  <svelte:fragment slot="right">
+  {/snippet}
+  {#snippet right()}
     <a href="/archive" class="btn btn-secondary btn-sm">
       <Fa icon={faBoxArchive} />
       Archive
     </a>
-  </svelte:fragment>
+  {/snippet}
 </TopMenu>
 
 {#if !data.activeModel}
@@ -144,7 +159,7 @@
     class="input input-primary w-full"
     placeholder="Search characters"
   />
-  <button on:click={showModal} class="btn btn-success">
+  <button onclick={showModal} class="btn btn-success">
     <Fa icon={faFileImport} /> Import characters
   </button>
 </div>
@@ -181,13 +196,13 @@
   <span class="loading loading-spinner loading-lg self-center py-8"></span>
 {/if}
 
-{#if data.characters.length === 0 && !loading}
+{#if characters.length === 0 && !loading}
   <div class="hero bg-base-200">
     <div class="hero-content text-center">
       <div class="max-w-md">
         <h1 class="text-2xl font-bold">No characters yet.</h1>
         <p class="py-6">Add a character to start chatting.</p>
-        <button on:click={showModal} class="btn btn-success">
+        <button onclick={showModal} class="btn btn-success">
           <Fa icon={faFileImport} />
           Import characters</button
         >
