@@ -1,13 +1,12 @@
-// import { getCharacter, getChatsForCharacter, saveNewChat } from "$lib/database";
 import { getInitialChatHistory } from "$lib/helpers";
-import { CharacterId } from "$lib/storage";
+import { CharacterId, type Chat } from "$lib/storage";
 import { error, redirect } from "@sveltejs/kit";
 import invariant from "tiny-invariant";
 
 export const load = async (event) => {
   const { storage, activeModel, config } = await event.parent();
   const characterId = CharacterId.make(event.params.characterId);
-  const chats = await storage.getChatsForCharacter(characterId);
+  const chats = await storage.getChatsForCharacter(characterId, false);
   if (chats.length === 0) {
     invariant(!!activeModel, "No active model");
 
@@ -22,6 +21,12 @@ export const load = async (event) => {
     });
     redirect(301, `/character/${characterId}/chat/${id}`);
   } else {
-    redirect(301, `/character/${characterId}/chat/${chats[0].id}`);
+    // find the chat with the most recent updatedAt timestamp
+    const lastUpdatedChat = chats.reduce((acc: Chat, chat: Chat) => {
+      return acc.updatedAt > chat.updatedAt ? acc : chat;
+    });
+    const id = lastUpdatedChat.id;
+
+    redirect(301, `/character/${characterId}/chat/${id}`);
   }
 };

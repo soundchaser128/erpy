@@ -381,10 +381,14 @@ export class ErpyStorage {
     return data.rows.map(convertChat);
   }
 
-  async getChatsForCharacter(characterId: CharacterId): Promise<Chat[]> {
-    const query = this.#evolu.createQuery((db) =>
-      db.selectFrom("chats").where("characterId", "=", characterId).selectAll(),
-    );
+  async getChatsForCharacter(characterId: CharacterId, archived?: boolean): Promise<Chat[]> {
+    const query = this.#evolu.createQuery((db) => {
+      const builder = db.selectFrom("chats").where("characterId", "=", characterId);
+      if (archived !== undefined) {
+        builder.where("archived", "=", cast(archived));
+      }
+      return builder.selectAll();
+    });
     const data = await this.#evolu.loadQuery(query);
 
     return data.rows.map(convertChat);
@@ -418,8 +422,8 @@ export class ErpyStorage {
       return convertConfig(data.row);
     } else {
       return {
+        id: ConfigId.make("sM858XXzjqpAwIMMKAncq"),
         userName: "User",
-        id: ConfigId.make(""),
         notifications: {
           newMessage: true,
         },
