@@ -287,6 +287,7 @@ export class ErpyStorage {
           eb
             .selectFrom("chats")
             .where("characterId", "=", id)
+            .where("archived", "=", cast(false))
             .select((eb2) => eb2.fn.count<number>("chats.id").as("chatCount"))
             .as("chatCount"),
         )
@@ -309,6 +310,7 @@ export class ErpyStorage {
         .select((eb) =>
           eb
             .selectFrom("chats")
+            .where("archived", "=", cast(false))
             .whereRef("chats.characterId", "=", "characters.id")
             .select((eb2) => eb2.fn.count<number>("chats.id").as("chatCount"))
             .as("chatCount"),
