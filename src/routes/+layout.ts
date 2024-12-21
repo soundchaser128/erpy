@@ -1,14 +1,15 @@
-import { getConfig } from "$lib/database";
-import type { Config } from "$lib/types";
-import { invoke } from "@tauri-apps/api/core";
+import { log } from "$lib/log";
+import { setupCompleted } from "$lib/service/setup";
+import { redirect } from "@sveltejs/kit";
 
 export const ssr = false;
 
-export const load = async () => {
-  const config: Config = await getConfig();
-  const activeModel: string | null = await invoke("active_model", { config });
-  return {
-    activeModel: activeModel || undefined,
-    config,
-  };
+export const load = async (event) => {
+  const isSetup = setupCompleted();
+  if (!isSetup && !event.url.pathname.startsWith("/first-time-setup")) {
+    log("First time setup not completed, redirecting to /first-time-setup");
+    redirect(302, "/first-time-setup");
+  } else {
+    return {};
+  }
 };

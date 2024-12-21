@@ -12,6 +12,7 @@
   </div>
   <div class="flex items-center gap-2">
     <ConnectionIndicator {modelName} />
+
     <slot name="right"></slot>
     <a class="btn btn-ghost btn-sm" href="/models">
       <Fa icon={faFolder} class="inline-block" />
