@@ -263,10 +263,10 @@ async fn speak(
     app: AppHandle,
     text: String,
     speaker: String,
-    reader: tauri::ipc::Channel<&[u8]>,
+    channel: tauri::ipc::Channel<&[u8]>,
 ) -> TAResult<()> {
     let state = app.state::<State>();
-    state.tts.speak(&text, &speaker, "en", reader).await?;
+    state.tts.speak(&text, &speaker, "en", channel).await?;
 
     Ok(())
 }

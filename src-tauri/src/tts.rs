@@ -20,7 +20,7 @@ impl Xtts2Client {
         text: &str,
         speaker: &str,
         language: &str,
-        reader: tauri::ipc::Channel<&[u8]>,
+        channel: tauri::ipc::Channel<&[u8]>,
     ) -> Result<()> {
         let mut url = self.base_url.clone();
         url.set_path("/tts_stream");
@@ -32,7 +32,7 @@ impl Xtts2Client {
 
         let mut response = self.client.get(url).send().await?.error_for_status()?;
         while let Some(bytes) = response.chunk().await? {
-            reader.send(&bytes)?;
+            channel.send(&bytes)?;
         }
 
         Ok(())

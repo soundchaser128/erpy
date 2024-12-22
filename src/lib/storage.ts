@@ -394,7 +394,7 @@ export class ErpyStorage {
     return data.rows.map(convertChat);
   }
 
-  async getChatById(characterId: CharacterId, chatId: ChatId): Promise<Chat | null> {
+  async getChatById(chatId: ChatId): Promise<Chat | null> {
     const query = this.#evolu.createQuery((db) =>
       db.selectFrom("chats").where("id", "=", chatId).selectAll(),
     );

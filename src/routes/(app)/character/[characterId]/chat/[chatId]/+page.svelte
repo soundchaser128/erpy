@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run, preventDefault } from "svelte/legacy";
+
   import { invoke } from "@tauri-apps/api/core";
   import { listen, once, emit } from "@tauri-apps/api/event";
   import { toApiRequest, type CompletionResponse } from "$lib/types";
@@ -18,6 +20,7 @@
     faCodeFork,
     faBars,
     faArchive,
+    faVolumeHigh,
   } from "@fortawesome/free-solid-svg-icons";
   import {
     clamp,
@@ -33,51 +36,28 @@
   import { page } from "$app/stores";
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { remarkHighlightQuotes } from "$lib/remark.js";
-  export let data;
+  import { speak } from "$lib/tts.js";
+  let { data } = $props();
 
-  let question = "";
-  let status = "idle";
-  let editText = "";
-  let summarizing = false;
-  let newTitle = "";
+  let question = $state("");
+  let status = $state("idle");
+  let editText = $state("");
+  let summarizing = $state(false);
+  let newTitle = $state("");
   let plugins = [gfmPlugin(), remarkHighlightQuotes()];
 
-  let messageContainer: HTMLElement;
-  let deleteModal: HTMLDialogElement;
-  let titleModal: HTMLDialogElement;
-  let messageToEdit: ChatHistoryItem | null = null;
+  let messageContainer: HTMLElement | undefined = $state();
+  let deleteModal: HTMLDialogElement | undefined = $state();
+  let titleModal: HTMLDialogElement | undefined = $state();
+  let messageToEdit: ChatHistoryItem | null = $state(null);
   let readOnly = $page.url.searchParams.get("readOnly") === "true";
-  // let showScrollDown = false;
-  // let observer: IntersectionObserver;
-
-  $: chatHistory = data.chat.history;
-  $: tokenCount = estimateTokens(chatHistory);
-  $: historyId = data.chat.id;
-
-  // $: {
-  //   if (observer && messageContainer.lastElementChild) {
-  //     observer.disconnect();
-  //     observer.observe(messageContainer.lastElementChild);
-  //   }
-  // }
 
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
-    messageContainer.scrollTo({ top: messageContainer.scrollHeight, behavior: type });
+    messageContainer!.scrollTo({ top: messageContainer!.scrollHeight, behavior: type });
   }
 
   onMount(() => {
     scrollToBottom("instant");
-    // observer = new IntersectionObserver(
-    //   (entries) => {
-    //     entries.forEach((entry) => {
-    //       showScrollDown = !entry.isIntersecting;
-    //     });
-    //   },
-    //   { root: messageContainer, rootMargin: "0px 0px 100% 0px" },
-    // );
-    // if (messageContainer.lastElementChild) {
-    //   observer.observe(messageContainer.lastElementChild);
-    // }
   });
 
   async function onAddNewSwipe() {
@@ -270,11 +250,11 @@
   }
 
   function showTitleModal() {
-    titleModal.showModal();
+    titleModal!.showModal();
   }
 
   function closeTitleModal() {
-    titleModal.close();
+    titleModal!.close();
   }
 
   async function onChangeTitle() {
@@ -285,11 +265,11 @@
   }
 
   function showDeleteModal() {
-    deleteModal.showModal();
+    deleteModal!.showModal();
   }
 
   function closeDeleteModal() {
-    deleteModal.close();
+    deleteModal!.close();
   }
 
   function estimateTokens(chat: ChatHistoryItem[]): number {
@@ -324,6 +304,16 @@
     await data.storage.setChatArchived(data.chat.id, true);
     await invalidateAll();
   }
+
+  let chatHistory = $derived(data.chat.history);
+  let tokenCount = $derived(estimateTokens(chatHistory));
+  let historyId = $derived(data.chat.id);
+  let stopSpeaking: (() => void) | undefined = $state(undefined);
+
+  async function onSpeakMessage(entry: ChatHistoryItem) {
+    const text = getContent(entry);
+    stopSpeaking = speak(text, "tifa", "en");
+  }
 </script>
 
 <dialog bind:this={deleteModal} class="modal">
@@ -331,10 +321,10 @@
     <h3 class="mb-2 text-lg font-bold">Confirmation</h3>
     <p>Are you sure you want to delete this chat?</p>
     <div class="modal-action">
-      <button on:click={closeDeleteModal} class="btn btn-secondary">
+      <button onclick={closeDeleteModal} class="btn btn-secondary">
         <Fa icon={faXmark} /> Cancel
       </button>
-      <button on:click={onDeleteChat} class="btn btn-error">
+      <button onclick={onDeleteChat} class="btn btn-error">
         <Fa icon={faTrash} /> Delete
       </button>
     </div>
@@ -348,7 +338,7 @@
 <dialog bind:this={titleModal} class="modal">
   <div class="modal-box">
     <h3 class="mb-2 text-lg font-bold">Set title</h3>
-    <form on:submit|preventDefault={onChangeTitle}>
+    <form onsubmit={preventDefault(onChangeTitle)}>
       <input
         type="text"
         bind:value={newTitle}
@@ -357,10 +347,10 @@
         disabled={summarizing}
       />
       <div class="modal-action">
-        <button on:click={closeTitleModal} type="button" class="btn">
+        <button onclick={closeTitleModal} type="button" class="btn">
           <Fa icon={faXmark} /> Cancel
         </button>
-        <button type="button" on:click={summarize} class="btn btn-secondary" disabled={summarizing}>
+        <button type="button" onclick={summarize} class="btn btn-secondary" disabled={summarizing}>
           <Fa icon={faPenToSquare} /> Generate summary
         </button>
         <button type="submit" class="btn btn-success">
@@ -377,17 +367,17 @@
 
 <div class="flex h-screen flex-col">
   <TopMenu modelName={data.activeModel}>
-    <svelte:fragment slot="breadcrumbs">
+    {#snippet breadcrumbs()}
       <ul>
         <li><a href="/">Home</a></li>
         <li>Chat with {data.character.name}</li>
       </ul>
-    </svelte:fragment>
-    <svelte:fragment slot="right">
+    {/snippet}
+    {#snippet right()}
       <p class="hidden text-sm lg:block">
         Estimated token count: {formatNumber(tokenCount)}
       </p>
-      <button disabled={readOnly} on:click={createNewChat} class="btn btn-success btn-sm">
+      <button disabled={readOnly} onclick={createNewChat} class="btn btn-success btn-sm">
         <Fa icon={faEnvelope} />
         New chat
       </button>
@@ -399,26 +389,26 @@
           class="menu dropdown-content z-[1] flex w-52 flex-col gap-2 rounded-box bg-base-200 p-2 shadow"
         >
           <li>
-            <button on:click={showTitleModal} class="btn btn-secondary btn-sm">
+            <button onclick={showTitleModal} class="btn btn-secondary btn-sm">
               <Fa icon={faPenToSquare} />
               Set title
             </button>
           </li>
           <li>
-            <button on:click={archiveChat} class="btn btn-secondary btn-sm">
+            <button onclick={archiveChat} class="btn btn-secondary btn-sm">
               <Fa icon={faArchive} />
               Archive chat
             </button>
           </li>
           <li>
-            <button on:click={showDeleteModal} class="btn btn-error btn-sm">
+            <button onclick={showDeleteModal} class="btn btn-error btn-sm">
               <Fa icon={faTrash} />
               Delete chat
             </button>
           </li>
         </ul>
       </details>
-    </svelte:fragment>
+    {/snippet}
   </TopMenu>
 
   {#if data.allChats.length > 1 && !readOnly}
@@ -470,14 +460,14 @@
                   <button
                     disabled={entry.chosenAnswer === 0}
                     class="btn join-item btn-sm"
-                    on:click={() => changeSelectedAnswer(entry, -1)}
+                    onclick={() => changeSelectedAnswer(entry, -1)}
                   >
                     <Fa icon={faCaretLeft} />
                   </button>
                   <button
                     disabled={entry.chosenAnswer === entry.content.length - 1}
                     class="btn join-item btn-sm"
-                    on:click={() => changeSelectedAnswer(entry, 1)}
+                    onclick={() => changeSelectedAnswer(entry, 1)}
                   >
                     <Fa icon={faCaretRight} />
                   </button>
@@ -485,28 +475,34 @@
                     {entry.chosenAnswer + 1}/{entry.content.length}
                   </span>
                 {/if}
-
-                {#if !isFirstAssistantMessage(index)}
-                  <button on:click={() => deleteMessage(entry)} class="btn join-item btn-sm">
-                    <Fa icon={faTrash} />
-                  </button>
-
-                  {#if entry.role === "assistant"}
-                    <button on:click={onAddNewSwipe} class="btn join-item btn-sm">
-                      <Fa icon={faRotateRight} />
-                    </button>
-                  {/if}
-                {/if}
-                <button on:click={() => onForkChat(entry)} class="btn join-item btn-sm">
-                  <Fa icon={faCodeFork} />
-                </button>
                 <button
-                  on:click={() => onStartEdit(entry)}
+                  onclick={() => onStartEdit(entry)}
                   class="btn join-item btn-sm"
                   disabled={entry === messageToEdit}
                 >
                   <Fa icon={faPenToSquare} />
                 </button>
+
+                {#if entry.role === "assistant" && !isFirstAssistantMessage(index)}
+                  <button onclick={onAddNewSwipe} class="btn join-item btn-sm">
+                    <Fa icon={faRotateRight} />
+                  </button>
+                {/if}
+                <button onclick={() => onForkChat(entry)} class="btn join-item btn-sm">
+                  <Fa icon={faCodeFork} />
+                </button>
+                <button class="btn join-item btn-sm" onclick={() => onSpeakMessage(entry)}>
+                  <Fa icon={faVolumeHigh} />
+                </button>
+
+                {#if !isFirstAssistantMessage(index)}
+                  <button
+                    onclick={() => deleteMessage(entry)}
+                    class="btn btn-error join-item btn-sm"
+                  >
+                    <Fa icon={faTrash} />
+                  </button>
+                {/if}
               </span>
             {/if}
           </div>
@@ -516,7 +512,7 @@
               : ''} relative"
           >
             {#if messageToEdit === entry}
-              <form class="flex w-full grow flex-col" on:submit={onSubmitEdit}>
+              <form class="flex w-full grow flex-col" onsubmit={onSubmitEdit}>
                 <textarea
                   class="w-full whitespace-pre-wrap bg-transparent text-white"
                   bind:value={editText}
@@ -524,7 +520,7 @@
                   cols={160}
                 ></textarea>
                 <div class="join mt-2 flex self-end">
-                  <button on:click={onCancelEdit} type="button" class="btn join-item btn-sm">
+                  <button onclick={onCancelEdit} type="button" class="btn join-item btn-sm">
                     <Fa icon={faXmark} /> Cancel
                   </button>
                   <button type="submit" class="btn btn-success join-item btn-sm">
@@ -551,14 +547,14 @@
     {/each}
   </section>
   {#if !readOnly}
-    <form on:submit|preventDefault={() => onSubmit()} class="flex shrink items-center gap-2 pb-2">
+    <form onsubmit={preventDefault(() => onSubmit())} class="flex shrink items-center gap-2 pb-2">
       <!-- svelte-ignore a11y_autofocus -->
       <textarea
         bind:value={question}
         class="textarea textarea-primary w-full"
         placeholder="Type your message..."
         autofocus
-        on:keydown={handleKeyDown}
+        onkeydown={handleKeyDown}
         rows={1}
       ></textarea>
       <button

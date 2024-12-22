@@ -1,14 +1,16 @@
 <script lang="ts">
+  import { preventDefault } from "svelte/legacy";
+
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { faSave, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
-  import { invoke } from "@tauri-apps/api/core";
+  import { invoke, Channel } from "@tauri-apps/api/core";
   import Fa from "svelte-fa";
 
-  export let data;
+  let { data = $bindable() } = $props();
 
-  let mnemonic = data.storage.mnemonic;
-  let confirmModal: HTMLDialogElement;
+  let mnemonic = $state(data.storage.mnemonic);
+  let confirmModal: HTMLDialogElement | undefined = $state();
 
   async function onSubmit() {
     await data.storage.saveConfig(data.config);
@@ -16,11 +18,11 @@
   }
 
   function showConfirmModal() {
-    confirmModal.showModal();
+    confirmModal?.showModal();
   }
 
   function closeConfirmModal() {
-    confirmModal.close();
+    confirmModal?.close();
   }
 
   async function onDeleteUserData() {
@@ -29,10 +31,6 @@
     await invalidateAll();
     await goto("/");
   }
-
-  async function speak() {
-    await invoke("speak", { text: "Hello, world!", speaker: "tifa" });
-  }
 </script>
 
 <dialog bind:this={confirmModal} class="modal">
@@ -40,10 +38,10 @@
     <h3 class="mb-2 text-lg font-bold">Confirmation</h3>
     <p>Are you sure you want to delete all your local data? This can not be undone.</p>
     <div class="modal-action">
-      <button on:click={closeConfirmModal} class="btn btn-secondary">
+      <button onclick={closeConfirmModal} class="btn btn-secondary">
         <Fa icon={faXmark} /> Cancel
       </button>
-      <button on:click={onDeleteUserData} class="btn btn-error">
+      <button onclick={onDeleteUserData} class="btn btn-error">
         <Fa icon={faTrash} /> Yes, delete all data
       </button>
     </div>
@@ -55,18 +53,17 @@
 </dialog>
 
 <TopMenu modelName={data.activeModel}>
-  <svelte:fragment slot="breadcrumbs">
+  {#snippet breadcrumbs()}
     <ul>
       <li><a href="/">Home</a></li>
       <li>Settings</li>
     </ul>
-  </svelte:fragment>
-  <svelte:fragment slot="right"></svelte:fragment>
+  {/snippet}
 </TopMenu>
 
 <main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">Settings</h1>
-  <form class="flex flex-col" on:submit|preventDefault={onSubmit}>
+  <form class="flex flex-col" onsubmit={preventDefault(onSubmit)}>
     <div class="form-control">
       <label class="label" for="user-name">
         <span class="label-text">Name of user character</span>
@@ -171,12 +168,10 @@
     <div class="flex items-baseline justify-between">
       <span> Deletes all your local data. </span>
 
-      <button type="button" class="btn btn-error mt-4" on:click={showConfirmModal}>
+      <button type="button" class="btn btn-error mt-4" onclick={showConfirmModal}>
         <Fa icon={faTrash} />
         Reset User Data
       </button>
     </div>
-
-    <button class="btn btn-secondary mt-4" on:click={speak}> Speak </button>
   </section>
 </main>

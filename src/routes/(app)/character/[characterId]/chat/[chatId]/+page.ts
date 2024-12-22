@@ -8,7 +8,7 @@ export async function load(event) {
   const character = await storage.getCharacter(characterId);
   const allChats = await storage.getChatsForCharacter(characterId);
 
-  const chat = await storage.getChatById(characterId, chatId);
+  const chat = await storage.getChatById(chatId);
   if (chat === null) {
     error(404, `Chat with ID ${chatId} not found`);
   } else if (character === null) {
