@@ -4,7 +4,7 @@ import concat from "./concat";
 const wavify = (data: ArrayBufferLike, numberOfChannels: number, sampleRate: number) => {
   const header = new ArrayBuffer(44);
 
-  var d = new DataView(header);
+  const d = new DataView(header);
 
   d.setUint8(0, "R".charCodeAt(0));
   d.setUint8(1, "I".charCodeAt(0));

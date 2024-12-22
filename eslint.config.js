@@ -7,7 +7,7 @@ import globals from "globals";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   js.configs.recommended,
-  ...ts.configs.recommended,
+  ...ts.configs.strict,
   ...svelte.configs["flat/recommended"],
   prettier,
   ...svelte.configs["flat/prettier"],
@@ -30,5 +30,10 @@ export default [
   {
     ignores: ["build/", ".svelte-kit/", "dist/", "src-tauri/", "tailwind.config.js", "target/"],
   },
-  { rules: { "@typescript-eslint/no-unused-vars": "warn" } },
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-non-null-assertion": "warn",
+    },
+  },
 ];

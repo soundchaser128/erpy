@@ -104,7 +104,7 @@ const WavPlayer = () => {
         const reader = response.body!.getReader();
 
         // This variable holds a possibly dangling byte.
-        var rest: ArrayBufferLike | null = null;
+        let rest: ArrayBufferLike | null = null;
 
         let isFirstBuffer = true;
         let numberOfChannels: number, sampleRate: number;

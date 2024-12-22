@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { preventDefault } from "svelte/legacy";
-
   import Fa from "svelte-fa";
   import { faPlus, faFileImport, faWarning, faBoxArchive } from "@fortawesome/free-solid-svg-icons";
   import { invalidateAll } from "$app/navigation";
@@ -40,7 +38,8 @@
     addModal?.showModal();
   }
 
-  async function addCharactersFromUrls() {
+  async function addCharactersFromUrls(event: Event) {
+    event.preventDefault();
     const urls = textInput.split("\n").map((url) => url.trim());
     if (urls.length === 0) {
       return;
@@ -55,7 +54,8 @@
     loading = false;
   }
 
-  async function addCharactersFromImages() {
+  async function addCharactersFromImages(event: Event) {
+    event.preventDefault();
     if (!files) return;
 
     loading = true;
@@ -77,7 +77,7 @@
   <div class="modal-box">
     <div class="flex flex-col">
       <h3 class="text-lg font-bold">Import characters</h3>
-      <form onsubmit={preventDefault(addCharactersFromUrls)} class="flex w-full flex-col gap-4">
+      <form onsubmit={addCharactersFromUrls} class="flex w-full flex-col gap-4">
         <div class="form-control">
           <label class="label" for="character-urls">
             <span class="label-text"
@@ -101,7 +101,7 @@
       </form>
       <div class="divider">OR</div>
 
-      <form onsubmit={preventDefault(addCharactersFromImages)} class="flex w-full flex-col gap-4">
+      <form onsubmit={addCharactersFromImages} class="flex w-full flex-col gap-4">
         <label class="form-control w-full max-w-sm self-center">
           <div class="label">
             <span class="label-text">Upload one or more PNG character cards (version 2).</span>

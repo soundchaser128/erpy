@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { preventDefault } from "svelte/legacy";
-
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import { faSave, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
-  import { invoke, Channel } from "@tauri-apps/api/core";
   import Fa from "svelte-fa";
 
   let { data = $bindable() } = $props();
@@ -12,7 +9,8 @@
   let mnemonic = $state(data.storage.mnemonic);
   let confirmModal: HTMLDialogElement | undefined = $state();
 
-  async function onSubmit() {
+  async function onSubmit(event: Event) {
+    event.preventDefault();
     await data.storage.saveConfig(data.config);
     await invalidateAll();
   }
@@ -63,7 +61,7 @@
 
 <main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">Settings</h1>
-  <form class="flex flex-col" onsubmit={preventDefault(onSubmit)}>
+  <form class="flex flex-col" onsubmit={onSubmit}>
     <div class="form-control">
       <label class="label" for="user-name">
         <span class="label-text">Name of user character</span>

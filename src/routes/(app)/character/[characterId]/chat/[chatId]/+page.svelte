@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run, preventDefault } from "svelte/legacy";
-
   import { invoke } from "@tauri-apps/api/core";
   import { listen, once, emit } from "@tauri-apps/api/event";
   import { toApiRequest, type CompletionResponse } from "$lib/types";
@@ -38,6 +36,7 @@
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { remarkHighlightQuotes } from "$lib/remark.js";
   import { speak } from "$lib/tts.js";
+
   let { data } = $props();
 
   let question = $state("");
@@ -45,6 +44,12 @@
   let editText = $state("");
   let summarizing = $state(false);
   let newTitle = $state("");
+  let chatHistory = $state(data.chat.history);
+  let tokenCount = $derived(estimateTokens(chatHistory));
+  let historyId = $derived(data.chat.id);
+  let stopSpeaking: (() => void) | undefined = $state(undefined);
+  let isSpeaking = $state(false);
+
   let plugins = [gfmPlugin(), remarkHighlightQuotes()];
 
   let messageContainer: HTMLElement | undefined = $state();
@@ -52,6 +57,7 @@
   let titleModal: HTMLDialogElement | undefined = $state();
   let messageToEdit: ChatHistoryItem | null = $state(null);
   let readOnly = $page.url.searchParams.get("readOnly") === "true";
+  let ttsOnMessage = $state(false);
 
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
     messageContainer!.scrollTo({ top: messageContainer!.scrollHeight, behavior: type });
@@ -62,10 +68,12 @@
   });
 
   async function onAddNewSwipe() {
-    await onSubmit(true);
+    await onSubmit(undefined, true);
   }
 
-  async function onSubmit(addToExisting = false) {
+  async function onSubmit(event: Event | undefined, addToExisting = false) {
+    event?.preventDefault();
+
     if (!data.activeModel) {
       return;
     }
@@ -132,7 +140,9 @@
         await data.storage.updateChat(historyId, chatHistory);
         unlisten();
         status = "idle";
-
+        if (ttsOnMessage) {
+          await doSpeak(answer);
+        }
         if (data.config.notifications.newMessage) {
           const messageContent = answer.content[answer.chosenAnswer].content;
           await createNotification("erpy", messageContent, false);
@@ -258,7 +268,8 @@
     titleModal!.close();
   }
 
-  async function onChangeTitle() {
+  async function onChangeTitle(event: Event) {
+    event.preventDefault();
     await data.storage.updateChatTitle(data.chat.id, newTitle);
     await invalidateAll();
     closeTitleModal();
@@ -266,11 +277,11 @@
   }
 
   function showDeleteModal() {
-    deleteModal!.showModal();
+    deleteModal?.showModal();
   }
 
   function closeDeleteModal() {
-    deleteModal!.close();
+    deleteModal?.close();
   }
 
   function estimateTokens(chat: ChatHistoryItem[]): number {
@@ -291,10 +302,10 @@
       textarea.selectionStart = textarea.selectionEnd = start + 1;
     } else if (e.key === "Enter" && e.ctrlKey) {
       e.preventDefault();
-      onSubmit(true);
+      onSubmit(undefined, true);
     } else if (e.key === "Enter") {
       e.preventDefault();
-      onSubmit();
+      onSubmit(undefined);
     } else if (e.key === "ArrowUp" && question.length === 0) {
       e.preventDefault();
       onStartEdit(chatHistory[chatHistory.length - 1]);
@@ -306,11 +317,16 @@
     await invalidateAll();
   }
 
-  let chatHistory = $derived(data.chat.history);
-  let tokenCount = $derived(estimateTokens(chatHistory));
-  let historyId = $derived(data.chat.id);
-  let stopSpeaking: (() => void) | undefined = $state(undefined);
-  let isSpeaking = $state(false);
+  async function doSpeak(entry: ChatHistoryItem) {
+    if (data.config.tts.enabled && data.config.tts.apiUrl) {
+      const text = getContent(entry);
+      isSpeaking = true;
+      const { stop, finished } = speak(data.config.tts.apiUrl, text, "tifa", "en");
+      stopSpeaking = stop;
+      await finished;
+      isSpeaking = false;
+    }
+  }
 
   async function onSpeakMessage(entry: ChatHistoryItem) {
     if (stopSpeaking) {
@@ -318,14 +334,7 @@
       stopSpeaking = undefined;
       isSpeaking = false;
     } else {
-      if (data.config.tts.enabled && data.config.tts.apiUrl) {
-        const text = getContent(entry);
-        isSpeaking = true;
-        const { stop, finished } = speak(data.config.tts.apiUrl, text, "tifa", "en");
-        stopSpeaking = stop;
-        await finished;
-        isSpeaking = false;
-      }
+      await doSpeak(entry);
     }
   }
 </script>
@@ -352,7 +361,7 @@
 <dialog bind:this={titleModal} class="modal">
   <div class="modal-box">
     <h3 class="mb-2 text-lg font-bold">Set title</h3>
-    <form onsubmit={preventDefault(onChangeTitle)}>
+    <form onsubmit={onChangeTitle}>
       <input
         type="text"
         bind:value={newTitle}
@@ -563,7 +572,7 @@
     {/each}
   </section>
   {#if !readOnly}
-    <form onsubmit={preventDefault(() => onSubmit())} class="flex shrink items-center gap-2 pb-2">
+    <form onsubmit={(e) => onSubmit(e, false)} class="flex shrink items-center gap-2 pb-2">
       <!-- svelte-ignore a11y_autofocus -->
       <textarea
         bind:value={question}
