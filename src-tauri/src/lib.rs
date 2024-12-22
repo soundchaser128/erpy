@@ -12,16 +12,13 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
 use tokio::sync::{oneshot, Mutex};
 use tokio_stream::StreamExt;
-use tts::Xtts2Client;
 
 pub mod character;
 pub mod chat;
 pub mod config;
-pub mod tts;
 
 struct State {
     completions: Mutex<Option<CompletionApis>>,
-    tts: Xtts2Client,
 }
 
 #[tauri::command]
@@ -258,19 +255,6 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
     }
 }
 
-#[tauri::command]
-async fn speak(
-    app: AppHandle,
-    text: String,
-    speaker: String,
-    channel: tauri::ipc::Channel<&[u8]>,
-) -> TAResult<()> {
-    let state = app.state::<State>();
-    state.tts.speak(&text, &speaker, "en", channel).await?;
-
-    Ok(())
-}
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -278,7 +262,6 @@ pub fn run() {
         .setup(|app| {
             app.manage(State {
                 completions: Mutex::new(None),
-                tts: Xtts2Client::new("http://localhost:8020")?,
             });
             Ok(())
         })
@@ -304,7 +287,6 @@ pub fn run() {
             test_connection,
             list_models_on_disk,
             get_backends,
-            speak,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

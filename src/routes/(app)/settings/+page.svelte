@@ -155,6 +155,30 @@
 
       <input id="mnemonic" type="text" bind:value={mnemonic} class="input input-primary" disabled />
     </div>
+
+    <h2 class="text-2xl font-bold">Text-to-speech</h2>
+    <div class="form-control">
+      <label class="label cursor-pointer">
+        <span class="label-text">Enabled</span>
+
+        <input type="checkbox" class="checkbox" bind:checked={data.config.tts.enabled} />
+      </label>
+    </div>
+
+    <div class="form-control">
+      <label for="syncServerUrl" class="label">
+        <span class="label-text"> Server URL </span>
+      </label>
+
+      <input
+        id="syncServerUrl"
+        type="url"
+        bind:value={data.config.tts.apiUrl}
+        class="input input-primary"
+        placeholder="http://localhost:8020"
+      />
+    </div>
+
     <button type="submit" class="btn btn-primary mt-4 self-end">
       <Fa icon={faSave} />
       Save</button

@@ -38,12 +38,18 @@ export interface NotificationSettings {
   newMessage: boolean;
 }
 
+export interface TtsSettings {
+  enabled: boolean;
+  apiUrl: string | null;
+}
+
 export interface Config {
   id: ConfigId;
   userName: string;
   notifications: NotificationSettings;
   sync: SyncSettings;
   llm: LlmSettings;
+  tts: TtsSettings;
 }
 
 const ConfigTable = table({
@@ -66,6 +72,10 @@ const ConfigTable = table({
       repeatPenalty: S.NullOr(S.Number),
       topP: S.NullOr(S.Number),
       seed: S.NullOr(S.Number),
+    }),
+    tts: S.Struct({
+      enabled: S.Boolean,
+      apiUrl: S.NullOr(S.String),
     }),
   }),
 });
@@ -90,6 +100,10 @@ function convertConfig(config: Nullable<ConfigRow>): Config {
       repeatPenalty: null,
       seed: null,
       topP: null,
+    },
+    tts: {
+      enabled: config.data?.tts?.enabled ?? false,
+      apiUrl: config.data?.tts?.apiUrl ?? null,
     },
   };
 }
@@ -423,27 +437,7 @@ export class ErpyStorage {
     if (data.row) {
       return convertConfig(data.row);
     } else {
-      return {
-        id: ConfigId.make("sM858XXzjqpAwIMMKAncq"),
-        userName: "User",
-        notifications: {
-          newMessage: true,
-        },
-        sync: {
-          apiKey: null,
-          clientId: null,
-          serverUrl: null,
-        },
-        llm: {
-          temperature: 0.8,
-          frequencyPenalty: null,
-          maxTokens: null,
-          presencePenalty: null,
-          repeatPenalty: null,
-          seed: null,
-          topP: null,
-        },
-      };
+      return getDefaultConfig();
     }
   }
 
@@ -463,6 +457,7 @@ export class ErpyStorage {
         notifications: config.notifications,
         sync: config.sync,
         userName: config.userName,
+        tts: config.tts,
       },
     });
   }
@@ -470,4 +465,32 @@ export class ErpyStorage {
   async resetData() {
     await this.#evolu.resetOwner({ reload: false });
   }
+}
+
+function getDefaultConfig(): Config {
+  return {
+    id: ConfigId.make("sM858XXzjqpAwIMMKAncq"),
+    userName: "User",
+    notifications: {
+      newMessage: true,
+    },
+    sync: {
+      apiKey: null,
+      clientId: null,
+      serverUrl: null,
+    },
+    llm: {
+      temperature: 0.8,
+      frequencyPenalty: null,
+      maxTokens: null,
+      presencePenalty: null,
+      repeatPenalty: null,
+      seed: null,
+      topP: null,
+    },
+    tts: {
+      enabled: false,
+      apiUrl: null,
+    },
+  };
 }

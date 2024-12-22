@@ -21,6 +21,7 @@
     faBars,
     faArchive,
     faVolumeHigh,
+    faStop,
   } from "@fortawesome/free-solid-svg-icons";
   import {
     clamp,
@@ -309,10 +310,23 @@
   let tokenCount = $derived(estimateTokens(chatHistory));
   let historyId = $derived(data.chat.id);
   let stopSpeaking: (() => void) | undefined = $state(undefined);
+  let isSpeaking = $state(false);
 
   async function onSpeakMessage(entry: ChatHistoryItem) {
-    const text = getContent(entry);
-    stopSpeaking = speak(text, "tifa", "en");
+    if (stopSpeaking) {
+      stopSpeaking();
+      stopSpeaking = undefined;
+      isSpeaking = false;
+    } else {
+      if (data.config.tts.enabled && data.config.tts.apiUrl) {
+        const text = getContent(entry);
+        isSpeaking = true;
+        const { stop, finished } = speak(data.config.tts.apiUrl, text, "tifa", "en");
+        stopSpeaking = stop;
+        await finished;
+        isSpeaking = false;
+      }
+    }
   }
 </script>
 
@@ -491,9 +505,11 @@
                 <button onclick={() => onForkChat(entry)} class="btn join-item btn-sm">
                   <Fa icon={faCodeFork} />
                 </button>
-                <button class="btn join-item btn-sm" onclick={() => onSpeakMessage(entry)}>
-                  <Fa icon={faVolumeHigh} />
-                </button>
+                {#if data.config.tts.enabled}
+                  <button class="btn join-item btn-sm" onclick={() => onSpeakMessage(entry)}>
+                    <Fa icon={isSpeaking ? faStop : faVolumeHigh} />
+                  </button>
+                {/if}
 
                 {#if !isFirstAssistantMessage(index)}
                   <button
