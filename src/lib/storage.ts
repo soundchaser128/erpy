@@ -209,6 +209,7 @@ export interface Chat {
   characterId: CharacterId;
   archived: boolean;
   history: ChatHistoryItem[];
+  isDeleted: boolean;
 }
 
 function convertChat(chat: Nullable<ChatRow>): Chat {
@@ -229,6 +230,7 @@ function convertChat(chat: Nullable<ChatRow>): Chat {
         modelId: content.modelId,
       })),
     })),
+    isDeleted: cast(chat.isDeleted ?? SqliteBoolean.make(0)),
   };
 }
 
@@ -302,6 +304,7 @@ export class ErpyStorage {
             .selectFrom("chats")
             .where("characterId", "=", id)
             .where("archived", "=", cast(false))
+            .where("isDeleted", "is not", cast(true))
             .select((eb2) => eb2.fn.count<number>("chats.id").as("chatCount"))
             .as("chatCount"),
         )
@@ -325,6 +328,7 @@ export class ErpyStorage {
           eb
             .selectFrom("chats")
             .where("archived", "=", cast(false))
+            .where("isDeleted", "is not", cast(true))
             .whereRef("chats.characterId", "=", "characters.id")
             .select((eb2) => eb2.fn.count<number>("chats.id").as("chatCount"))
             .as("chatCount"),
@@ -392,14 +396,19 @@ export class ErpyStorage {
   }
 
   async getAllChats(): Promise<Chat[]> {
-    const query = this.#evolu.createQuery((db) => db.selectFrom("chats").selectAll());
+    const query = this.#evolu.createQuery((db) =>
+      db.selectFrom("chats").where("isDeleted", "is not", cast(true)).selectAll(),
+    );
     const data = await this.#evolu.loadQuery(query);
     return data.rows.map(convertChat);
   }
 
   async getChatsForCharacter(characterId: CharacterId, archived?: boolean): Promise<Chat[]> {
     const query = this.#evolu.createQuery((db) => {
-      const builder = db.selectFrom("chats").where("characterId", "=", characterId);
+      const builder = db
+        .selectFrom("chats")
+        .where("characterId", "=", characterId)
+        .where("isDeleted", "is not", cast(true));
       if (archived !== undefined) {
         builder.where("archived", "=", cast(archived));
       }
@@ -419,15 +428,15 @@ export class ErpyStorage {
     return data.row ? convertChat(data.row) : null;
   }
 
-  async deleteChat(id: ChatId): Promise<void> {
+  deleteChat(id: ChatId) {
     this.#evolu.update("chats", { id, isDeleted: true });
   }
 
-  async updateChatTitle(chatId: string, title: string): Promise<void> {
+  updateChatTitle(chatId: string, title: string) {
     this.#evolu.update("chats", { id: ChatId.make(chatId), title });
   }
 
-  async setChatArchived(chatId: string, archived: boolean): Promise<void> {
+  setChatArchived(chatId: string, archived: boolean) {
     this.#evolu.update("chats", { id: ChatId.make(chatId), archived });
   }
 

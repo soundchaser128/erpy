@@ -37,20 +37,23 @@
   import { remarkHighlightQuotes } from "$lib/remark.js";
   import { speak } from "$lib/tts.js";
   import { log } from "$lib/log.js";
-  import { stateLink } from "$lib/state-link.svelte.js";
 
   let { data } = $props();
 
-  let chatHistory = stateLink(() => data.chat.history);
+  let chatHistory: ChatHistoryItem[] = $state(data.chat.history);
   let question = $state("");
   let status = $state("idle");
   let editText = $state("");
   let summarizing = $state(false);
   let newTitle = $state("");
-  let tokenCount = $derived(estimateTokens(chatHistory.current));
+  let tokenCount = $derived(estimateTokens(chatHistory));
   let historyId = $derived(data.chat.id);
   let stopSpeaking: (() => void) | undefined = $state(undefined);
   let isSpeaking = $state(false);
+
+  $effect(() => {
+    chatHistory = data.chat.history;
+  });
 
   let plugins = [gfmPlugin(), remarkHighlightQuotes()];
 
@@ -85,7 +88,7 @@
       const timestamp = new Date();
       invariant(!!data.activeModel, "No active model selected");
 
-      const lastMessage = chatHistory.current[chatHistory.current.length - 1];
+      const lastMessage = chatHistory[chatHistory.length - 1];
       if (lastMessage.role !== MessageRole.User && !addToExisting) {
         if (question.trim().length > 0) {
           const q: ChatHistoryItem = {
@@ -99,7 +102,7 @@
             ],
             chosenAnswer: 0,
           };
-          chatHistory.current = [...chatHistory.current, q];
+          chatHistory = [...chatHistory, q];
         }
         question = "";
       }
@@ -114,7 +117,7 @@
 
       scrollToBottom();
       if (!addToExisting) {
-        chatHistory.current = [...chatHistory.current, answer];
+        chatHistory = [...chatHistory, answer];
       } else {
         answer.content.push({
           content: "",
@@ -127,7 +130,7 @@
 
       scrollToBottom();
 
-      const history = addToExisting ? chatHistory.current.slice(0, -1) : chatHistory.current;
+      const history = addToExisting ? chatHistory.slice(0, -1) : chatHistory;
       invoke("chat_completion", {
         messageHistory: toApiRequest(history),
         config: data.config,
@@ -136,13 +139,13 @@
       const unlisten = await listen<CompletionResponse>("completion", (response) => {
         log("completion", response);
         const delta = response.payload.choices[0].delta.content;
-        const answer = chatHistory.current[chatHistory.current.length - 1];
+        const answer = chatHistory[chatHistory.length - 1];
         answer.content[answer.chosenAnswer].content += delta;
 
         scrollToBottom();
       });
       once("completion_done", async () => {
-        await data.storage.updateChat(historyId, chatHistory.current);
+        await data.storage.updateChat(historyId, chatHistory);
         unlisten();
         status = "idle";
         if (ttsOnMessage) {
@@ -181,26 +184,26 @@
 
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
     entry.chosenAnswer = clamp(entry.chosenAnswer + delta, 0, entry.content.length - 1);
-    data.chat.history = [...data.chat.history];
-    await data.storage.updateChat(historyId, data.chat.history);
+    chatHistory = [...chatHistory];
+    await data.storage.updateChat(historyId, chatHistory);
   }
 
   async function deleteMessage(entry: ChatHistoryItem) {
     if (entry.content.length > 1) {
       entry.content.splice(entry.chosenAnswer, 1);
       entry.chosenAnswer = entry.content.length - 1;
-      data.chat.history = [...data.chat.history];
+      chatHistory = [...chatHistory];
     } else {
-      data.chat.history = data.chat.history.filter((item) => item !== entry);
+      chatHistory = chatHistory.filter((item) => item !== entry);
     }
 
     scrollToBottom();
 
-    await data.storage.updateChat(historyId, data.chat.history);
+    await data.storage.updateChat(historyId, chatHistory);
   }
 
   function isFirstAssistantMessage(index: number): boolean {
-    const firstAssistantMessage = data.chat.history.findIndex((item) => item.role === "assistant");
+    const firstAssistantMessage = chatHistory.findIndex((item) => item.role === "assistant");
     return firstAssistantMessage === index;
   }
 
@@ -212,7 +215,7 @@
   }
 
   async function onForkChat(entry: ChatHistoryItem) {
-    const forkedHistory = data.chat.history.slice(0, data.chat.history.indexOf(entry) + 1);
+    const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
     const newChatId = await data.storage.saveNewChat({
       characterId: data.character?.id!,
       data: forkedHistory,
@@ -228,8 +231,8 @@
     event.preventDefault();
     if (messageToEdit) {
       messageToEdit.content[messageToEdit.chosenAnswer].content = editText;
-      data.chat.history = [...data.chat.history];
-      await data.storage.updateChat(historyId, data.chat.history);
+      chatHistory = [...chatHistory];
+      await data.storage.updateChat(historyId, chatHistory);
       messageToEdit = null;
     }
   }
@@ -247,22 +250,12 @@
     summarizing = false;
   }
 
-  // FIXME redirects to a 404
+  // FIXME redirect to a better page
   async function onDeleteChat() {
-    const chatCount = data.allChats.length - 1;
-
-    await data.storage.deleteChat(data.chat.id);
+    data.storage.deleteChat(data.chat.id);
     closeDeleteModal();
     await invalidateAll();
-
-    if (chatCount === 0) {
-      goto("/");
-    } else {
-      const newChatIds = data.allChats.filter((chat) => chat.id !== data.chat.id);
-      const chatId = newChatIds[0].id;
-
-      goto(`/character/${data.character.id}/chat/${chatId}`);
-    }
+    goto("/");
   }
 
   function showTitleModal() {
@@ -313,7 +306,7 @@
       onSubmit(undefined);
     } else if (e.key === "ArrowUp" && question.length === 0) {
       e.preventDefault();
-      onStartEdit(data.chat.history[data.chat.history.length - 1]);
+      onStartEdit(chatHistory[chatHistory.length - 1]);
     }
   }
 
@@ -442,7 +435,7 @@
   {#if data.allChats.length > 1 && !readOnly}
     <div role="tablist" class="tabs tabs-bordered">
       {#each data.allChats as chat}
-        {#if !chat.archived}
+        {#if !chat.archived && !chat.isDeleted}
           <a
             href={`/character/${data.character.id}/chat/${chat.id}`}
             class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
@@ -464,7 +457,7 @@
       </button>
     {/if} -->
 
-    {#each data.chat.history as entry, index}
+    {#each chatHistory as entry, index}
       {#if entry.role !== "system"}
         <div class="chat {entry.role === 'assistant' ? 'chat-start' : 'chat-end'}">
           {#if entry.role === "assistant"}

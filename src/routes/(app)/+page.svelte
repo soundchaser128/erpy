@@ -18,6 +18,8 @@
   let files: FileList | undefined = $state();
   let characters = $derived(allCharacters.characters);
 
+  $inspect(characters);
+
   let filtered = $derived(
     searchInput.trim()
       ? characters.filter((character) =>
