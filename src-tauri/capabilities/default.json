@@ -18,7 +18,7 @@
       "identifier": "http:default",
       "allow": [
         {
-          "url": "http://localhost:4041"
+          "url": "https://sync.soundchaser128.com"
         }
       ]
     }

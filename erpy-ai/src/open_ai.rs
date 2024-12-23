@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use anyhow::{bail, Result};
-use log::{debug, info};
+use log::{debug, info, trace};
 use reqwest::Client;
 use reqwest_eventsource::{Event, EventSource};
 use tokio_stream::{Stream, StreamExt};
@@ -52,7 +52,7 @@ impl CompletionApi for OpenAiCompletions {
                     Event::Message(msg) => {
                         let response: StreamingCompletionResponse =
                             serde_json::from_str(&msg.data).ok()?;
-                        info!("parsed response: {:#?}", response);
+                        trace!("parsed response: {:#?}", response);
                         Some(response)
                     }
                     Event::Open => None,

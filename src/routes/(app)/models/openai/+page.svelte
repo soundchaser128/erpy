@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { preventDefault } from "svelte/legacy";
+
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import type { ConnectionTestResult, LoadModel } from "$lib/types";
@@ -6,12 +8,12 @@
   import { invoke } from "@tauri-apps/api/core";
   import Fa from "svelte-fa";
 
-  export let data;
+  let { data } = $props();
 
-  let apiUrl = localStorage.getItem("openai-api-url") || "";
-  let apiKey = localStorage.getItem("openai-api-key") || "";
-  let connectionTestStatus: "success" | string | undefined = undefined;
-  let testingConnection = false;
+  let apiUrl = $state(localStorage.getItem("openai-api-url") || "");
+  let apiKey = $state(localStorage.getItem("openai-api-key") || "");
+  let connectionTestStatus: "success" | string | undefined = $state(undefined);
+  let testingConnection = $state(false);
 
   async function testConnection() {
     testingConnection = true;
@@ -44,7 +46,7 @@
 </script>
 
 <TopMenu modelName={data.activeModel}>
-  <svelte:fragment slot="breadcrumbs">
+  {#snippet breadcrumbs()}
     <ul>
       <li>
         <a href="/">Home</a>
@@ -52,8 +54,7 @@
       <li><a href="/models">Models</a></li>
       <li>OpenAI connection</li>
     </ul>
-  </svelte:fragment>
-  <svelte:fragment slot="right"></svelte:fragment>
+  {/snippet}
 </TopMenu>
 
 <main class="w-full max-w-3xl self-center">
@@ -67,7 +68,7 @@
       </div>
     {/if}
   {/if}
-  <form class="flex flex-col" on:submit|preventDefault={onSubmit}>
+  <form class="flex flex-col" onsubmit={preventDefault(onSubmit)}>
     <div class="form-control">
       <label class="label" for="url-field">
         <span class="label-text">URL of the OpenAI-compatible endpoint (required)</span>
@@ -105,7 +106,7 @@
     <div class="mt-4 flex gap-2 self-end">
       <button
         disabled={testingConnection || !apiUrl}
-        on:click={testConnection}
+        onclick={testConnection}
         type="button"
         class="btn btn-secondary"
       >

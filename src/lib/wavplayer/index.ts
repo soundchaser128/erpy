@@ -117,7 +117,7 @@ const WavPlayer = () => {
               return;
             }
             if (value && value.buffer) {
-              let buffer, segment: Segment;
+              let buffer;
 
               if (rest !== null) {
                 buffer = concat(rest, value.buffer);
@@ -154,7 +154,7 @@ const WavPlayer = () => {
                 rest = null;
               }
 
-              segment = {};
+              const segment: Segment = {};
 
               audioStack.push(segment);
 

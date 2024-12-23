@@ -4,11 +4,17 @@ import { DateTime } from "luxon";
 const numberFormat = new Intl.NumberFormat("en-US");
 const pluralRules = new Intl.PluralRules("en-US");
 
-export function formatTimestamp(timestamp: number | Date, format: "long" | "short" = "short") {
-  const date =
-    timestamp instanceof Date ? DateTime.fromJSDate(timestamp) : DateTime.fromMillis(timestamp);
+export const toDateTime = (timestamp: number | Date) =>
+  timestamp instanceof Date ? DateTime.fromJSDate(timestamp) : DateTime.fromMillis(timestamp);
 
-  return date.toLocaleString(format === "long" ? DateTime.DATETIME_FULL : DateTime.TIME_SIMPLE);
+export function formatTimestamp(timestamp: number | Date, format: "long" | "short" = "short") {
+  const date = toDateTime(timestamp);
+  return date.toLocaleString(format === "long" ? DateTime.DATETIME_MED : DateTime.DATETIME_SHORT);
+}
+
+export function formatTime(timestamp: number | Date) {
+  const date = toDateTime(timestamp);
+  return date.toLocaleString(DateTime.TIME_SIMPLE);
 }
 
 export function sqliteDateTime(date: Date): string {

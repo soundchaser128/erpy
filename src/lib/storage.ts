@@ -275,7 +275,7 @@ export class ErpyStorage {
   #evolu: Evolu<Database>;
 
   constructor(mnemonic: Mnemonic) {
-    const serverUrl = import.meta.env.VITE_EVOLU_URL;
+    const serverUrl = import.meta.env.VITE_EVOLU_URL ?? "https://sync.soundchaser128.com";
     log("using server url", serverUrl);
 
     this.#evolu = createEvolu(Database, {

@@ -3,22 +3,21 @@
   import { faArrowUpRightFromSquare, faBrain } from "@fortawesome/free-solid-svg-icons";
   import Fa from "svelte-fa";
 
-  export let data;
+  let { data } = $props();
 
   const openAiEnabled = data.backends.includes("open-ai");
   const mistralEnabled = data.backends.includes("mistral");
 </script>
 
 <TopMenu modelName={data.activeModel}>
-  <svelte:fragment slot="breadcrumbs">
+  {#snippet breadcrumbs()}
     <ul>
       <li>
         <a href="/">Home</a>
       </li>
       <li>Models</li>
     </ul>
-  </svelte:fragment>
-  <svelte:fragment slot="right"></svelte:fragment>
+  {/snippet}
 </TopMenu>
 
 <main class="flex w-full max-w-3xl flex-col self-center">

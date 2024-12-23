@@ -24,9 +24,9 @@
   import {
     clamp,
     formatNumber,
-    formatTimestamp,
     getChatTitle,
     getInitialChatHistory,
+    toDateTime,
   } from "$lib/helpers";
   import { createNotification } from "$lib/notifications";
   import TopMenu from "$lib/components/TopMenu.svelte";
@@ -37,6 +37,7 @@
   import { remarkHighlightQuotes } from "$lib/remark.js";
   import { speak } from "$lib/tts.js";
   import { log } from "$lib/log.js";
+  import { DateTime } from "luxon";
 
   let { data } = $props();
 
@@ -179,7 +180,14 @@
 
   function getTimestamp(entry: ChatHistoryItem): string {
     const selectedAnswer = entry.content[entry.chosenAnswer];
-    return formatTimestamp(selectedAnswer.timestamp);
+    const date = toDateTime(selectedAnswer.timestamp);
+    const today = DateTime.now();
+
+    if (date.hasSame(today, "day")) {
+      return date.toLocaleString(DateTime.TIME_24_SIMPLE);
+    } else {
+      return date.toLocaleString(DateTime.DATETIME_SHORT);
+    }
   }
 
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
@@ -216,8 +224,11 @@
 
   async function onForkChat(entry: ChatHistoryItem) {
     const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
+    const characterId = data.character?.id;
+    invariant(characterId, "character i must be set");
+
     const newChatId = await data.storage.saveNewChat({
-      characterId: data.character?.id!,
+      characterId,
       data: forkedHistory,
     });
     goto(`/character/${data.character.id}/chat/${newChatId}`);

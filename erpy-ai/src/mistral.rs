@@ -1,6 +1,7 @@
 use std::{
     num::NonZero,
     sync::{Arc, LazyLock},
+    time::Instant,
 };
 
 use crate::{CompletionChoice, CompletionMessage, MessageRole, ModelInfo};
@@ -23,6 +24,7 @@ use mistralrs::{
 };
 use tokio::sync::mpsc::Receiver;
 use tokio_stream::{Stream, StreamExt};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct MistralRsCompletions {
@@ -168,6 +170,15 @@ impl From<ChatCompletionChunkResponse> for StreamingCompletionResponse {
     }
 }
 
+fn timestamp() -> i64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time must be after 1970.")
+        .as_secs() as i64
+}
+
 impl CompletionApi for MistralRsCompletions {
     async fn get_completions_stream(
         &self,
@@ -221,8 +232,8 @@ impl CompletionApi for MistralRsCompletions {
             .collect();
 
         Ok(CompletionResponse {
-            id: "todo".into(),
-            created: 0,
+            id: Uuid::new_v4().to_string(),
+            created: timestamp(),
             model: self.model_id.clone(),
             choices: vec![CompletionChoice {
                 index: 0,

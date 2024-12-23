@@ -6,7 +6,7 @@ export interface ModelInfo {
   path: string;
 }
 
-export const load = async (event) => {
+export const load = async () => {
   const modelsOnDisk = await invoke<ModelInfo[]>("list_models_on_disk");
 
   return { modelsOnDisk };

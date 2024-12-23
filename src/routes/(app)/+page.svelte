@@ -46,7 +46,7 @@
     loading = true;
     addModal?.close();
 
-    const newCharacters = await createCharacterFromUrls(urls, data.storage);
+    await createCharacterFromUrls(urls, data.storage);
     await invalidateAll();
 
     files = undefined;
@@ -60,7 +60,7 @@
     loading = true;
     addModal?.close();
 
-    const newCharacters = await createCharactersFromPngs(files, data.storage);
+    await createCharactersFromPngs(files, data.storage);
     await invalidateAll();
 
     textInput = "";

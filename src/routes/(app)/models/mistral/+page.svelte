@@ -1,18 +1,20 @@
 <script lang="ts">
+  import { preventDefault } from "svelte/legacy";
+
   import { invoke } from "@tauri-apps/api/core";
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import type { LoadModel } from "$lib/types.js";
 
-  export let data;
+  let { data } = $props();
 
-  let downloading = false;
-  let loading = false;
+  let downloading = $state(false);
+  let loading = $state(false);
 
-  let modelId = "";
-  let fileName = "";
-  let chatTemplate = "";
-  let modelOnDisk = "";
+  let modelId = $state("");
+  let fileName = $state("");
+  let chatTemplate = $state("");
+  let modelOnDisk = $state("");
 
   async function onSubmit() {
     let payload;
@@ -53,7 +55,7 @@
 </script>
 
 <TopMenu modelName={data.activeModel}>
-  <svelte:fragment slot="breadcrumbs">
+  {#snippet breadcrumbs()}
     <ul>
       <li>
         <a href="/">Home</a>
@@ -61,15 +63,14 @@
       <li><a href="/models">Models</a></li>
       <li>Load model</li>
     </ul>
-  </svelte:fragment>
-  <svelte:fragment slot="right"></svelte:fragment>
+  {/snippet}
 </TopMenu>
 
 <main class="w-full max-w-3xl self-center">
   <h1 class="mb-4 text-4xl font-black">Load model</h1>
 
   {#if data.modelsOnDisk.length > 0}
-    <form class="flex w-full flex-col" on:submit|preventDefault={onSubmit}>
+    <form class="flex w-full flex-col" onsubmit={preventDefault(onSubmit)}>
       <div class="form-control">
         <label class="label" for="modelDropdown"
           ><span class="label-text">Select an already downloaded model</span></label
@@ -92,7 +93,7 @@
     <div class="divider">OR</div>
   {/if}
 
-  <form class="flex w-full flex-col" on:submit|preventDefault={onSubmit}>
+  <form class="flex w-full flex-col" onsubmit={preventDefault(onSubmit)}>
     <p>Download a new model from HuggingFace</p>
     <div class="form-control">
       <label class="label" for="modelId"><span class="label-text">Model ID</span></label>
