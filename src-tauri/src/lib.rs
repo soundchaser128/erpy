@@ -81,16 +81,11 @@ async fn chat_completion(
         }
     });
 
-    let mut full_text = String::new();
     while let Some(response) = stream.next().await {
         if let Ok(_) = tx.try_recv() {
             info!("cancelling completion stream");
             drop(stream);
             break;
-        }
-
-        if let Some(text) = response.choices.get(0).map(|c| &c.delta.content) {
-            full_text.push_str(&text);
         }
 
         app.emit("completion", response)
