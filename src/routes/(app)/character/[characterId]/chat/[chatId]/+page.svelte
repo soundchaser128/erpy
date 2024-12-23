@@ -36,16 +36,18 @@
   import { gfmPlugin } from "svelte-exmarkdown/gfm";
   import { remarkHighlightQuotes } from "$lib/remark.js";
   import { speak } from "$lib/tts.js";
+  import { log } from "$lib/log.js";
+  import { stateLink } from "$lib/state-link.svelte.js";
 
   let { data } = $props();
 
+  let chatHistory = stateLink(() => data.chat.history);
   let question = $state("");
   let status = $state("idle");
   let editText = $state("");
   let summarizing = $state(false);
   let newTitle = $state("");
-  let chatHistory = $state(data.chat.history);
-  let tokenCount = $derived(estimateTokens(chatHistory));
+  let tokenCount = $derived(estimateTokens(chatHistory.current));
   let historyId = $derived(data.chat.id);
   let stopSpeaking: (() => void) | undefined = $state(undefined);
   let isSpeaking = $state(false);
@@ -83,7 +85,7 @@
       const timestamp = new Date();
       invariant(!!data.activeModel, "No active model selected");
 
-      const lastMessage = chatHistory[chatHistory.length - 1];
+      const lastMessage = chatHistory.current[chatHistory.current.length - 1];
       if (lastMessage.role !== MessageRole.User && !addToExisting) {
         if (question.trim().length > 0) {
           const q: ChatHistoryItem = {
@@ -97,7 +99,7 @@
             ],
             chosenAnswer: 0,
           };
-          chatHistory = [...chatHistory, q];
+          chatHistory.current = [...chatHistory.current, q];
         }
         question = "";
       }
@@ -112,7 +114,7 @@
 
       scrollToBottom();
       if (!addToExisting) {
-        chatHistory = [...chatHistory, answer];
+        chatHistory.current = [...chatHistory.current, answer];
       } else {
         answer.content.push({
           content: "",
@@ -120,24 +122,27 @@
           modelId: data.activeModel,
         });
         answer.chosenAnswer += 1;
-        chatHistory = [...chatHistory];
+        // chatHistory.current = [...chatHistory.current];
       }
 
       scrollToBottom();
 
-      const history = addToExisting ? chatHistory.slice(0, -1) : chatHistory;
+      const history = addToExisting ? chatHistory.current.slice(0, -1) : chatHistory.current;
       invoke("chat_completion", {
         messageHistory: toApiRequest(history),
         config: data.config,
       });
 
       const unlisten = await listen<CompletionResponse>("completion", (response) => {
-        answer.content[answer.chosenAnswer].content += response.payload.choices[0].delta.content;
-        chatHistory = [...chatHistory];
+        log("completion", response);
+        const delta = response.payload.choices[0].delta.content;
+        const answer = chatHistory.current[chatHistory.current.length - 1];
+        answer.content[answer.chosenAnswer].content += delta;
+
         scrollToBottom();
       });
       once("completion_done", async () => {
-        await data.storage.updateChat(historyId, chatHistory);
+        await data.storage.updateChat(historyId, chatHistory.current);
         unlisten();
         status = "idle";
         if (ttsOnMessage) {
@@ -176,26 +181,26 @@
 
   async function changeSelectedAnswer(entry: ChatHistoryItem, delta: number) {
     entry.chosenAnswer = clamp(entry.chosenAnswer + delta, 0, entry.content.length - 1);
-    chatHistory = [...chatHistory];
-    await data.storage.updateChat(historyId, chatHistory);
+    data.chat.history = [...data.chat.history];
+    await data.storage.updateChat(historyId, data.chat.history);
   }
 
   async function deleteMessage(entry: ChatHistoryItem) {
     if (entry.content.length > 1) {
       entry.content.splice(entry.chosenAnswer, 1);
       entry.chosenAnswer = entry.content.length - 1;
-      chatHistory = [...chatHistory];
+      data.chat.history = [...data.chat.history];
     } else {
-      chatHistory = chatHistory.filter((item) => item !== entry);
+      data.chat.history = data.chat.history.filter((item) => item !== entry);
     }
 
     scrollToBottom();
 
-    await data.storage.updateChat(historyId, chatHistory);
+    await data.storage.updateChat(historyId, data.chat.history);
   }
 
   function isFirstAssistantMessage(index: number): boolean {
-    const firstAssistantMessage = chatHistory.findIndex((item) => item.role === "assistant");
+    const firstAssistantMessage = data.chat.history.findIndex((item) => item.role === "assistant");
     return firstAssistantMessage === index;
   }
 
@@ -207,7 +212,7 @@
   }
 
   async function onForkChat(entry: ChatHistoryItem) {
-    const forkedHistory = chatHistory.slice(0, chatHistory.indexOf(entry) + 1);
+    const forkedHistory = data.chat.history.slice(0, data.chat.history.indexOf(entry) + 1);
     const newChatId = await data.storage.saveNewChat({
       characterId: data.character?.id!,
       data: forkedHistory,
@@ -223,8 +228,8 @@
     event.preventDefault();
     if (messageToEdit) {
       messageToEdit.content[messageToEdit.chosenAnswer].content = editText;
-      chatHistory = [...chatHistory];
-      await data.storage.updateChat(historyId, chatHistory);
+      data.chat.history = [...data.chat.history];
+      await data.storage.updateChat(historyId, data.chat.history);
       messageToEdit = null;
     }
   }
@@ -308,7 +313,7 @@
       onSubmit(undefined);
     } else if (e.key === "ArrowUp" && question.length === 0) {
       e.preventDefault();
-      onStartEdit(chatHistory[chatHistory.length - 1]);
+      onStartEdit(data.chat.history[data.chat.history.length - 1]);
     }
   }
 
@@ -459,7 +464,7 @@
       </button>
     {/if} -->
 
-    {#each chatHistory as entry, index}
+    {#each data.chat.history as entry, index}
       {#if entry.role !== "system"}
         <div class="chat {entry.role === 'assistant' ? 'chat-start' : 'chat-end'}">
           {#if entry.role === "assistant"}

@@ -52,6 +52,7 @@ impl CompletionApi for OpenAiCompletions {
                     Event::Message(msg) => {
                         let response: StreamingCompletionResponse =
                             serde_json::from_str(&msg.data).ok()?;
+                        info!("parsed response: {:#?}", response);
                         Some(response)
                     }
                     Event::Open => None,
