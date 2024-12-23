@@ -8,7 +8,6 @@
   import type { Character } from "$lib/storage.js";
   import { pluralize } from "$lib/helpers.js";
   import { allCharacters, subscribeCharacters } from "$lib/subscriptions.svelte";
-  import { onMount } from "svelte";
 
   let { data } = $props();
   let addModal: HTMLDialogElement | undefined = $state();
@@ -16,9 +15,7 @@
   let searchInput = $state("");
   let loading = $state(false);
   let files: FileList | undefined = $state();
-  let characters = $derived(allCharacters.characters);
-
-  $inspect(characters);
+  let characters = $state(data.characters);
 
   let filtered = $derived(
     searchInput.trim()
@@ -28,12 +25,12 @@
       : characters,
   );
 
-  onMount(() => {
-    const unsubscribe = subscribeCharacters(data.storage);
-
-    return () => {
-      unsubscribe();
-    };
+  $effect(() => {
+    const unsub = subscribeCharacters(data.storage);
+    if (allCharacters.state === "success") {
+      characters = allCharacters.characters;
+    }
+    return unsub;
   });
 
   function showModal() {
