@@ -17,6 +17,8 @@
   let files: FileList | undefined = $state();
   let characters = $state(data.characters);
 
+  $inspect(characters);
+
   let filtered = $derived(
     searchInput.trim()
       ? characters.filter((character) =>

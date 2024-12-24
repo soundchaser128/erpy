@@ -1,16 +1,6 @@
 import { type Character, type NewCharacter, type ErpyStorage } from "$lib/storage";
 import type { CharacterInformation } from "$lib/types";
 import { invoke } from "@tauri-apps/api/core";
-import { BaseDirectory, mkdir, writeFile } from "@tauri-apps/plugin-fs";
-
-async function createDirectory(name: string, baseDir: BaseDirectory) {
-  try {
-    await mkdir(name, { baseDir });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {
-    // ignored
-  }
-}
 
 export async function createCharactersFromPngs(
   files: FileList,
@@ -29,7 +19,6 @@ export async function createCharactersFromPngs(
     }),
   );
 
-  await createDirectory("avatars", BaseDirectory.AppData);
   const characterPayloads: CharacterInformation[] = await invoke("upload_character_pngs", { pngs });
 
   const newCharacters: NewCharacter[] = [];
@@ -43,24 +32,7 @@ export async function createCharactersFromPngs(
     });
   }
 
-  const characters = await storage.persistCharacters(newCharacters);
-
-  let i = 0;
-  for (const character of characters) {
-    const file = files.item(i);
-    if (!file) continue;
-    const data = await file.arrayBuffer();
-    const array = new Uint8Array(data);
-    const path = character.avatar.replace("asset://", "");
-
-    await writeFile(path, array, {
-      baseDir: BaseDirectory.AppData,
-    });
-
-    i += 1;
-  }
-
-  return characters;
+  return await storage.persistCharacters(newCharacters);
 }
 
 export async function createCharacterFromUrls(

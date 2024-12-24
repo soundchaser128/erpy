@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 
+use std::io::Cursor;
+
 use anyhow::{anyhow, bail, Result};
 use erpy_types::CharacterInformation;
+use image::imageops::FilterType;
 use log::info;
 use serde::Deserialize;
 use serde_json::Value;
@@ -125,7 +128,15 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
 
     let json = BASE64_STANDARD.decode(base64)?;
     let json: CharacterCard = serde_json::from_slice(&json)?;
-    let base64 = String::from_utf8(base64.to_vec())?;
+
+    let image = image::load_from_memory(bytes)?;
+    let image = image.resize(500, 500, FilterType::Lanczos3);
+    let image = image.into_rgba8();
+
+    let mut writer = Cursor::new(Vec::new());
+    image.write_to(&mut writer, image::ImageFormat::WebP)?;
+    let base64 = BASE64_STANDARD.encode(writer.get_ref());
+    let image_base64 = format!("data:image/webp;base64,{}", base64);
 
     let mut first_messages = vec![json.data.first_message];
     first_messages.extend(json.data.alternate_greetings);
@@ -142,7 +153,7 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
         },
         first_messages,
         avatar: json.data.avatar,
-        image_base64: Some(base64),
+        image_base64: Some(image_base64),
     })
 }
 
