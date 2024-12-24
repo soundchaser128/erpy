@@ -177,7 +177,7 @@
             class="w-full rounded-t-lg object-contain {isDisabled(character)
               ? 'blur-sm grayscale'
               : ''}"
-            src="data:image/png;base64,{character.imageBase64}"
+            src={character.imageBase64}
             alt={character.name}
           />
         </figure>

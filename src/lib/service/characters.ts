@@ -28,7 +28,7 @@ export async function createCharactersFromPngs(
     newCharacters.push({
       payload: { ...character },
       url: null,
-      imageBase64: pngs[i],
+      imageBase64: character.image_base64,
     });
   }
 
@@ -45,7 +45,7 @@ export async function createCharacterFromUrls(
 
   return storage.persistCharacters(
     data.map((character) => ({
-      imageBase64: character.image_base64!,
+      imageBase64: character.image_base64,
       payload: character,
       url: null,
     })),

@@ -25,7 +25,7 @@ export interface CharacterInformation {
   tags: string[];
   system_prompt: string;
   avatar?: string;
-  image_base64?: string;
+  image_base64: string;
 }
 
 export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {

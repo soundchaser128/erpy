@@ -459,15 +459,6 @@
   {/if}
 
   <section bind:this={messageContainer} class="relative mb-4 h-full w-full grow overflow-x-auto">
-    <!-- {#if showScrollDown}
-      <button
-        on:click={() => scrollToBottom("smooth")}
-        class="btn btn-square fixed bottom-20 right-8 z-20 shadow-xl"
-      >
-        <Fa icon={faArrowDown} />
-      </button>
-    {/if} -->
-
     {#each chatHistory as entry, index}
       {#if entry.role !== "system"}
         <div class="chat {entry.role === 'assistant' ? 'chat-start' : 'chat-end'}">
@@ -476,7 +467,7 @@
               <div class="w-20 rounded-full shadow-xl">
                 <img
                   alt="Avatar image for {data.character.name}"
-                  src="data:image/png;base64,{data.character.imageBase64}"
+                  src={data.character.imageBase64}
                 />
               </div>
             </div>

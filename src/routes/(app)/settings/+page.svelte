@@ -26,11 +26,11 @@
 
   async function onDeleteUserData() {
     await data.storage.resetData();
-    const directory = await navigator.storage.getDirectory();
-    // @ts-expect-error not yet in the types
-    for await (const [name, entry] of directory.entries()) {
-      await directory.removeEntry(name, { recursive: true });
-    }
+    // const directory = await navigator.storage.getDirectory();
+    // // @ts-expect-error not yet in the types
+    // for await (const [name, entry] of directory.entries()) {
+    //   await directory.removeEntry(name, { recursive: true });
+    // }
 
     window.localStorage.clear();
     await invalidateAll();

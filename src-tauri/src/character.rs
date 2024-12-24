@@ -5,7 +5,7 @@ use std::io::Cursor;
 use anyhow::{anyhow, bail, Result};
 use erpy_types::CharacterInformation;
 use image::imageops::FilterType;
-use log::info;
+use log::{debug, info};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -80,7 +80,7 @@ pub async fn character_from_chub_ai(url: &str) -> Result<CharacterInformation> {
     let parsed_url = reqwest::Url::parse(url)?;
     let api_url = format!("https://api.chub.ai/api{}?full=true", parsed_url.path());
     let response: ChubAiCharacter = reqwest::get(&api_url).await?.json().await?;
-    info!("received character: {response:#?} for URL {url}");
+    debug!("received character: {response:#?} for URL {url}");
 
     let mut first_messages = vec![response.node.definition.first_message];
     first_messages.extend(response.node.definition.alternate_greetings);
@@ -112,6 +112,8 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
     use base64::prelude::*;
     use zune_png::PngDecoder;
 
+    info!("parsing character data from PNG file");
+
     let mut decoder = PngDecoder::new(&*bytes);
     decoder.decode()?;
 
@@ -128,6 +130,8 @@ pub fn character_from_png_bytes(bytes: &[u8]) -> Result<CharacterInformation> {
 
     let json = BASE64_STANDARD.decode(base64)?;
     let json: CharacterCard = serde_json::from_slice(&json)?;
+
+    info!("parsed data for character '{}'", json.data.name);
 
     let image = image::load_from_memory(bytes)?;
     let image = image.resize(500, 500, FilterType::Lanczos3);

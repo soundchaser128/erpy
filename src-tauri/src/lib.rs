@@ -7,6 +7,7 @@ use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, Mes
 use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::CharacterInformation;
 use erpy_types::Chat;
+use log::debug;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
@@ -101,6 +102,7 @@ async fn chat_completion(
 
 #[tauri::command]
 async fn fetch_character(character_url: String) -> TAResult<CharacterInformation> {
+    info!("creating character from URL {character_url}");
     let character = character_from_string(&character_url).await?;
     Ok(character)
 }
@@ -109,13 +111,15 @@ async fn fetch_character(character_url: String) -> TAResult<CharacterInformation
 async fn upload_character_pngs(pngs: Vec<String>) -> TAResult<Vec<CharacterInformation>> {
     use base64::prelude::*;
 
+    info!("uploading {} character PNG files", pngs.len());
+
     let mut characters = Vec::new();
     for base64 in pngs {
         let bytes = BASE64_STANDARD
             .decode(base64)
             .map_err(|e| anyhow!("failed to decode base64: {e}"))?;
         let character = character_from_png_bytes(&bytes)?;
-        info!("received character: {:#?}", character);
+        debug!("received character: {:#?}", character);
 
         characters.push(character);
     }
