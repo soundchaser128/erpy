@@ -4,7 +4,11 @@
   import { invoke } from "@tauri-apps/api/core";
   import Fa from "svelte-fa";
 
-  export let modelName: string | undefined;
+  interface Props {
+    modelName: string | undefined;
+  }
+
+  let { modelName }: Props = $props();
 
   async function onUnload() {
     await invoke("unload_model");
@@ -16,7 +20,7 @@
   {#if !modelName}
     <span>No model selected.</span>
   {:else}
-    <button class="btn btn-primary btn-sm" on:click={onUnload}>
+    <button class="btn btn-primary btn-sm" onclick={onUnload}>
       <Fa icon={faEject} />
       Unload
     </button>
