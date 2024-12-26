@@ -1,7 +1,6 @@
 use std::{
     num::NonZero,
     sync::{Arc, LazyLock},
-    time::Instant,
 };
 
 use crate::{CompletionChoice, CompletionMessage, MessageRole, ModelInfo};
@@ -30,7 +29,7 @@ use uuid::Uuid;
 pub struct MistralRsCompletions {
     runner: Arc<MistralRs>,
     model_id: String,
-    file_name: String,
+    // file_name: String,
 }
 
 impl MistralRsCompletions {
@@ -43,7 +42,7 @@ impl MistralRsCompletions {
             prompt_batchsize: None,
             topology: None,
         };
-        let file_name = files[0].clone();
+        // let file_name = files[0].clone();
         let loader =
             GGUFLoaderBuilder::new(chat_template, None, model_id.clone(), files, config).build();
 
@@ -89,7 +88,7 @@ impl MistralRsCompletions {
         Ok(Self {
             runner,
             model_id,
-            file_name,
+            // file_name,
         })
     }
 
@@ -127,6 +126,7 @@ impl MistralRsCompletions {
             tools: None,
             tool_choice: None,
             logits_processors: None,
+            return_raw_logits: false,
         });
 
         let sender = self.runner.get_sender().unwrap();
@@ -214,6 +214,7 @@ impl CompletionApi for MistralRsCompletions {
             Response::CompletionDone(_) => None,
             Response::CompletionChunk(_) => None,
             Response::ImageGeneration(_) => None,
+            Response::Raw { .. } => None,
         }))
     }
 

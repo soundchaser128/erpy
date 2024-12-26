@@ -44,6 +44,14 @@ fn list_models_on_disk() -> TAResult<Vec<ModelInfo>> {
     Ok(models)
 }
 
+pub fn estimate_tokens(history: &[MessageHistoryItem]) -> usize {
+    let total_len: usize = history
+        .iter()
+        .fold(0, |count, item| count + item.content.len());
+
+    total_len / 4
+}
+
 #[tauri::command]
 async fn chat_completion(
     app: AppHandle,
@@ -51,9 +59,10 @@ async fn chat_completion(
     message_history: Vec<MessageHistoryItem>,
 ) -> TAResult<()> {
     info!(
-        "received request to chat with history: {:#?}",
-        message_history
+        "received request to chat with {} tokens",
+        estimate_tokens(&message_history)
     );
+    debug!("chat history: {message_history:#?}");
     let state = app.state::<State>();
     let lock = state.completions.lock().await;
     let Some(api) = lock.as_ref() else {

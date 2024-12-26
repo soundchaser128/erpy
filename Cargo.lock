@@ -39,6 +39,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "ahash"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
+dependencies = [
+ "cfg-if",
+ "getrandom 0.2.15",
+ "once_cell",
+ "serde",
+ "version_check",
+ "zerocopy",
+]
+
+[[package]]
 name = "aho-corasick"
 version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -73,6 +87,12 @@ checksum = "94fb8275041c72129eb51b7d0322c29b8387a0386127718b096429201a5d6ece"
 dependencies = [
  "alloc-no-stdlib",
 ]
+
+[[package]]
+name = "allocator-api2"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "android-tzdata"
@@ -226,9 +246,9 @@ dependencies = [
 
 [[package]]
 name = "async-broadcast"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20cd0e2e25ea8e5f7e9df04578dc6cf5c83577fd09b1a46aaf5c85e1c33f2a7e"
+checksum = "435a87a52755b8f27fcf321ac4f04b2802e337c8c4872923137471ec39c37532"
 dependencies = [
  "event-listener",
  "event-listener-strategy",
@@ -579,6 +599,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "borrow-or-share"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3eeab4423108c5d7c744f4d234de88d18d636100093ae04caf4825134b9c3a32"
+
+[[package]]
 name = "borsh"
 version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -759,8 +785,8 @@ dependencies = [
 
 [[package]]
 name = "candle-core"
-version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
+version = "0.8.0"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=521e33c#521e33ccd1ba77b2140c16e21bde7fe95b012e1a"
 dependencies = [
  "byteorder",
  "candle-kernels",
@@ -786,17 +812,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "candle-hf-hub"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca5f45ce8fe55a9e9246a3fc60000d7ed11b88a84d72f753488f7264ce04b102"
+dependencies = [
+ "dirs",
+ "futures",
+ "http 1.2.0",
+ "indicatif",
+ "log",
+ "num_cpus",
+ "rand 0.8.5",
+ "reqwest 0.12.9",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "ureq",
+]
+
+[[package]]
 name = "candle-kernels"
-version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
+version = "0.8.0"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=521e33c#521e33ccd1ba77b2140c16e21bde7fe95b012e1a"
 dependencies = [
  "bindgen_cuda 0.1.5",
 ]
 
 [[package]]
 name = "candle-metal-kernels"
-version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
+version = "0.8.0"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=521e33c#521e33ccd1ba77b2140c16e21bde7fe95b012e1a"
 dependencies = [
  "metal 0.27.0",
  "once_cell",
@@ -806,8 +853,8 @@ dependencies = [
 
 [[package]]
 name = "candle-nn"
-version = "0.7.2"
-source = "git+https://github.com/EricLBuehler/candle.git?rev=2d3df4a#2d3df4a8f3e52240a92be330a41f848dbc38f930"
+version = "0.8.0"
+source = "git+https://github.com/EricLBuehler/candle.git?rev=521e33c#521e33ccd1ba77b2140c16e21bde7fe95b012e1a"
 dependencies = [
  "candle-core",
  "candle-metal-kernels",
@@ -850,6 +897,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a969e13a7589e9e3e4207e153bae624ade2b5622fb4684a4923b23ec3d57719"
 dependencies = [
  "serde",
+ "toml 0.8.19",
+]
+
+[[package]]
+name = "cbindgen"
+version = "0.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3fce8dd7fcfcbf3a0a87d8f515194b49d6135acab73e18bd380d1d93bb1a15eb"
+dependencies = [
+ "clap",
+ "heck 0.4.1",
+ "indexmap 2.7.0",
+ "log",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.91",
+ "tempfile",
  "toml 0.8.19",
 ]
 
@@ -1325,9 +1391,9 @@ dependencies = [
 
 [[package]]
 name = "cudarc"
-version = "0.12.2"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cd76de2aa3a7bdb9a65941ea5a3c688d941688f736a81b2fc5beb88747a7f25"
+checksum = "38cd60a9a42ec83a2ed7effb0b1f073270264ea99da7acfc44f7e8d74dee0384"
 dependencies = [
  "half",
  "libloading 0.8.6",
@@ -1489,6 +1555,19 @@ dependencies = [
  "quote",
  "rustc_version",
  "syn 2.0.91",
+]
+
+[[package]]
+name = "derivre"
+version = "0.1.0"
+source = "git+https://github.com/microsoft/derivre?rev=02ee497e6e404a0b402b4f68a9abf599d22ed2ed#02ee497e6e404a0b402b4f68a9abf599d22ed2ed"
+dependencies = [
+ "ahash 0.8.11",
+ "anyhow",
+ "bytemuck",
+ "bytemuck_derive",
+ "hashbrown 0.14.5",
+ "regex-syntax 0.8.5",
 ]
 
 [[package]]
@@ -1774,6 +1853,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "camino",
+ "cudarc",
  "dirs",
  "either",
  "erpy-types",
@@ -1952,6 +2032,17 @@ dependencies = [
  "num-traits",
  "rand 0.8.5",
  "rand_distr",
+]
+
+[[package]]
+name = "fluent-uri"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1918b65d96df47d3591bed19c5cca17e3fa5d0707318e4b5ef2eae01764df7e5"
+dependencies = [
+ "borrow-or-share",
+ "ref-cast",
+ "serde",
 ]
 
 [[package]]
@@ -2637,7 +2728,17 @@ version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 dependencies = [
- "ahash",
+ "ahash 0.7.8",
+]
+
+[[package]]
+name = "hashbrown"
+version = "0.14.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
+dependencies = [
+ "ahash 0.8.11",
+ "allocator-api2",
 ]
 
 [[package]]
@@ -3503,6 +3604,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "llguidance"
+version = "0.4.1"
+source = "git+https://github.com/microsoft/llguidance?rev=cfef3df97372a7b84d74976ff41cc9cb78bca6cc#cfef3df97372a7b84d74976ff41cc9cb78bca6cc"
+dependencies = [
+ "anyhow",
+ "cbindgen",
+ "derivre",
+ "indexmap 2.7.0",
+ "instant",
+ "referencing",
+ "regex-syntax 0.8.5",
+ "rustc-hash 2.1.0",
+ "serde",
+ "serde_json",
+ "toktrie",
+ "url",
+]
+
+[[package]]
 name = "lock_api"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3748,11 +3868,13 @@ dependencies = [
 
 [[package]]
 name = "mistralrs"
-version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
+version = "0.3.4"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=1cde7450db60980e87ccb82eceb929dd70d77ada#1cde7450db60980e87ccb82eceb929dd70d77ada"
 dependencies = [
  "anyhow",
  "candle-core",
+ "candle-nn",
+ "clap",
  "either",
  "futures",
  "image",
@@ -3767,8 +3889,8 @@ dependencies = [
 
 [[package]]
 name = "mistralrs-core"
-version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
+version = "0.3.4"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=1cde7450db60980e87ccb82eceb929dd70d77ada#1cde7450db60980e87ccb82eceb929dd70d77ada"
 dependencies = [
  "akin",
  "anyhow",
@@ -3780,6 +3902,7 @@ dependencies = [
  "bytemuck",
  "bytemuck_derive",
  "candle-core",
+ "candle-hf-hub",
  "candle-nn",
  "cfgrammar",
  "chrono",
@@ -3793,17 +3916,18 @@ dependencies = [
  "futures",
  "galil-seiferas",
  "half",
- "hf-hub",
  "image",
  "indexmap 2.7.0",
  "indicatif",
  "itertools 0.13.0",
+ "llguidance",
  "lrtable",
  "minijinja",
  "minijinja-contrib",
  "mistralrs-paged-attn",
  "mistralrs-quant",
  "mistralrs-vision",
+ "objc",
  "once_cell",
  "radix_trie",
  "rand 0.8.5",
@@ -3825,6 +3949,7 @@ dependencies = [
  "tokenizers",
  "tokio",
  "tokio-rayon",
+ "toktrie_hf_tokenizers",
  "toml 0.8.19",
  "tqdm",
  "tracing",
@@ -3836,20 +3961,23 @@ dependencies = [
 
 [[package]]
 name = "mistralrs-paged-attn"
-version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
+version = "0.3.4"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=1cde7450db60980e87ccb82eceb929dd70d77ada#1cde7450db60980e87ccb82eceb929dd70d77ada"
 dependencies = [
  "anyhow",
  "bindgen_cuda 0.1.6",
  "candle-core",
  "float8",
  "half",
+ "metal 0.27.0",
+ "once_cell",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "mistralrs-quant"
-version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
+version = "0.3.4"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=1cde7450db60980e87ccb82eceb929dd70d77ada#1cde7450db60980e87ccb82eceb929dd70d77ada"
 dependencies = [
  "bindgen_cuda 0.1.5",
  "byteorder",
@@ -3862,13 +3990,15 @@ dependencies = [
  "paste",
  "rayon",
  "serde",
+ "serde_json",
+ "thiserror 1.0.69",
  "tracing",
 ]
 
 [[package]]
 name = "mistralrs-vision"
-version = "0.3.2"
-source = "git+https://github.com/EricLBuehler/mistral.rs?rev=09d2e2596d9b0aa728749cf5614e40dd1a112b3b#09d2e2596d9b0aa728749cf5614e40dd1a112b3b"
+version = "0.3.4"
+source = "git+https://github.com/EricLBuehler/mistral.rs?rev=1cde7450db60980e87ccb82eceb929dd70d77ada#1cde7450db60980e87ccb82eceb929dd70d77ada"
 dependencies = [
  "candle-core",
  "image",
@@ -5128,9 +5258,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.37"
+version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
+checksum = "0e4dccaaaf89514f546c693ddc140f729f958c247918a13380cccc6078391acc"
 dependencies = [
  "proc-macro2",
 ]
@@ -5371,6 +5501,39 @@ dependencies = [
  "getrandom 0.2.15",
  "libredox",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "ref-cast"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccf0a6f84d5f1d581da8b41b47ec8600871962f2a528115b542b362d4b744931"
+dependencies = [
+ "ref-cast-impl",
+]
+
+[[package]]
+name = "ref-cast-impl"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcc303e793d3734489387d205e9b186fac9c6cfacedd98cbb2e8a5943595f3e6"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.91",
+]
+
+[[package]]
+name = "referencing"
+version = "0.26.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb8e15af8558cb157432dd3d88c1d1e982d0a5755cf80ce593b6499260aebc49"
+dependencies = [
+ "ahash 0.8.11",
+ "fluent-uri",
+ "once_cell",
+ "percent-encoding",
+ "serde_json",
 ]
 
 [[package]]
@@ -5908,6 +6071,7 @@ version = "1.0.134"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d00f4175c42ee48b15416f6193a959ba3a0d67fc699a0db9ad12df9f83991c7d"
 dependencies = [
+ "indexmap 2.7.0",
  "itoa 1.0.14",
  "memchr",
  "ryu",
@@ -5957,9 +6121,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with"
-version = "3.11.0"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e28bdad6db2b8340e449f7108f020b3b092e8583a9e3fb82713e1d4e71fe817"
+checksum = "d6b6f7f2fcb69f747921f79f3926bd1e203fce4fef62c268dd3abfb6d86029aa"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -5975,9 +6139,9 @@ dependencies = [
 
 [[package]]
 name = "serde_with_macros"
-version = "3.11.0"
+version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d846214a9854ef724f3da161b426242d8de7c1fc7de2f89bb1efcb154dca79d"
+checksum = "8d00caa5193a3c8362ac2b73be6b9e768aa5a4b2f721d8f4b339600c3cb51f8e"
 dependencies = [
  "darling 0.20.10",
  "proc-macro2",
@@ -6157,6 +6321,17 @@ checksum = "c970269d99b64e60ec3bd6ad27270092a5394c4e309314b18ae3fe575695fbe8"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "socks"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0c3dbbd9ae980613c6dd8e28a9407b50509d3803b57624d5dfe8315218cd58b"
+dependencies = [
+ "byteorder",
+ "libc",
+ "winapi",
 ]
 
 [[package]]
@@ -7076,14 +7251,15 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokenizers"
-version = "0.19.1"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e500fad1dd3af3d626327e6a3fe5050e664a6eaa4708b8ca92f1794aaf73e6fd"
+checksum = "9ecededfed68a69bc657e486510089e255e53c3d38cc7d4d59c8742668ca2cae"
 dependencies = [
  "aho-corasick",
  "derive_builder",
  "esaxx-rs",
  "getrandom 0.2.15",
+ "hf-hub",
  "indicatif",
  "itertools 0.12.1",
  "lazy_static",
@@ -7188,6 +7364,33 @@ dependencies = [
  "futures-sink",
  "pin-project-lite",
  "tokio",
+]
+
+[[package]]
+name = "toktrie"
+version = "0.1.0"
+source = "git+https://github.com/microsoft/llguidance?rev=cfef3df97372a7b84d74976ff41cc9cb78bca6cc#cfef3df97372a7b84d74976ff41cc9cb78bca6cc"
+dependencies = [
+ "anyhow",
+ "bytemuck",
+ "bytemuck_derive",
+ "rustc-hash 2.1.0",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "toktrie_hf_tokenizers"
+version = "0.1.0"
+source = "git+https://github.com/microsoft/llguidance?rev=cfef3df97372a7b84d74976ff41cc9cb78bca6cc#cfef3df97372a7b84d74976ff41cc9cb78bca6cc"
+dependencies = [
+ "anyhow",
+ "log",
+ "rustc-hash 2.1.0",
+ "serde",
+ "serde_json",
+ "tokenizers",
+ "toktrie",
 ]
 
 [[package]]
@@ -7557,6 +7760,7 @@ dependencies = [
  "rustls-pki-types",
  "serde",
  "serde_json",
+ "socks",
  "url",
  "webpki-roots",
 ]
