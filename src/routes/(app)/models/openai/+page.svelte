@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { preventDefault } from "svelte/legacy";
-
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import type { ConnectionTestResult, LoadModel } from "$lib/types";
@@ -30,7 +28,9 @@
     testingConnection = false;
   }
 
-  async function onSubmit() {
+  async function onSubmit(event: Event) {
+    event.preventDefault();
+
     const payload = {
       type: "open-ai",
       apiUrl,
@@ -68,7 +68,7 @@
       </div>
     {/if}
   {/if}
-  <form class="flex flex-col" onsubmit={preventDefault(onSubmit)}>
+  <form class="flex flex-col" onsubmit={onSubmit}>
     <div class="form-control">
       <label class="label" for="url-field">
         <span class="label-text">URL of the OpenAI-compatible endpoint (required)</span>

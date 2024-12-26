@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { preventDefault } from "svelte/legacy";
-
   import { invoke } from "@tauri-apps/api/core";
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
@@ -16,7 +14,9 @@
   let chatTemplate = $state("");
   let modelOnDisk = $state("");
 
-  async function onSubmit() {
+  async function onSubmit(event: Event) {
+    event.preventDefault();
+
     let payload;
     if (modelId && fileName && modelOnDisk !== "__none__") {
       downloading = true;
@@ -70,7 +70,7 @@
   <h1 class="mb-4 text-4xl font-black">Load model</h1>
 
   {#if data.modelsOnDisk.length > 0}
-    <form class="flex w-full flex-col" onsubmit={preventDefault(onSubmit)}>
+    <form class="flex w-full flex-col" onsubmit={onSubmit}>
       <div class="form-control">
         <label class="label" for="modelDropdown"
           ><span class="label-text">Select an already downloaded model</span></label
@@ -93,7 +93,7 @@
     <div class="divider">OR</div>
   {/if}
 
-  <form class="flex w-full flex-col" onsubmit={preventDefault(onSubmit)}>
+  <form class="flex w-full flex-col" onsubmit={onSubmit}>
     <p>Download a new model from HuggingFace</p>
     <div class="form-control">
       <label class="label" for="modelId"><span class="label-text">Model ID</span></label>
