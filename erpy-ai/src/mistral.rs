@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
-use crate::ModelInfo;
+use crate::{CompletionChoice, CompletionMessage, MessageRole, ModelInfo};
 
 use super::{
     CompletionApi, CompletionRequest, CompletionResponse, DeltaContent, MessageHistoryItem,
@@ -14,20 +14,22 @@ use camino::{Utf8Component, Utf8Path, Utf8PathBuf};
 use either::Either;
 use indexmap::IndexMap;
 
+use log::info;
 use mistralrs::{
     best_device, ChatCompletionChunkResponse, Constraint, DefaultSchedulerMethod,
-    DeviceMapMetadata, GGUFLoaderBuilder, GGUFSpecificConfig, MistralRs, MistralRsBuilder,
-    ModelDType, NormalRequest, Request, RequestMessage, Response, SamplingParams, SchedulerConfig,
-    TokenSource,
+    DeviceMapMetadata, GGUFLoaderBuilder, GGUFSpecificConfig, MemoryGpuConfig, MistralRs,
+    MistralRsBuilder, ModelDType, NormalRequest, PagedAttentionMetaBuilder, Request,
+    RequestMessage, Response, SamplingParams, SchedulerConfig, TokenSource,
 };
 use tokio::sync::mpsc::Receiver;
 use tokio_stream::{Stream, StreamExt};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct MistralRsCompletions {
     runner: Arc<MistralRs>,
     model_id: String,
-    file_name: String,
+    // file_name: String,
 }
 
 impl MistralRsCompletions {
@@ -40,19 +42,24 @@ impl MistralRsCompletions {
             prompt_batchsize: None,
             topology: None,
         };
-        let file_name = files[0].clone();
+        // let file_name = files[0].clone();
         let loader =
             GGUFLoaderBuilder::new(chat_template, None, model_id.clone(), files, config).build();
 
-        // let paged_attn_cfg = if cfg!(not(target_os = "macos")) {
-        //     Some(PagedAttentionMetaBuilder::default().build()?)
-        // } else {
-        //     None
-        // };
-        let paged_attn_cfg = None;
+        let paged_attn = if cfg!(target_os = "linux") {
+            Some(
+                PagedAttentionMetaBuilder::default()
+                    .with_block_size(32)
+                    // TODO load from configuration
+                    .with_gpu_memory(MemoryGpuConfig::ContextSize(8192))
+                    .build()?,
+            )
+        } else {
+            None
+        };
 
         let device = &best_device(false)?;
-        println!("Using device: {:?}", device);
+        info!("Using device: {:?}", device);
 
         // Load, into a Pipeline
         let pipeline = loader.load_model_from_hf(
@@ -63,7 +70,7 @@ impl MistralRsCompletions {
             false,
             DeviceMapMetadata::dummy(),
             None,
-            paged_attn_cfg,
+            paged_attn,
         )?;
 
         let scheduler_method = SchedulerConfig::DefaultScheduler {
@@ -81,7 +88,7 @@ impl MistralRsCompletions {
         Ok(Self {
             runner,
             model_id,
-            file_name,
+            // file_name,
         })
     }
 
@@ -119,6 +126,7 @@ impl MistralRsCompletions {
             tools: None,
             tool_choice: None,
             logits_processors: None,
+            return_raw_logits: false,
         });
 
         let sender = self.runner.get_sender().unwrap();
@@ -153,12 +161,22 @@ impl From<ChatCompletionChunkResponse> for StreamingCompletionResponse {
                 delta: DeltaContent {
                     content: c.delta.content,
                 },
+                finish_reason: c.finish_reason,
             });
 
         Self {
             choices: choices.collect(),
         }
     }
+}
+
+fn timestamp() -> i64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("system time must be after 1970.")
+        .as_secs() as i64
 }
 
 impl CompletionApi for MistralRsCompletions {
@@ -196,6 +214,7 @@ impl CompletionApi for MistralRsCompletions {
             Response::CompletionDone(_) => None,
             Response::CompletionChunk(_) => None,
             Response::ImageGeneration(_) => None,
+            Response::Raw { .. } => None,
         }))
     }
 
@@ -204,7 +223,28 @@ impl CompletionApi for MistralRsCompletions {
     }
 
     async fn get_completions(&self, request: &CompletionRequest) -> Result<CompletionResponse> {
-        todo!()
+        let chunks: Vec<_> = self.get_completions_stream(request).await?.collect().await;
+        let finish_reason = chunks
+            .last()
+            .and_then(|c| c.choices[0].finish_reason.clone());
+        let message = chunks
+            .into_iter()
+            .map(|mut c| c.choices.remove(0).delta.content)
+            .collect();
+
+        Ok(CompletionResponse {
+            id: Uuid::new_v4().to_string(),
+            created: timestamp(),
+            model: self.model_id.clone(),
+            choices: vec![CompletionChoice {
+                index: 0,
+                finish_reason,
+                message: CompletionMessage {
+                    role: MessageRole::Assistant,
+                    content: message,
+                },
+            }],
+        })
     }
 }
 

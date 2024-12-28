@@ -1,12 +1,14 @@
+use std::fmt;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Chat {
-    pub id: i32,
-    pub title: Option<String>,
-    pub character_id: i32,
-    pub data: Vec<ChatHistoryItem>,
+    pub id: String,
+    pub title: String,
+    pub character_id: String,
+    pub history: Vec<ChatHistoryItem>,
     pub archived: bool,
 }
 
@@ -22,7 +24,7 @@ pub struct ChatHistoryItem {
 #[serde(rename_all = "camelCase")]
 pub struct ChatContent {
     pub content: String,
-    pub timestamp: i64,
+    pub timestamp: String,
     pub model_id: String,
 }
 
@@ -34,8 +36,17 @@ pub enum MessageRole {
     System,
 }
 
-#[derive(Debug, Serialize)]
-pub struct Character {
+impl fmt::Display for MessageRole {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MessageRole::User => write!(f, "user"),
+            MessageRole::Assistant => write!(f, "assistant"),
+            MessageRole::System => write!(f, "system"),
+        }
+    }
+}
+#[derive(Serialize, Deserialize)]
+pub struct CharacterInformation {
     pub name: String,
     pub description: String,
     pub personality: String,
@@ -43,4 +54,27 @@ pub struct Character {
     pub tags: Vec<String>,
     pub system_prompt: String,
     pub avatar: Option<String>,
+    pub image_base64: Option<String>,
+}
+
+impl fmt::Debug for CharacterInformation {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CharacterInformation")
+            .field("name", &self.name)
+            .field("description", &self.description)
+            .field("personality", &self.personality)
+            .field("first_messages", &self.first_messages)
+            .field("tags", &self.tags)
+            .field("system_prompt", &self.system_prompt)
+            .field("avatar", &self.avatar)
+            .field("image_base64", &self.image_base64.is_some())
+            .finish()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Character {
+    pub id: String,
+    pub url: Option<String>,
+    pub payload: CharacterInformation,
 }

@@ -5,9 +5,10 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.89"
-camino = {version = "1.1.9", features = ["serde1"]}
+camino = { version = "1.1.9", features = ["serde1"] }
 dirs = "5.0.1"
 either = "1.13.0"
+erpy-types = { path = "../erpy-types" }
 hf-hub = { version = "0.3.2", optional = true, features = ["tokio"] }
 indexmap = "2.6.0"
 log = "0.4.22"
@@ -18,22 +19,24 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 tokio = { version = "1.40.0", features = ["sync"] }
 tokio-stream = "0.1.16"
+uuid = { version = "1.11.0", features = ["v4"] }
 walkdir = "2.5.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs", rev = "v0.3.1", features = [
+mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs", rev = "1cde7450db60980e87ccb82eceb929dd70d77ada", features = [
     "metal",
 ], optional = true }
 llama-cpp-2 = { version = "0.1", optional = true, features = ["metal"] }
 
 [target.'cfg(not(target_os = "macos"))'.dependencies]
-mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs", rev = "v0.3.1", features = [
+mistralrs = { git = "https://github.com/EricLBuehler/mistral.rs", rev = "1cde7450db60980e87ccb82eceb929dd70d77ada", features = [
     "cuda",
     "cudnn",
 ], optional = true }
 llama-cpp-2 = { version = "0.1", optional = true, features = ["cuda"] }
+cudarc = { version = "=0.12.1", optional = true }
 
 [features]
 default = []
 llama = ["llama-cpp-2", "hf-hub"]
-mistral = ["mistralrs"]
+mistral = ["mistralrs", "cudarc"]

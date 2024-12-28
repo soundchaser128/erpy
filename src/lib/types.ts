@@ -1,4 +1,4 @@
-import type { ChatHistoryItem } from "./database";
+import type { ChatHistoryItem, MessageRole } from "./storage";
 
 export interface CompletionResponse {
   choices: CompletionChoice[];
@@ -12,14 +12,12 @@ export interface DeltaContent {
   content: string;
 }
 
-export type MessageRole = "user" | "assistant" | "system";
-
 export interface MessageHistoryItem {
   role: MessageRole;
   content: string;
 }
 
-export interface CharacterPayload {
+export interface CharacterInformation {
   name: string;
   description: string;
   personality: string;
@@ -27,6 +25,7 @@ export interface CharacterPayload {
   tags: string[];
   system_prompt: string;
   avatar?: string;
+  image_base64: string;
 }
 
 export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {
@@ -38,27 +37,6 @@ export function toApiRequest(chat: ChatHistoryItem[]): MessageHistoryItem[] {
       };
     })
     .filter((i) => i.content.length > 0);
-}
-
-export interface Config {
-  apiUrl: string;
-  apiKey?: string;
-  userName: string;
-  notifications: NotificationsConfig;
-  firstTimeSetupCompleted: boolean;
-
-  // LLM settings
-  maxTokens?: number;
-  temperature?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
-  repeatPenalty?: number;
-  topP?: number;
-  seed?: number;
-}
-
-export interface NotificationsConfig {
-  newMessage: boolean;
 }
 
 export type LoadModel =
