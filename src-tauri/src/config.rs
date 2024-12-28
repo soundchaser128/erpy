@@ -28,9 +28,17 @@ pub struct NotificationSettings {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
+pub struct ExperimentalSettings {
+    pub local_llm: bool,
+    pub text_to_speech: bool,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
     pub user_name: String,
     pub notifications: NotificationSettings,
     pub sync: SyncSettings,
     pub llm: LlmSettings,
+    pub experimental: ExperimentalSettings,
 }

@@ -43,6 +43,11 @@ export interface TtsSettings {
   apiUrl: string | null;
 }
 
+export interface ExperimentalSettings {
+  localLlm: boolean;
+  textToSpeech: boolean;
+}
+
 export interface Config {
   id: ConfigId;
   userName: string;
@@ -50,6 +55,7 @@ export interface Config {
   sync: SyncSettings;
   llm: LlmSettings;
   tts: TtsSettings;
+  experimental: ExperimentalSettings;
 }
 
 const ConfigTable = table({
@@ -76,6 +82,10 @@ const ConfigTable = table({
     tts: S.Struct({
       enabled: S.Boolean,
       apiUrl: S.NullOr(S.String),
+    }),
+    experimental: S.Struct({
+      localLlm: S.Boolean,
+      textToSpeech: S.Boolean,
     }),
   }),
 });
@@ -104,6 +114,10 @@ function convertConfig(config: Nullable<ConfigRow>): Config {
     tts: {
       enabled: config.data?.tts?.enabled ?? false,
       apiUrl: config.data?.tts?.apiUrl ?? null,
+    },
+    experimental: {
+      localLlm: config.data?.experimental?.localLlm ?? false,
+      textToSpeech: config.data?.experimental?.textToSpeech ?? false,
     },
   };
 }
@@ -467,6 +481,7 @@ export class ErpyStorage {
         sync: config.sync,
         userName: config.userName,
         tts: config.tts,
+        experimental: config.experimental,
       },
     });
   }
@@ -500,6 +515,10 @@ function getDefaultConfig(): Config {
     tts: {
       enabled: false,
       apiUrl: null,
+    },
+    experimental: {
+      localLlm: false,
+      textToSpeech: false,
     },
   };
 }

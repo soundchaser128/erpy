@@ -26,12 +26,6 @@
 
   async function onDeleteUserData() {
     await data.storage.resetData();
-    // const directory = await navigator.storage.getDirectory();
-    // // @ts-expect-error not yet in the types
-    // for await (const [name, entry] of directory.entries()) {
-    //   await directory.removeEntry(name, { recursive: true });
-    // }
-
     window.localStorage.clear();
     await invalidateAll();
     await goto("/");
@@ -151,36 +145,64 @@
       </div>
     </section>
 
-    <section>
-      <h2 class="text-2xl font-bold">Text-to-speech</h2>
-      <p class="mb-2">
-        You can use <ExternalLink href="https://github.com/daswer123/xtts-api-server"
-          >xtts-api-server</ExternalLink
-        > for text-to-speech. Setting it up is a bit involved at the moment (see their README).
-      </p>
+    <section class="mb-8">
+      <h2 class="text-2xl font-bold">Experimental fatures</h2>
 
       <div class="form-control">
         <label class="label cursor-pointer">
-          <span class="label-text">Enabled</span>
-
-          <input type="checkbox" class="checkbox" bind:checked={data.config.tts.enabled} />
+          <span class="label-text">Text-to-speech</span>
+          <input
+            type="checkbox"
+            class="checkbox"
+            bind:checked={data.config.experimental.textToSpeech}
+          />
         </label>
       </div>
 
       <div class="form-control">
-        <label for="ttsServerUrl" class="label">
-          <span class="label-text"> Server URL </span>
+        <label class="label cursor-pointer">
+          <span class="label-text">Local LLM</span>
+          <input
+            type="checkbox"
+            class="checkbox"
+            bind:checked={data.config.experimental.localLlm}
+          />
         </label>
-
-        <input
-          id="ttsServerUrl"
-          type="url"
-          bind:value={data.config.tts.apiUrl}
-          class="input input-primary"
-          placeholder="http://localhost:8020"
-        />
       </div>
     </section>
+
+    {#if data.config.experimental.textToSpeech}
+      <section>
+        <h2 class="text-2xl font-bold">Text-to-speech</h2>
+        <p class="mb-2">
+          You can use <ExternalLink href="https://github.com/daswer123/xtts-api-server"
+            >xtts-api-server</ExternalLink
+          > for text-to-speech. Setting it up is a bit involved at the moment (see their README).
+        </p>
+
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">Enabled</span>
+
+            <input type="checkbox" class="checkbox" bind:checked={data.config.tts.enabled} />
+          </label>
+        </div>
+
+        <div class="form-control">
+          <label for="ttsServerUrl" class="label">
+            <span class="label-text"> Server URL </span>
+          </label>
+
+          <input
+            id="ttsServerUrl"
+            type="url"
+            bind:value={data.config.tts.apiUrl}
+            class="input input-primary"
+            placeholder="http://localhost:8020"
+          />
+        </div>
+      </section>
+    {/if}
 
     <button type="submit" class="btn btn-primary mt-4 self-end">
       <Fa icon={faSave} />

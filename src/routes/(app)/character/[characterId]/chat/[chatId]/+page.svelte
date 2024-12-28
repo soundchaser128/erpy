@@ -514,7 +514,7 @@
                 <button onclick={() => onForkChat(entry)} class="btn join-item btn-sm">
                   <Fa icon={faCodeFork} />
                 </button>
-                {#if data.config.tts.enabled}
+                {#if data.config.tts.enabled && data.config.experimental.textToSpeech}
                   <button class="btn join-item btn-sm" onclick={() => onSpeakMessage(entry)}>
                     <Fa icon={isSpeaking ? faStop : faVolumeHigh} />
                   </button>
