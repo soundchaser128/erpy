@@ -157,6 +157,10 @@
             bind:checked={data.config.experimental.textToSpeech}
           />
         </label>
+
+        <p class="label-text ml-4 font-light">
+          Use an external (self-hosted) text-to-speech server. It works but needs some manual setup.
+        </p>
       </div>
 
       <div class="form-control">
@@ -168,6 +172,10 @@
             bind:checked={data.config.experimental.localLlm}
           />
         </label>
+
+        <p class="label-text ml-4 font-light">
+          Allow running LLMs inside erpy using the mistral-rs library.
+        </p>
       </div>
     </section>
 
