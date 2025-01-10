@@ -20,6 +20,8 @@
     faArchive,
     faVolumeHigh,
     faStop,
+    faMagnifyingGlassPlus,
+    faMagnifyingGlassMinus,
   } from "@fortawesome/free-solid-svg-icons";
   import {
     clamp,
@@ -51,6 +53,7 @@
   let historyId = $derived(data.chat.id);
   let stopSpeaking: (() => void) | undefined = $state(undefined);
   let isSpeaking = $state(false);
+  let fontSize = $state(12);
 
   $effect(() => {
     chatHistory = data.chat.history;
@@ -346,6 +349,14 @@
       await doSpeak(entry);
     }
   }
+
+  function onIncreaseFontSize() {
+    fontSize = clamp(fontSize + 1, 10, 24);
+  }
+
+  function onDecreaseFontSize() {
+    fontSize = clamp(fontSize - 1, 10, 24);
+  }
 </script>
 
 <dialog bind:this={deleteModal} class="modal">
@@ -420,6 +431,15 @@
         <ul
           class="menu dropdown-content z-[1] flex w-52 flex-col gap-2 rounded-box bg-base-200 p-2 shadow"
         >
+          <li class="flex flex-row flex-nowrap items-center gap-0">
+            <span class="text-sm">Font size</span>
+            <button onclick={onDecreaseFontSize} class="btn btn-square btn-ghost btn-sm">
+              <Fa icon={faMagnifyingGlassMinus} />
+            </button>
+            <button onclick={onIncreaseFontSize} class="btn btn-square btn-ghost btn-sm">
+              <Fa icon={faMagnifyingGlassPlus} />
+            </button>
+          </li>
           <li>
             <button onclick={showTitleModal} class="btn btn-secondary btn-sm">
               <Fa icon={faPenToSquare} />
@@ -427,7 +447,7 @@
             </button>
           </li>
           <li>
-            <button onclick={archiveChat} class="btn btn-secondary btn-sm">
+            <button onclick={archiveChat} class="btn btn-warning btn-sm">
               <Fa icon={faArchive} />
               Archive chat
             </button>
@@ -554,7 +574,10 @@
                 </div>
               </form>
             {:else if getContent(entry).length > 0}
-              <div class="prose prose-invert text-neutral-content">
+              <div
+                class="prose prose-invert text-neutral-content"
+                style="font-size: {fontSize}pt !important;"
+              >
                 <Markdown {plugins} md={getContent(entry)} />
               </div>
             {:else}

@@ -2,7 +2,7 @@
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
   import type { ConnectionTestResult, LoadModel } from "$lib/types";
-  import { faSave, faFlask } from "@fortawesome/free-solid-svg-icons";
+  import { faSave, faFlask, faCheck } from "@fortawesome/free-solid-svg-icons";
   import { invoke } from "@tauri-apps/api/core";
   import Fa from "svelte-fa";
 
@@ -61,7 +61,10 @@
   <h1 class="mb-4 text-4xl font-black">OpenAI connection</h1>
   {#if connectionTestStatus !== undefined}
     {#if connectionTestStatus === "success"}
-      <div class="alert alert-success">Connection test successful!</div>
+      <div class="alert alert-success">
+        <Fa icon={faCheck} />
+        Connection test successful!
+      </div>
     {:else}
       <div class="alert alert-error">
         {connectionTestStatus}
