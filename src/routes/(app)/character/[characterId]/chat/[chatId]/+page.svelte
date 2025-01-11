@@ -45,7 +45,7 @@
 
   let chatHistory: ChatHistoryItem[] = $state(data.chat.history);
   let question = $state("");
-  let status = $state("idle");
+  let status: "idle" | "loading" = $state("idle");
   let editText = $state("");
   let summarizing = $state(false);
   let newTitle = $state("");
@@ -129,7 +129,6 @@
           modelId: data.activeModel,
         });
         answer.chosenAnswer += 1;
-        // chatHistory.current = [...chatHistory.current];
       }
 
       scrollToBottom();
@@ -518,22 +517,28 @@
                     {entry.chosenAnswer + 1}/{entry.content.length}
                   </span>
                 {/if}
-                <button
-                  onclick={() => onStartEdit(entry)}
-                  class="btn join-item btn-sm"
-                  disabled={entry === messageToEdit}
-                >
-                  <Fa icon={faPenToSquare} />
-                </button>
+                <div class="tooltip" data-tip="Edit message">
+                  <button
+                    onclick={() => onStartEdit(entry)}
+                    class="btn join-item btn-sm"
+                    disabled={entry === messageToEdit}
+                  >
+                    <Fa icon={faPenToSquare} />
+                  </button>
+                </div>
 
                 {#if entry.role === "assistant" && !isFirstAssistantMessage(index)}
-                  <button onclick={onAddNewSwipe} class="btn join-item btn-sm">
-                    <Fa icon={faRotateRight} />
-                  </button>
+                  <div class="tooltip" data-tip="Add a new swipe">
+                    <button onclick={onAddNewSwipe} class="btn join-item btn-sm">
+                      <Fa icon={faRotateRight} />
+                    </button>
+                  </div>
                 {/if}
-                <button onclick={() => onForkChat(entry)} class="btn join-item btn-sm">
-                  <Fa icon={faCodeFork} />
-                </button>
+                <div class="tooltip" data-tip="Fork chat (New chat with this chat as a base)">
+                  <button onclick={() => onForkChat(entry)} class="btn join-item btn-sm">
+                    <Fa icon={faCodeFork} />
+                  </button>
+                </div>
                 {#if data.config.tts.enabled && data.config.experimental.textToSpeech}
                   <button class="btn join-item btn-sm" onclick={() => onSpeakMessage(entry)}>
                     <Fa icon={isSpeaking ? faStop : faVolumeHigh} />
@@ -541,12 +546,14 @@
                 {/if}
 
                 {#if !isFirstAssistantMessage(index)}
-                  <button
-                    onclick={() => deleteMessage(entry)}
-                    class="btn btn-error join-item btn-sm"
-                  >
-                    <Fa icon={faTrash} />
-                  </button>
+                  <div class="tooltip" data-tip="Delete message">
+                    <button
+                      onclick={() => deleteMessage(entry)}
+                      class="btn btn-error join-item btn-sm"
+                    >
+                      <Fa icon={faTrash} />
+                    </button>
+                  </div>
                 {/if}
               </span>
             {/if}
@@ -580,7 +587,7 @@
               >
                 <Markdown {plugins} md={getContent(entry)} />
               </div>
-            {:else}
+            {:else if status === "loading"}
               <span class="flex items-end gap-2"
                 >Thinking <span class="loading loading-dots loading-xs"></span></span
               >
