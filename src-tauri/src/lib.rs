@@ -82,7 +82,7 @@ async fn chat_completion(
         seed: config.llm.seed,
     };
 
-    let mut stream = api.get_completions_stream(&request).await?;
+    let mut stream = api.get_completions_stream(request).await?;
     let (rx, mut tx) = oneshot::channel();
 
     app.once("cancel", move |_| {
@@ -183,6 +183,7 @@ pub enum LoadModel {
     OpenAi {
         api_url: String,
         api_key: Option<String>,
+        model: String,
     },
     #[serde(rename_all = "camelCase")]
     #[cfg(feature = "mistral")]
@@ -196,9 +197,12 @@ pub enum LoadModel {
 impl LoadModel {
     pub async fn to_api(self) -> Result<CompletionApis, anyhow::Error> {
         let api = match self {
-            LoadModel::OpenAi { api_url, api_key } => {
-                CompletionApis::OpenAi(OpenAiCompletions::new(api_url, api_key))
-            }
+            LoadModel::OpenAi {
+                api_url,
+                api_key,
+                model,
+            } => CompletionApis::OpenAi(OpenAiCompletions::new(api_url, api_key, model)),
+
             #[cfg(feature = "mistral")]
             LoadModel::Mistral {
                 model_id,
@@ -240,13 +244,13 @@ async fn unload_model(app: AppHandle) -> TAResult<()> {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 enum ConnectionTestResult {
-    Success,
+    Success { models: Vec<String> },
     Failure { error: String },
 }
 
 #[tauri::command]
 async fn test_connection(api_url: String, api_key: Option<String>) -> ConnectionTestResult {
-    let api = OpenAiCompletions::new(api_url, api_key);
+    let api = OpenAiCompletions::new(api_url, api_key, "ignored".into());
     match api.list_models().await {
         Ok(models) => {
             if models.is_empty() {
@@ -254,7 +258,7 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
                     error: "No models found".to_string(),
                 }
             } else {
-                ConnectionTestResult::Success
+                ConnectionTestResult::Success { models }
             }
         }
         Err(e) => ConnectionTestResult::Failure {

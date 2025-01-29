@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto, invalidateAll } from "$app/navigation";
   import TopMenu from "$lib/components/TopMenu.svelte";
+  import { log } from "$lib/log.js";
   import type { ConnectionTestResult, LoadModel } from "$lib/types";
   import { faSave, faFlask, faCheck } from "@fortawesome/free-solid-svg-icons";
   import { invoke } from "@tauri-apps/api/core";
@@ -10,8 +11,10 @@
 
   let apiUrl = $state(localStorage.getItem("openai-api-url") || "");
   let apiKey = $state(localStorage.getItem("openai-api-key") || "");
+  let model = $state(localStorage.getItem("openai-model") || "");
   let connectionTestStatus: "success" | string | undefined = $state(undefined);
   let testingConnection = $state(false);
+  let models: string[] = $state([]);
 
   async function testConnection() {
     testingConnection = true;
@@ -22,6 +25,8 @@
 
     if (result.type === "success") {
       connectionTestStatus = "success";
+      models = result.models;
+      log("available models", models);
     } else {
       connectionTestStatus = result.error;
     }
@@ -35,12 +40,14 @@
       type: "open-ai",
       apiUrl,
       apiKey: apiKey.trim() || undefined,
+      model,
     } satisfies LoadModel;
 
     await invoke("load_model", { payload });
     await invalidateAll();
     localStorage.setItem("openai-api-url", apiUrl);
     localStorage.setItem("openai-api-key", apiKey);
+    localStorage.setItem("openai-model", model);
     goto("/");
   }
 </script>
@@ -104,6 +111,20 @@
           to add your API key here.
         </span>
       </div>
+    </div>
+
+    <div class="form-control">
+      <label for="model-field" class="label cursor-pointer">
+        <span class="label-text">Model</span>
+      </label>
+      <input
+        id="model-field"
+        type="text"
+        class="input input-primary"
+        bind:value={model}
+        required
+        placeholder="Enter the model name"
+      />
     </div>
 
     <div class="mt-4 flex gap-2 self-end">
