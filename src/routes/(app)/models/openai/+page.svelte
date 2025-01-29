@@ -25,6 +25,7 @@
 
     if (result.type === "success") {
       connectionTestStatus = "success";
+      result.models.sort();
       models = result.models;
       log("available models", models);
     } else {
@@ -117,14 +118,22 @@
       <label for="model-field" class="label cursor-pointer">
         <span class="label-text">Model</span>
       </label>
-      <input
-        id="model-field"
-        type="text"
-        class="input input-primary"
-        bind:value={model}
-        required
-        placeholder="Enter the model name"
-      />
+      {#if models.length > 0}
+        <select class="select select-bordered" bind:value={model}>
+          {#each models as modelName}
+            <option value={modelName}>{modelName}</option>
+          {/each}
+        </select>
+      {:else}
+        <input
+          id="model-field"
+          type="text"
+          class="input input-primary"
+          bind:value={model}
+          required
+          placeholder="Enter the model name"
+        />
+      {/if}
     </div>
 
     <div class="mt-4 flex gap-2 self-end">
