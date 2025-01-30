@@ -7,7 +7,7 @@ function rehypeQuotes() {
   return (tree: Root) => {
     findAndReplace(tree, [
       [
-        /"(.*?)"/g,
+        /["”“](.*?)["”“]/g,
         function ($0) {
           return h("span", { class: "text-white" }, $0);
         },
