@@ -182,9 +182,9 @@ fn timestamp() -> i64 {
 impl CompletionApi for MistralRsCompletions {
     async fn get_completions_stream(
         &self,
-        request: &CompletionRequest,
+        request: CompletionRequest,
     ) -> Result<impl Stream<Item = StreamingCompletionResponse>> {
-        let rx = self.completions_receiver(request).await?;
+        let rx = self.completions_receiver(&request).await?;
         let stream = tokio_stream::wrappers::ReceiverStream::new(rx);
 
         Ok(stream.map_while(|response| match response {
@@ -222,7 +222,7 @@ impl CompletionApi for MistralRsCompletions {
         Ok(vec![self.model_id.clone()])
     }
 
-    async fn get_completions(&self, request: &CompletionRequest) -> Result<CompletionResponse> {
+    async fn get_completions(&self, request: CompletionRequest) -> Result<CompletionResponse> {
         let chunks: Vec<_> = self.get_completions_stream(request).await?.collect().await;
         let finish_reason = chunks
             .last()
@@ -389,7 +389,7 @@ mod tests {
             seed: None,
         };
 
-        let mut stream = mistral.get_completions_stream(&request).await.unwrap();
+        let mut stream = mistral.get_completions_stream(request).await.unwrap();
         while let Some(response) = stream.next().await {
             println!("{:#?}", response);
         }

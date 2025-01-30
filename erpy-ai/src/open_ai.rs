@@ -14,14 +14,16 @@ pub struct OpenAiCompletions {
     base_url: String,
     api_key: Option<String>,
     client: Client,
+    model: String,
 }
 
 impl OpenAiCompletions {
-    pub fn new(api_url: String, api_key: Option<String>) -> Self {
+    pub fn new(api_url: String, api_key: Option<String>, model: String) -> Self {
         OpenAiCompletions {
             base_url: api_url,
             api_key: api_key,
             client: Client::new(),
+            model,
         }
     }
 }
@@ -29,15 +31,17 @@ impl OpenAiCompletions {
 impl CompletionApi for OpenAiCompletions {
     async fn get_completions_stream(
         &self,
-        request: &CompletionRequest,
+        mut request: CompletionRequest,
     ) -> Result<impl Stream<Item = StreamingCompletionResponse>> {
         if !request.stream {
             bail!("Only streaming completions are supported for get_completions_stream");
         }
 
+        request.model = self.model.clone();
+
         let url = format!("{}/chat/completions", self.base_url);
         info!("Sending request (streaming) {request:#?} to {url}");
-        let mut request = self.client.post(&url).json(request);
+        let mut request = self.client.post(&url).json(&request);
         if let Some(key) = &self.api_key {
             request = request.bearer_auth(key);
         }
@@ -63,20 +67,16 @@ impl CompletionApi for OpenAiCompletions {
     async fn list_models(&self) -> Result<Vec<String>> {
         let url = format!("{}/models", self.base_url);
         info!("Sending request to {url}");
-        let response = self
-            .client
-            .get(&url)
-            // this really shouldn't take more than a second
-            .timeout(Duration::from_secs(1))
-            .send()
-            .await?
-            .json::<ModelsResponse>()
-            .await?;
+        let mut request = self.client.get(&url).timeout(Duration::from_secs(2));
+        if let Some(api_key) = &self.api_key {
+            request = request.bearer_auth(api_key);
+        }
+        let response = request.send().await?.json::<ModelsResponse>().await?;
 
         Ok(response.data.into_iter().map(|m| m.id).collect())
     }
 
-    async fn get_completions(&self, request: &CompletionRequest) -> Result<CompletionResponse> {
+    async fn get_completions(&self, mut request: CompletionRequest) -> Result<CompletionResponse> {
         if request.stream {
             bail!("Only non-streaming completions are supported for get_completions");
         }
@@ -84,10 +84,12 @@ impl CompletionApi for OpenAiCompletions {
         let url = format!("{}/chat/completions", self.base_url);
         info!("Sending request (batch) {request:#?} to {url}");
 
+        request.model = self.model.clone();
+
         let response = self
             .client
             .post(&url)
-            .json(request)
+            .json(&request)
             .send()
             .await?
             .json()

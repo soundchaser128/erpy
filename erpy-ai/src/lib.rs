@@ -109,14 +109,14 @@ pub struct CompletionMessage {
 pub trait CompletionApi {
     fn get_completions_stream(
         &self,
-        request: &CompletionRequest,
+        request: CompletionRequest,
     ) -> impl Future<Output = Result<impl Stream<Item = StreamingCompletionResponse>>> + Send;
 
     fn list_models(&self) -> impl Future<Output = Result<Vec<String>>> + Send;
 
     fn get_completions(
         &self,
-        request: &CompletionRequest,
+        request: CompletionRequest,
     ) -> impl Future<Output = Result<CompletionResponse>> + Send;
 }
 
@@ -131,7 +131,7 @@ pub enum CompletionApis {
 impl CompletionApis {
     pub async fn get_completions_stream<'a>(
         &'a self,
-        request: &'a CompletionRequest,
+        request: CompletionRequest,
     ) -> Result<Pin<Box<dyn Stream<Item = StreamingCompletionResponse> + Send + 'a>>> {
         let stream = match self {
             #[cfg(feature = "llama")]
@@ -158,7 +158,7 @@ impl CompletionApis {
         }
     }
 
-    pub async fn get_completions(&self, request: &CompletionRequest) -> Result<CompletionResponse> {
+    pub async fn get_completions(&self, request: CompletionRequest) -> Result<CompletionResponse> {
         match self {
             #[cfg(feature = "llama")]
             CompletionApis::Llama(api) => api.get_completions(request).await,

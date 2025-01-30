@@ -582,7 +582,7 @@
               </form>
             {:else if getContent(entry).length > 0}
               <div
-                class="prose prose-invert text-neutral-content"
+                class="prose prose-invert text-neutral-content prose-hr:my-4 prose-hr:border-white"
                 style="font-size: {fontSize}pt !important;"
               >
                 <Markdown {plugins} md={getContent(entry)} />

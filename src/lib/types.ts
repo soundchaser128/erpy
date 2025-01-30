@@ -44,6 +44,7 @@ export type LoadModel =
       type: "open-ai";
       apiUrl: string;
       apiKey?: string;
+      model: string;
     }
   | {
       type: "mistral";
@@ -55,6 +56,7 @@ export type LoadModel =
 export type ConnectionTestResult =
   | {
       type: "success";
+      models: string[];
     }
   | {
       type: "failure";
