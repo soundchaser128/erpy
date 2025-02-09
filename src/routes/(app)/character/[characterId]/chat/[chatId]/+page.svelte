@@ -45,7 +45,7 @@
 
   let chatHistory: ChatHistoryItem[] = $state(data.chat.history);
   let question = $state("");
-  let status: "idle" | "loading" = $state("idle");
+  let status: "idle" | "loading" = $state<"idle" | "loading">("idle");
   let editText = $state("");
   let summarizing = $state(false);
   let newTitle = $state("");
@@ -54,6 +54,7 @@
   let stopSpeaking: (() => void) | undefined = $state(undefined);
   let isSpeaking = $state(false);
   let fontSize = $state(12);
+  let hideThinking = $state(true);
 
   $effect(() => {
     chatHistory = data.chat.history;
@@ -67,6 +68,7 @@
   let messageToEdit: ChatHistoryItem | null = $state(null);
   let readOnly = $page.url.searchParams.get("readOnly") === "true";
   let ttsOnMessage = $state(false);
+  let textEntryDisabled = $derived(messageToEdit !== null || status === "loading");
 
   function scrollToBottom(type: "smooth" | "instant" = "smooth") {
     messageContainer!.scrollTo({ top: messageContainer!.scrollHeight, behavior: type });
@@ -177,7 +179,17 @@
 
   function getContent(entry: ChatHistoryItem): string {
     const selectedAnswer = entry.content[entry.chosenAnswer];
-    return selectedAnswer.content;
+    const content = selectedAnswer.content;
+    if (hideThinking) {
+      const end = content.indexOf("</think>");
+      if (end > 0) {
+        return content.substring(end + 8);
+      } else {
+        return content;
+      }
+    } else {
+      return content;
+    }
   }
 
   function getTimestamp(entry: ChatHistoryItem): string {
@@ -468,7 +480,7 @@
         {#if !chat.archived && !chat.isDeleted}
           <a
             href={`/character/${data.character.id}/chat/${chat.id}`}
-            class="tab {chat.id === data.chat.id ? 'tab-active' : ''}"
+            class="tab truncate {chat.id === data.chat.id ? 'tab-active' : ''}"
           >
             {getChatTitle(chat)}
           </a>
@@ -611,6 +623,7 @@
         autofocus
         onkeydown={handleKeyDown}
         rows={1}
+        disabled={textEntryDisabled}
       ></textarea>
       <button
         disabled={!data.activeModel}
