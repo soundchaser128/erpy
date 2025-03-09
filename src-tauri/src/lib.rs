@@ -8,6 +8,7 @@ use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::CharacterInformation;
 use erpy_types::Chat;
 use log::debug;
+use log::error;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
@@ -153,7 +154,9 @@ async fn summarize(app: AppHandle, chat: Chat, prompt: String) -> TAResult<Strin
     let state = app.state::<State>();
     let lock = state.completions.lock().await;
     if let Some(api) = lock.as_ref() {
-        let summary = chat::summarize(&chat, &api, &prompt).await?;
+        let summary = chat::summarize(&chat, &api, &prompt)
+            .await
+            .inspect_err(|e| error!("failed to summarize: {e:?}"))?;
         Ok(summary)
     } else {
         bail!("no model loaded")

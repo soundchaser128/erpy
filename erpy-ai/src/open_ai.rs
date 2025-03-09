@@ -86,15 +86,19 @@ impl CompletionApi for OpenAiCompletions {
 
         request.model = self.model.clone();
 
-        let response = self
-            .client
-            .post(&url)
-            .json(&request)
-            .send()
-            .await?
-            .json()
-            .await?;
+        let mut http_req = self.client.post(&url).json(&request);
+        if let Some(key) = &self.api_key {
+            http_req = http_req.bearer_auth(key);
+        }
+        let response = http_req.send().await?;
 
-        Ok(response)
+        if response.status().is_success() {
+            let response = response.json::<CompletionResponse>().await?;
+            Ok(response)
+        } else {
+            let status = response.status();
+            let text = response.text().await?;
+            bail!("Request failed with status {status} and response '{text}'");
+        }
     }
 }
