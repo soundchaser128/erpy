@@ -18,6 +18,7 @@ pub struct LlmSettings {
     pub repeat_penalty: Option<f32>,
     pub top_p: Option<f64>,
     pub seed: Option<i64>,
+    pub strip_thinking_tags: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]

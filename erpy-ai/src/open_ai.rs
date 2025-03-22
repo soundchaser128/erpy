@@ -40,7 +40,12 @@ impl CompletionApi for OpenAiCompletions {
         request.model = self.model.clone();
 
         let url = format!("{}/chat/completions", self.base_url);
-        info!("Sending request (streaming) {request:#?} to {url}");
+        info!(
+            "Sending request (streaming) with {} messages and {} tokens to {url} with model {}",
+            request.messages.len(),
+            request.estimated_tokens(),
+            self.model,
+        );
         let mut request = self.client.post(&url).json(&request);
         if let Some(key) = &self.api_key {
             request = request.bearer_auth(key);
@@ -82,8 +87,12 @@ impl CompletionApi for OpenAiCompletions {
         }
 
         let url = format!("{}/chat/completions", self.base_url);
-        info!("Sending request (batch) {request:#?} to {url}");
-
+        info!(
+            "Sending request (batch) with {} messages and {} tokens to {url} with model {}",
+            request.messages.len(),
+            request.estimated_tokens(),
+            self.model,
+        );
         request.model = self.model.clone();
 
         let mut http_req = self.client.post(&url).json(&request);

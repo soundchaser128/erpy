@@ -3,6 +3,7 @@ use anyhow_tauri::{bail, IntoTAResult, TAResult};
 use character::character_from_png_bytes;
 use character::character_from_string;
 use config::Config;
+use erpy_ai::estimate_tokens;
 use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, MessageHistoryItem};
 use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::CharacterInformation;
@@ -45,14 +46,6 @@ fn list_models_on_disk() -> TAResult<Vec<ModelInfo>> {
     Ok(models)
 }
 
-pub fn estimate_tokens(history: &[MessageHistoryItem]) -> usize {
-    let total_len: usize = history
-        .iter()
-        .fold(0, |count, item| count + item.content.len());
-
-    total_len / 4
-}
-
 #[tauri::command]
 async fn chat_completion(
     app: AppHandle,
@@ -70,7 +63,7 @@ async fn chat_completion(
         bail!("no model loaded")
     };
 
-    let request = CompletionRequest {
+    let mut request = CompletionRequest {
         messages: message_history,
         temperature: config.llm.temperature,
         model: Default::default(),
@@ -82,6 +75,10 @@ async fn chat_completion(
         top_p: config.llm.top_p,
         seed: config.llm.seed,
     };
+
+    if config.llm.strip_thinking_tags.unwrap_or(true) {
+        request = request.strip_thinking_tags();
+    }
 
     let mut stream = api.get_completions_stream(request).await?;
     let (rx, mut tx) = oneshot::channel();

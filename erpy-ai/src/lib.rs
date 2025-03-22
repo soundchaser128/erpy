@@ -59,6 +59,36 @@ pub struct CompletionRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub seed: Option<i64>,
 }
+
+impl CompletionRequest {
+    pub fn estimated_tokens(&self) -> usize {
+        estimate_tokens(&self.messages)
+    }
+
+    pub fn strip_thinking_tags(self) -> Self {
+        let new_messages = self
+            .messages
+            .into_iter()
+            .map(|m| {
+                let end = m.content.find("</think>");
+                if let Some(end) = end {
+                    MessageHistoryItem {
+                        role: m.role,
+                        content: m.content[end + 8..].to_string(),
+                    }
+                } else {
+                    m
+                }
+            })
+            .collect();
+
+        CompletionRequest {
+            messages: new_messages,
+            ..self
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StreamingCompletionResponse {
@@ -174,4 +204,12 @@ pub struct ModelInfo {
     pub user: String,
     pub name: String,
     pub path: Utf8PathBuf,
+}
+
+pub fn estimate_tokens(history: &[MessageHistoryItem]) -> usize {
+    let total_len: usize = history
+        .iter()
+        .fold(0, |count, item| count + item.content.len());
+
+    total_len / 4
 }
