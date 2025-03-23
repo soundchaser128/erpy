@@ -3,11 +3,13 @@ use anyhow_tauri::{bail, IntoTAResult, TAResult};
 use character::character_from_png_bytes;
 use character::character_from_string;
 use config::Config;
+use erpy_ai::estimate_tokens;
 use erpy_ai::{open_ai::OpenAiCompletions, CompletionApis, CompletionRequest, MessageHistoryItem};
 use erpy_ai::{CompletionApi, ModelInfo};
 use erpy_types::CharacterInformation;
 use erpy_types::Chat;
 use log::debug;
+use log::error;
 use log::{info, LevelFilter};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Listener, Manager};
@@ -44,14 +46,6 @@ fn list_models_on_disk() -> TAResult<Vec<ModelInfo>> {
     Ok(models)
 }
 
-pub fn estimate_tokens(history: &[MessageHistoryItem]) -> usize {
-    let total_len: usize = history
-        .iter()
-        .fold(0, |count, item| count + item.content.len());
-
-    total_len / 4
-}
-
 #[tauri::command]
 async fn chat_completion(
     app: AppHandle,
@@ -69,7 +63,7 @@ async fn chat_completion(
         bail!("no model loaded")
     };
 
-    let request = CompletionRequest {
+    let mut request = CompletionRequest {
         messages: message_history,
         temperature: config.llm.temperature,
         model: Default::default(),
@@ -82,7 +76,11 @@ async fn chat_completion(
         seed: config.llm.seed,
     };
 
-    let mut stream = api.get_completions_stream(&request).await?;
+    if config.llm.strip_thinking_tags.unwrap_or(false) {
+        request = request.strip_thinking_tags();
+    }
+
+    let mut stream = api.get_completions_stream(request).await?;
     let (rx, mut tx) = oneshot::channel();
 
     app.once("cancel", move |_| {
@@ -153,7 +151,9 @@ async fn summarize(app: AppHandle, chat: Chat, prompt: String) -> TAResult<Strin
     let state = app.state::<State>();
     let lock = state.completions.lock().await;
     if let Some(api) = lock.as_ref() {
-        let summary = chat::summarize(&chat, &api, &prompt).await?;
+        let summary = chat::summarize(&chat, &api, &prompt)
+            .await
+            .inspect_err(|e| error!("failed to summarize: {e:?}"))?;
         Ok(summary)
     } else {
         bail!("no model loaded")
@@ -183,6 +183,7 @@ pub enum LoadModel {
     OpenAi {
         api_url: String,
         api_key: Option<String>,
+        model: String,
     },
     #[serde(rename_all = "camelCase")]
     #[cfg(feature = "mistral")]
@@ -196,9 +197,12 @@ pub enum LoadModel {
 impl LoadModel {
     pub async fn to_api(self) -> Result<CompletionApis, anyhow::Error> {
         let api = match self {
-            LoadModel::OpenAi { api_url, api_key } => {
-                CompletionApis::OpenAi(OpenAiCompletions::new(api_url, api_key))
-            }
+            LoadModel::OpenAi {
+                api_url,
+                api_key,
+                model,
+            } => CompletionApis::OpenAi(OpenAiCompletions::new(api_url, api_key, model)),
+
             #[cfg(feature = "mistral")]
             LoadModel::Mistral {
                 model_id,
@@ -240,13 +244,13 @@ async fn unload_model(app: AppHandle) -> TAResult<()> {
 #[derive(Debug, Serialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 enum ConnectionTestResult {
-    Success,
+    Success { models: Vec<String> },
     Failure { error: String },
 }
 
 #[tauri::command]
 async fn test_connection(api_url: String, api_key: Option<String>) -> ConnectionTestResult {
-    let api = OpenAiCompletions::new(api_url, api_key);
+    let api = OpenAiCompletions::new(api_url, api_key, "ignored".into());
     match api.list_models().await {
         Ok(models) => {
             if models.is_empty() {
@@ -254,7 +258,7 @@ async fn test_connection(api_url: String, api_key: Option<String>) -> Connection
                     error: "No models found".to_string(),
                 }
             } else {
-                ConnectionTestResult::Success
+                ConnectionTestResult::Success { models }
             }
         }
         Err(e) => ConnectionTestResult::Failure {

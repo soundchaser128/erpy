@@ -26,6 +26,6 @@ pub async fn summarize(chat: &Chat, client: &CompletionApis, prompt: &str) -> Re
         ..Default::default()
     };
 
-    let response = client.get_completions(&request).await?;
+    let response = client.get_completions(request).await?;
     Ok(response.into_message())
 }

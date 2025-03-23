@@ -114,7 +114,7 @@
           id="temperature"
           type="number"
           class="input input-primary"
-          min="1"
+          min="0"
           max="2048"
           bind:value={data.config.llm.maxTokens}
         />
@@ -124,6 +124,17 @@
             2048.
           </span>
         </div>
+      </div>
+
+      <div class="form-control">
+        <label class="label cursor-pointer">
+          <span class="label-text">Strip thinking tags</span>
+          <input
+            type="checkbox"
+            class="checkbox"
+            bind:checked={data.config.llm.stripThinkingTags}
+          />
+        </label>
       </div>
     </section>
 
