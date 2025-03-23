@@ -76,7 +76,7 @@ async fn chat_completion(
         seed: config.llm.seed,
     };
 
-    if config.llm.strip_thinking_tags.unwrap_or(true) {
+    if config.llm.strip_thinking_tags.unwrap_or(false) {
         request = request.strip_thinking_tags();
     }
 

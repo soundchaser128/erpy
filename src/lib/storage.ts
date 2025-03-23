@@ -32,6 +32,7 @@ export interface LlmSettings {
   repeatPenalty: number | null;
   topP: number | null;
   seed: number | null;
+  stripThinkingTags: boolean | null;
 }
 
 export interface NotificationSettings {
@@ -78,6 +79,7 @@ const ConfigTable = table({
       repeatPenalty: S.NullOr(S.Number),
       topP: S.NullOr(S.Number),
       seed: S.NullOr(S.Number),
+      stripThinkingTags: S.NullOr(S.Boolean),
     }),
     tts: S.Struct({
       enabled: S.Boolean,
@@ -110,6 +112,7 @@ function convertConfig(config: Nullable<ConfigRow>): Config {
       repeatPenalty: null,
       seed: null,
       topP: null,
+      stripThinkingTags: false,
     },
     tts: {
       enabled: config.data?.tts?.enabled ?? false,
@@ -511,6 +514,7 @@ function getDefaultConfig(): Config {
       repeatPenalty: null,
       seed: null,
       topP: null,
+      stripThinkingTags: false,
     },
     tts: {
       enabled: false,
