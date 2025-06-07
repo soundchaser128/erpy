@@ -16,10 +16,10 @@ use indexmap::IndexMap;
 
 use log::info;
 use mistralrs::{
-    best_device, ChatCompletionChunkResponse, Constraint, DefaultSchedulerMethod,
-    DeviceMapMetadata, GGUFLoaderBuilder, GGUFSpecificConfig, MemoryGpuConfig, MistralRs,
-    MistralRsBuilder, ModelDType, NormalRequest, PagedAttentionMetaBuilder, Request,
-    RequestMessage, Response, SamplingParams, SchedulerConfig, TokenSource,
+    best_device, ChatCompletionChunkResponse, Constraint, DefaultSchedulerMethod, DeviceMapSetting,
+    GGUFLoaderBuilder, GGUFSpecificConfig, MemoryGpuConfig, MistralRs, MistralRsBuilder,
+    ModelDType, NormalRequest, PagedAttentionMetaBuilder, Request, RequestMessage, Response,
+    SamplingParams, SchedulerConfig, TokenSource,
 };
 use tokio::sync::mpsc::Receiver;
 use tokio_stream::{Stream, StreamExt};
@@ -39,12 +39,20 @@ impl MistralRsCompletions {
         files: Vec<String>,
     ) -> Result<Self> {
         let config = GGUFSpecificConfig {
-            prompt_batchsize: None,
+            prompt_chunksize: None,
             topology: None,
         };
-        // let file_name = files[0].clone();
-        let loader =
-            GGUFLoaderBuilder::new(chat_template, None, model_id.clone(), files, config).build();
+
+        let loader = GGUFLoaderBuilder::new(
+            chat_template,
+            None,
+            model_id.clone(),
+            files,
+            config,
+            false,
+            None,
+        )
+        .build();
 
         let paged_attn = if cfg!(target_os = "linux") {
             Some(
@@ -68,7 +76,7 @@ impl MistralRsCompletions {
             &ModelDType::Auto,
             device,
             false,
-            DeviceMapMetadata::dummy(),
+            DeviceMapSetting::dummy(),
             None,
             paged_attn,
         )?;
@@ -77,9 +85,8 @@ impl MistralRsCompletions {
             method: DefaultSchedulerMethod::Fixed(NonZero::new(32).unwrap()),
         };
 
-        let runner = MistralRsBuilder::new(pipeline, scheduler_method)
+        let runner = MistralRsBuilder::new(pipeline, scheduler_method, false, None)
             .with_no_kv_cache(false)
-            .with_gemm_full_precision_f16(true)
             .with_no_prefix_cache(false)
             .with_prefix_cache_n(16)
             .with_log("info".into())
@@ -100,9 +107,10 @@ impl MistralRsCompletions {
 
         let (tx, rx) = channel(10_000);
         let id = self.runner.next_request_id();
-        let request = Request::Normal(NormalRequest {
+        let request = Request::Normal(Box::new(NormalRequest {
             id,
             messages: convert_messages(&request.messages),
+            web_search_options: None,
             sampling_params: SamplingParams {
                 temperature: request.temperature,
                 top_k: None,
@@ -122,12 +130,11 @@ impl MistralRsCompletions {
             is_streaming: true,
             constraint: Constraint::None,
             suffix: None,
-            adapters: None,
             tools: None,
             tool_choice: None,
             logits_processors: None,
             return_raw_logits: false,
-        });
+        }));
 
         let sender = self.runner.get_sender().unwrap();
         sender.send(request).await?;
@@ -149,7 +156,10 @@ fn convert_messages(items: &[MessageHistoryItem]) -> RequestMessage {
         messages.push(message_map);
     }
 
-    RequestMessage::Chat(messages)
+    RequestMessage::Chat {
+        messages,
+        enable_thinking: Some(false),
+    }
 }
 
 impl From<ChatCompletionChunkResponse> for StreamingCompletionResponse {
@@ -159,7 +169,7 @@ impl From<ChatCompletionChunkResponse> for StreamingCompletionResponse {
             .into_iter()
             .map(|c| StreamingCompletionChoice {
                 delta: DeltaContent {
-                    content: c.delta.content,
+                    content: c.delta.content.unwrap_or_default(),
                 },
                 finish_reason: c.finish_reason,
             });
@@ -215,6 +225,7 @@ impl CompletionApi for MistralRsCompletions {
             Response::CompletionChunk(_) => None,
             Response::ImageGeneration(_) => None,
             Response::Raw { .. } => None,
+            Response::Speech { .. } => None,
         }))
     }
 
@@ -299,30 +310,43 @@ fn find_lm_studio_models(home: &Utf8Path) -> Result<Vec<ModelInfo>> {
     use walkdir::WalkDir;
 
     const LM_STUDIO_CACHE_DIR: &str = ".cache/lm-studio/models";
+    const LM_STUDIO_MODEL_DIR: &str = ".lmstudio/models";
 
-    let directory = home.join(LM_STUDIO_CACHE_DIR);
+    let directories = [
+        home.join(LM_STUDIO_CACHE_DIR),
+        home.join(LM_STUDIO_MODEL_DIR),
+    ];
     let mut models = vec![];
+    let entry_iter = directories.iter().filter_map(|dir| {
+        if dir.exists() {
+            Some(WalkDir::new(dir).follow_links(false))
+        } else {
+            None
+        }
+    });
 
-    for entry in WalkDir::new(directory) {
-        let path = Utf8PathBuf::from_path_buf(entry?.into_path()).unwrap();
-        if path.extension() == Some("gguf") {
-            let Some(model_name) = path.parent().and_then(|p| p.file_name()) else {
-                continue;
-            };
+    for walkdir in entry_iter {
+        for entry in walkdir {
+            let path = Utf8PathBuf::from_path_buf(entry?.into_path()).unwrap();
+            if path.extension() == Some("gguf") {
+                let Some(model_name) = path.parent().and_then(|p| p.file_name()) else {
+                    continue;
+                };
 
-            let Some(user) = path
-                .parent()
-                .and_then(|p| p.parent())
-                .and_then(|p| p.file_name())
-            else {
-                continue;
-            };
+                let Some(user) = path
+                    .parent()
+                    .and_then(|p| p.parent())
+                    .and_then(|p| p.file_name())
+                else {
+                    continue;
+                };
 
-            models.push(ModelInfo {
-                user: user.to_string(),
-                name: model_name.to_string(),
-                path,
-            });
+                models.push(ModelInfo {
+                    user: user.to_string(),
+                    name: model_name.to_string(),
+                    path,
+                });
+            }
         }
     }
 
@@ -336,11 +360,13 @@ pub fn list_models_on_disk() -> Result<Vec<ModelInfo>> {
 
     let hf_models = find_huggingface_models(&home);
     if let Ok(hf_models) = hf_models {
+        info!("Found Hugging Face models: {:#?}", hf_models);
         models.extend(hf_models);
     }
 
     let lm_studio_models = find_lm_studio_models(&home);
     if let Ok(lm_studio_models) = lm_studio_models {
+        info!("Found LM Studio models: {:#?}", lm_studio_models);
         models.extend(lm_studio_models);
     }
 
